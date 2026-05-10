@@ -24,6 +24,8 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
 const MAX_AUTH_ATTEMPTS = 5;
 const AUTH_LOCK_MS = 1000 * 60 * 15;
 const PRODUCT_NAME = "Design-md-ai";
+const REPOSITORY_URL = "https://github.com/minhduchd-mds/Design-md-ai";
+const CUSTOM_USAGE_TEXT = "Download DESIGN.md, then place it at ./DESIGN.md";
 const TEMPLATE_PRIORITY_FILTERS: TemplatePriorityFilter[] = ["All", "Product", "Technical"];
 const TEMPLATE_CATEGORY_FILTERS: TemplateCategoryFilter[] = [
   "All",
@@ -579,6 +581,11 @@ function templateCommandSlug(value: string): string {
   return slug && slug !== "template" ? slug : "custom";
 }
 
+function getDesignMdUsageCommand(openDesign: string): string {
+  if (!hasDesignMdTemplate(openDesign)) return CUSTOM_USAGE_TEXT;
+  return `npx getdesign@latest add ${templateCommandSlug(openDesign)}`;
+}
+
 function parseMarkdownSections(markdown: string): MarkdownSection[] {
   const lines = markdown.split(/\r?\n/);
   const sections: MarkdownSection[] = [];
@@ -737,12 +744,12 @@ function App() {
   const designMdSections = useMemo(() => parseMarkdownSections(designMd), [designMd]);
   const previewNavSections = useMemo(() => designMdSections.slice(0, 8), [designMdSections]);
   const designMdStatus = savedDesignMd ? "Edited" : "Generated";
-  const usageSlug = hasDesignMdTemplate(outputRequest.openDesign) ? outputRequest.openDesign : "custom";
   const previewItems = useMemo(() => buildPreviewText(outputRequest, openDesignPresets), [openDesignPresets, outputRequest]);
   const selectedPreset = getOpenDesignPreset(request.openDesign, loadedTemplatePresets);
   const outputPreset = getOpenDesignPreset(outputRequest.openDesign, loadedTemplatePresets);
   const importedDesign = useMemo(() => parseDesignMd(outputRequest.prompt, outputPreset), [outputRequest.prompt, outputPreset]);
   const activeDesign = importedDesign ?? outputPreset;
+  const usageCommand = importedDesign ? CUSTOM_USAGE_TEXT : getDesignMdUsageCommand(outputRequest.openDesign);
   const templatePriorityCounts = useMemo(
     () => ({
       All: DESIGN_MD_TEMPLATES.length,
@@ -1355,8 +1362,11 @@ function App() {
                             <p>{activeDesign.direction}</p>
                             <div className="usage-card">
                               <span>Usage</span>
-                              <code>npx getdesign@latest add {usageSlug}/design-md</code>
+                              <code>{usageCommand}</code>
                             </div>
+                            <a className="repository-link" href={REPOSITORY_URL} target="_blank" rel="noreferrer">
+                              GitHub: minhduchd-mds/Design-md-ai
+                            </a>
                             <p className="preview-disclaimer">
                               This preview is generated from Design.md context and is not affiliated with the referenced brand.
                             </p>
@@ -1653,7 +1663,7 @@ function App() {
                 <span>{template.category}</span>
                 <span>{template.id}</span>
               </div>
-              <div className="template-command">npx getdesign@latest add {templateCommandSlug(template.id)}/design-md</div>
+              <div className="template-command">{getDesignMdUsageCommand(template.id)}</div>
               <button type="button" onClick={() => selectLandingTemplate(template.id)}>Use template</button>
             </article>
           ))}

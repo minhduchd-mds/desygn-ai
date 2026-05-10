@@ -229,6 +229,14 @@ The landing-page library supports:
 
 The composer dropdown also supports metadata-aware search, so users can search by template name, id, category, priority, or keyword.
 
+Usage commands are standardized as:
+
+```bash
+npx getdesign@latest add airtable
+```
+
+Registered templates use their template id, without `/design-md` at the end. Custom or uploaded Design.md files do not use a fake `custom` package slug; use the workspace `Download` action, then place the exported file at `./DESIGN.md` in the target project.
+
 This keeps the main bundle smaller while preserving the full library.
 
 ## Screenshot-To-Code Configuration
@@ -309,6 +317,12 @@ Live deployment currently targets:
 
 ```text
 https://design-md-ai.vercel.app/
+```
+
+GitHub repository:
+
+```text
+https://github.com/minhduchd-mds/Design-md-ai
 ```
 
 ## Current Limitations

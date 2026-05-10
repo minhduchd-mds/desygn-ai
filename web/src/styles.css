@@ -2003,6 +2003,18 @@ textarea {
   color: #e2e8f0;
 }
 
+.repository-link {
+  width: fit-content;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.repository-link:hover {
+  text-decoration: underline;
+}
+
 .preview-disclaimer {
   font-size: 13px;
 }
