@@ -1,7 +1,7 @@
 ﻿import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { AccountPlan, AppView, AuthMode, ChatMessage, OpenDesignDefinition, OpenDesignPreset, ProjectHistoryItem, ProjectRequest, SessionUser, UserRecord } from "./app/types";
-import { buildDesignMd, buildPreviewText, extractDesignLabel, inferProjectName, parseDesignMd } from "./design/designParser";
+import { buildDesignMd, buildPreviewText, inferProjectName, parseDesignMd } from "./design/designParser";
 import { DESIGN_MD_TEMPLATES, hasDesignMdTemplate, loadDesignMdTemplate, type DesignMdTemplateCategory } from "./design/templateRegistry";
 import { ChatComposer } from "./workspace/ChatComposer";
 import { buildMarkdownPrompt, readMarkdownFiles } from "./workspace/fileImport";

@@ -54,7 +54,7 @@ const CATEGORY_KEYWORDS: Record<DesignMdTemplateCategory, string[]> = {
   Finance: ["binance", "coinbase", "kraken", "revolut", "wise"],
   Media: ["pinterest", "playstation", "spotify", "theverge", "wired"],
   Product: ["apple", "figma", "framer", "linear", "lovable", "meta", "miro", "notion", "posthog", "raycast", "resend", "sanity", "slack", "superhuman", "uber", "zapier"],
-  Workspace: ["airtable", "clay", "ibm", "mintlify", "nvidia", "vodafone"],
+  Workspace: ["airtable", "ba-agent-workflow", "business-analyst", "clay", "ibm", "mintlify", "nvidia", "vodafone"],
 };
 
 function inferCategory(id: string): DesignMdTemplateCategory {

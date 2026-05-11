@@ -32,7 +32,6 @@ export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>("scan");
   const designSystemSnapshot = useDesignSystemSnapshot(activeTab === "design");
   const lastNodeIdRef = useRef<string | null>(null);
-  const lastNameRef = useRef("");
   const pendingRescanRef = useRef(false);
   const lastVariableCountRef = useRef(0);
 
@@ -63,9 +62,6 @@ export function App() {
     } else if (pendingRescanRef.current && selectedNode) {
       pendingRescanRef.current = false;
       scan(selectedNode, scanProfile);
-    }
-    if (selectionName) {
-      lastNameRef.current = selectionName;
     }
   }, [selectedNode, selectionName, reset, batchReset, scan, scanProfile]);
 
@@ -102,14 +98,13 @@ export function App() {
   }, [refreshSelection]);
 
   const hasResult = !!result;
+  const selectionDisplayName = selectedNode?.componentName || selectedNode?.name || selectionName;
 
   // Resize plugin window: narrow when idle, wide when showing results
   useEffect(() => {
     const width = hasResult || activeTab === "design" ? 768 : 480;
     parent.postMessage({ pluginMessage: { type: "resize", width, height: 768 } }, "*");
   }, [activeTab, hasResult, batchResult]);
-
-  const hasScanned = hasResult || !!batchResult;
 
   // State 3: Scanned → full dashboard
 
@@ -131,8 +126,7 @@ export function App() {
             className="topbar-component-name"
             style={result?.atomicInfo ? { color: LEVEL_CONFIG[result.atomicInfo.level]?.color } : undefined}
           >
-            {/* eslint-disable-next-line react-hooks/refs -- intentional: show last known name */}
-            {selectedNode?.componentName || selectionName || lastNameRef.current || "—"}
+            {selectionDisplayName || "—"}
           </span>
         </div>
 
@@ -250,9 +244,8 @@ export function App() {
                     </svg>
                   </div>
                   <div className="empty-title">
-                    {/* eslint-disable-next-line react-hooks/refs -- intentional */}
                     {selectedNode
-                      ? `Selected: ${selectedNode.componentName || selectionName || lastNameRef.current}`
+                      ? `Selected: ${selectionDisplayName}`
                       : "Select a frame"}
                   </div>
                   <div className="empty-hint">

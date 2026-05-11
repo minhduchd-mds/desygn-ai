@@ -22,7 +22,7 @@ Core capabilities:
 - Map design-system components into layout templates such as dashboard, admin table, settings, landing page, mobile app, AI workspace, and developer console.
 - Create a project frame back inside Figma with mapped components and layout metadata.
 - Import `.md`, `.markdown`, `.txt`, and `.zip` files into the web workspace.
-- Use a bundled Design.md template library with 71 templates loaded on demand.
+- Use a bundled Design.md template library with 72 templates loaded on demand.
 - Search and filter templates by product/technical priority, category, brand, keyword, and template id.
 - Preview generated Design.md as structured sections with light/dark preview modes.
 - Edit generated Design.md, save changes locally, copy output, and download the current `DESIGN.md`.
@@ -34,7 +34,7 @@ Recent updates include:
 
 - Brand and product messaging standardized as `Design-md-ai`.
 - New landing section: `How it works`.
-- 71 Design.md templates imported from `design-md.zip`.
+- 72 Design.md templates, including the BA Agent Workflow template.
 - Template storage added under `web/src/design-md-templates`.
 - Template registry added at `web/src/design/templateRegistry.ts`.
 - Template markdown is lazy-loaded only when selected, keeping the main web bundle smaller.
@@ -60,7 +60,7 @@ Recent updates include:
 |-- web/                     # Public web workspace
 |   |-- src/design/          # Design.md parser and template registry
 |   |-- src/design-md-templates/
-|   |   `-- */DESIGN.md      # 71 stored Design.md templates
+|   |   `-- */DESIGN.md      # 72 stored Design.md templates
 |   `-- src/workspace/       # File import and screenshot-to-code client
 |-- manifest.json            # Figma plugin manifest
 |-- vite.config.ts           # Plugin UI build
@@ -200,7 +200,7 @@ Authentication is local-demo only. User records and encrypted profile/chat data 
 
 ## Template Library
 
-Design-md-ai stores 71 Design.md templates in:
+Design-md-ai stores 72 Design.md templates in:
 
 ```text
 web/src/design-md-templates/
