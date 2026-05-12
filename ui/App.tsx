@@ -104,7 +104,7 @@ export function App() {
   useEffect(() => {
     const width = hasResult || activeTab === "design" ? 768 : 480;
     parent.postMessage({ pluginMessage: { type: "resize", width, height: 768 } }, "*");
-  }, [activeTab, hasResult, batchResult]);
+  }, [activeTab, hasResult]);
 
   // State 3: Scanned → full dashboard
 

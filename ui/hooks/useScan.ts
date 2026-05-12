@@ -9,12 +9,14 @@ export function useScan() {
   const [variants, setVariants] = useState<ViewportVariant[]>([]);
   const pendingNodeRef = useRef<SerializedNode | null>(null);
   const profileRef = useRef<PluginProfile | null>(null);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       const msg = event.data?.pluginMessage;
       if (!msg) return;
       if (msg.type === "variants-result") {
+        if (scanTimeoutRef.current) { clearTimeout(scanTimeoutRef.current); scanTimeoutRef.current = null; }
         setVariants(msg.variants);
         if (pendingNodeRef.current) {
           executeScan(pendingNodeRef.current, msg.variants);
@@ -44,6 +46,15 @@ export function useScan() {
     pendingNodeRef.current = node;
     profileRef.current = profile ?? null;
     parent.postMessage({ pluginMessage: { type: "request-variants" } }, "*");
+
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    scanTimeoutRef.current = setTimeout(() => {
+      if (pendingNodeRef.current) {
+        pendingNodeRef.current = null;
+        setError("Scan timed out. Please try again.");
+        setIsScanning(false);
+      }
+    }, 10000);
   }, []);
 
   const reset = useCallback(() => {

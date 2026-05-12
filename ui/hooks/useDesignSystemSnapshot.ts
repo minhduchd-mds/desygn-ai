@@ -34,7 +34,7 @@ export function useDesignSystemSnapshot(enabled = true): SnapshotState & { refre
     const timeout = window.setTimeout(() => {
       setState((current) =>
         current.isLoading
-          ? { ...current, isLoading: false, error: "Không thể đồng bộ Figma. Hãy thử lại hoặc kiểm tra quyền truy cập file." }
+          ? { ...current, isLoading: false, error: "Could not sync with Figma. Try again or check file permissions." }
           : current,
       );
     }, 20000);
