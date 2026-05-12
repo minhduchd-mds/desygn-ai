@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { sanitizeLong } from "./lib/sanitize";
+import { GROQ_MODEL, SCREEN_GEN_MAX_TOKENS } from "../shared/constants";
 
 export const config = { api: { bodyParser: true } };
 
@@ -41,25 +43,17 @@ function setCors(response: VercelResponse): void {
   Object.entries(corsHeaders).forEach(([key, value]) => response.setHeader(key, value));
 }
 
-function sanitize(input: string): string {
-  return input
-    .replace(/<[^>]*>/g, "")
-    .replace(/[^\x20-\x7E\n\r\tÀ-ɏ一-鿿]/g, "")
-    .trim()
-    .slice(0, 10000);
-}
-
 function buildGenerationPrompt(context: DesignContextPayload, selectedTemplateLabel: string): string {
   const components = (context.components ?? [])
     .map((c) => c.componentName || c.name)
     .filter(Boolean)
     .join(", ");
-  const docs = sanitize((context.docs ?? []).map((d) => d.content).join("\n")).slice(0, 2000);
+  const docs = sanitizeLong((context.docs ?? []).map((d) => d.content).join("\n")).slice(0, 2000);
 
   return `Generate a complete DESIGN.md specification for a ${selectedTemplateLabel} project.
 
 Project context:
-- Prompt: ${sanitize(context.prompt ?? "")}
+- Prompt: ${sanitizeLong(context.prompt ?? "")}
 - Available components: ${components || "None (use bootstrap suggestions)"}
 - Template: ${selectedTemplateLabel}
 - Bootstrap suggestions: ${(context.bootstrapSuggestions ?? []).join(", ")}
@@ -130,14 +124,14 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   try {
     const context = request.body?.context ?? {};
-    const selectedTemplateLabel = sanitize(
+    const selectedTemplateLabel = sanitizeLong(
       request.body?.selectedTemplateLabel ?? context.selectedTemplateId ?? "Unselected"
     );
 
     const groq = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: 4000,
+      model: GROQ_MODEL,
+      max_tokens: SCREEN_GEN_MAX_TOKENS,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: buildGenerationPrompt(context, selectedTemplateLabel) },

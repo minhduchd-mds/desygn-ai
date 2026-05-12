@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { ColorMapping } from "../../shared/types";
 import styles from "./TokenMap.module.css";
+import { TOKEN_MAP_DISPLAY_LIMIT } from "../../shared/constants";
 
 interface TokenMapProps {
   mappings: ColorMapping[];
   profileName?: string;
 }
-
-const DISPLAY_LIMIT = 6;
 
 export function TokenMap({ mappings, profileName }: TokenMapProps) {
   const [expanded, setExpanded] = useState(false);
@@ -17,12 +16,13 @@ export function TokenMap({ mappings, profileName }: TokenMapProps) {
 
   const mappedCount = mappings.filter((m) => m.tokenName).length;
   const unknownCount = mappings.length - mappedCount;
+  const needsExpand = mappings.length > TOKEN_MAP_DISPLAY_LIMIT;
 
-  const needsExpand = mappings.length > DISPLAY_LIMIT;
-  const visibleMappings = expanded ? mappings : mappings.slice(0, DISPLAY_LIMIT);
-
-  // Sort theo số lần sử dụng (cao nhất lên trên)
-  const sortedMappings = [...visibleMappings].sort((a, b) => b.count - a.count);
+  // Sort by usage count (highest first). Memoized so it only re-runs when mappings/expanded changes.
+  const sortedMappings = useMemo(() => {
+    const visible = expanded ? mappings : mappings.slice(0, TOKEN_MAP_DISPLAY_LIMIT);
+    return [...visible].sort((a, b) => b.count - a.count);
+  }, [mappings, expanded]);
 
   const copyToClipboard = async (hex: string) => {
     try {

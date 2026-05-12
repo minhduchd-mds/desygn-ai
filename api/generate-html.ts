@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { sanitizeShort, stripCodeFences } from "./lib/sanitize";
+import { GROQ_MODEL, HTML_GEN_MAX_TOKENS } from "../shared/constants";
 
 export const config = { api: { bodyParser: true } };
 
@@ -27,10 +29,6 @@ const corsHeaders = {
 
 const systemPrompt =
   "You are an expert frontend developer. Output ONLY a complete, self-contained HTML document. No markdown, no code fences, no explanation — just raw HTML starting with <!DOCTYPE html>. Include all CSS in <style> and all JS in <script>. Use modern CSS with custom properties. Make the UI visually polished, dark-themed (--bg: #0f172a, --primary: #6366f1), and fully responsive. No external libraries except Google Fonts.";
-
-function sanitize(input: string): string {
-  return input.replace(/<[^>]*>/g, "").replace(/[^\x20-\x7E\n\rÀ-ɏ]/g, "").trim().slice(0, 4000);
-}
 
 function buildPrompt(prompt: string, style: string): string {
   return `Create a complete, beautiful, standalone HTML page for: ${prompt}
@@ -63,24 +61,24 @@ export default async function handler(request: VercelRequest, response: VercelRe
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) { response.status(500).json({ error: "GROQ_API_KEY is not configured." }); return; }
 
-  const prompt = sanitize(request.body?.prompt ?? "");
-  const style = sanitize(request.body?.style ?? "");
+  const prompt = sanitizeShort(request.body?.prompt ?? "");
+  const style  = sanitizeShort(request.body?.style  ?? "");
   if (!prompt) { response.status(400).json({ error: "Prompt is required." }); return; }
 
   try {
     const groq = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: 6000,
+      model: GROQ_MODEL,
+      max_tokens: HTML_GEN_MAX_TOKENS,
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: buildPrompt(prompt, style) },
+        { role: "user",   content: buildPrompt(prompt, style) },
       ],
     });
 
-    let html = completion.choices[0]?.message.content?.trim() ?? "";
-    // Strip accidental code fences the model might add
-    html = html.replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+    const raw = completion.choices[0]?.message.content?.trim() ?? "";
+    const html = stripCodeFences(raw);
+
     if (!html.toLowerCase().startsWith("<!doctype") && !html.toLowerCase().startsWith("<html")) {
       response.status(500).json({ error: "Model returned non-HTML content." });
       return;
@@ -88,6 +86,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
     response.status(200).json({ html });
   } catch (error) {
-    response.status(500).json({ error: error instanceof Error ? error.message : "HTML generation failed." });
+    const msg = error instanceof Error ? error.message : "HTML generation failed.";
+    response.status(500).json({ error: msg });
   }
 }

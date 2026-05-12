@@ -31,24 +31,34 @@ interface AtomicData {
 function collectAtomicData(root: SerializedNode): AtomicData {
   let componentCount = 0;
   let containsMolecules = false;
-  let maxFrmDepth = 0;
+  let maxFrameDepth = 0;
   const subSeen = new Set<string>();
   const subs: string[] = [];
 
-  // Check if a node contains component children (without counting root)
+  // Cache: node id → whether it contains any component descendant.
+  // Populated during the single walk pass, so hasNestedComponents never re-walks the same subtree.
+  const nestedComponentCache = new Map<string, boolean>();
+
   function hasNestedComponents(n: SerializedNode): boolean {
-    if (!n.children) return false;
-    for (const child of n.children) {
-      if (child.visible === false) continue;
-      if (isComponentNode(child)) return true;
-      if (hasNestedComponents(child)) return true;
+    const cached = nestedComponentCache.get(n.id);
+    if (cached !== undefined) return cached;
+    let result = false;
+    if (n.children) {
+      for (const child of n.children) {
+        if (child.visible === false) continue;
+        if (isComponentNode(child) || hasNestedComponents(child)) {
+          result = true;
+          break;
+        }
+      }
     }
-    return false;
+    nestedComponentCache.set(n.id, result);
+    return result;
   }
 
-  function walk(n: SerializedNode, depth: number) {
+  function walk(n: SerializedNode, depth: number): void {
     if (n.visible === false) return;
-    if (depth > maxFrmDepth) maxFrmDepth = depth;
+    if (depth > maxFrameDepth) maxFrameDepth = depth;
 
     if (n !== root && isComponentNode(n)) {
       componentCount++;
@@ -57,8 +67,9 @@ function collectAtomicData(root: SerializedNode): AtomicData {
         subSeen.add(name);
         subs.push(name);
       }
-      // Check if this child component contains its own components → it's a molecule, making us an organism
-      if (hasNestedComponents(n)) {
+      // Check if this child component contains its own components → it's a molecule, making us an organism.
+      // Uses cache so the subtree is scanned at most once.
+      if (!containsMolecules && hasNestedComponents(n)) {
         containsMolecules = true;
       }
       return; // don't recurse into component children for counting (they're separate units)
@@ -84,7 +95,7 @@ function collectAtomicData(root: SerializedNode): AtomicData {
     }
   }
 
-  return { componentCount, containsMolecules, maxFrameDepth: maxFrmDepth, subComponents: subs };
+  return { componentCount, containsMolecules, maxFrameDepth, subComponents: subs };
 }
 
 function classifyAtomicLevel(node: SerializedNode, data: AtomicData): AtomicLevel {

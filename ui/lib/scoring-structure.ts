@@ -1,5 +1,6 @@
 import type { SerializedNode, ScanIssue } from "../../shared/types";
 import { buildPath } from "./utils";
+import { MAX_OPTIMAL_NESTING, MAX_DEEP_NESTING } from "../../shared/constants";
 
 interface StructureResult {
   score: number;
@@ -15,7 +16,9 @@ interface WalkState {
   issues: ScanIssue[];
 }
 
-function walkTree(node: SerializedNode, ancestors: string[], depth: number, state: WalkState) {
+// Mutable ancestors array — push/pop instead of [...spread] per node.
+// Reduces allocations from O(n × depth) to O(depth).
+function walkTree(node: SerializedNode, ancestors: string[], depth: number, state: WalkState): void {
   if (depth > state.maxDepth) state.maxDepth = depth;
   const isFrame = node.type === "FRAME" || node.type === "COMPONENT" || node.type === "COMPONENT_SET";
   if (isFrame) {
@@ -42,7 +45,7 @@ function walkTree(node: SerializedNode, ancestors: string[], depth: number, stat
       state.hasGrid = true;
     }
   }
-  if (depth > 8 && isFrame && !node.isComponent && !node.isInstance) {
+  if (depth > MAX_OPTIMAL_NESTING && isFrame && !node.isComponent && !node.isInstance) {
     state.issues.push({
       id: `structure-deep-nesting-${node.id}`,
       category: "structure",
@@ -65,9 +68,11 @@ function walkTree(node: SerializedNode, ancestors: string[], depth: number, stat
     });
   }
   if (node.children) {
+    ancestors.push(node.name);
     for (const child of node.children) {
-      walkTree(child, [...ancestors, node.name], depth + 1, state);
+      walkTree(child, ancestors, depth + 1, state);
     }
+    ancestors.pop();
   }
 }
 
@@ -119,6 +124,6 @@ export function scoreStructure(node: SerializedNode): StructureResult {
       nodeId: node.id,
     });
   }
-  if (state.maxDepth > 10) score -= 5;
+  if (state.maxDepth > MAX_DEEP_NESTING) score -= 5;
   return { score: Math.max(0, Math.min(100, score)), issues: state.issues };
 }

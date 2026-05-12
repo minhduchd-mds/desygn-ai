@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import type { ScanCategory } from "../../shared/types";
 import { SCORE_WEIGHTS } from "../../shared/types";
 import styles from "./ScoreOverview.module.css";
+import { RING_COLORS } from "../../shared/constants";
 
 interface ScoreOverviewProps {
   score: number;
@@ -17,9 +18,6 @@ function scoreColor(score: number): string {
 }
 
 const WEIGHTS = SCORE_WEIGHTS;
-
-// Segment colors: atom, molecule, score-green, score-yellow, warning, chart-variants
-const RING_COLORS = ["#58a6ff", "#bc8cff", "#7ee787", "#e0e040", "#f5a623", "#ff6b9d"];
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -92,46 +90,38 @@ export function ScoreOverview({ score, categories }: ScoreOverviewProps) {
   const color = scoreColor(score);
   const animatedScore = useAnimatedValue(score, 600);
 
-  const totalWeighted = categories.reduce((sum, cat) => sum + (WEIGHTS[cat.id] ?? 0.25) * cat.score, 0);
-  const tolerance = 100 - Math.round(totalWeighted);
+  // Memoize the expensive segments + arc geometry — only recomputes when categories change.
+  const { segments, arcs, tolArc } = useMemo(() => {
+    const totalWeighted = categories.reduce((sum, cat) => sum + (WEIGHTS[cat.id] ?? 0.25) * cat.score, 0);
+    const tolerance = 100 - Math.round(totalWeighted);
 
-  const segments: DonutSegment[] = categories.map((cat, i) => ({
-    label: cat.label,
-    value: Math.round((WEIGHTS[cat.id] ?? 0.25) * cat.score),
-    color: RING_COLORS[i % RING_COLORS.length],
-    isTolerance: false,
-  }));
+    const segs: DonutSegment[] = categories.map((cat, i) => ({
+      label: cat.label,
+      value: Math.round((WEIGHTS[cat.id] ?? 0.25) * cat.score),
+      color: RING_COLORS[i % RING_COLORS.length],
+      isTolerance: false,
+    }));
 
-  if (tolerance > 0) {
-    segments.push({
-      label: "AI Tolerance",
-      value: tolerance,
-      color: "#444",
-      isTolerance: true,
-    });
-  }
+    if (tolerance > 0) {
+      segs.push({ label: "AI Tolerance", value: tolerance, color: "#444", isTolerance: true });
+    }
 
-  const cx = 100;
-  const cy = 100;
-  const r = 72;
-  const strokeW = 28;
-  const gap = 2;
-  const arcs = segments.reduce(
-    (acc, seg) => {
-      const sweep = (seg.value / 100) * 360 - gap;
-      acc.result.push({
-        ...seg,
-        startAngle: acc.angle,
-        sweepAngle: Math.max(0, sweep),
-      });
-      acc.angle += (seg.value / 100) * 360;
-      return acc;
-    },
-    { angle: -90, result: [] as (DonutSegment & { startAngle: number; sweepAngle: number })[] },
-  ).result;
+    const cx = 100, cy = 100, r = 72, strokeW = 28, gap = 2;
+    const computedArcs = segs.reduce(
+      (acc, seg) => {
+        const sweep = (seg.value / 100) * 360 - gap;
+        acc.result.push({ ...seg, startAngle: acc.angle, sweepAngle: Math.max(0, sweep) });
+        acc.angle += (seg.value / 100) * 360;
+        return acc;
+      },
+      { angle: -90, result: [] as (DonutSegment & { startAngle: number; sweepAngle: number })[] },
+    ).result;
 
-  // Tolerance arc data for the hatched fill
-  const tolArc = arcs.find((a) => a.isTolerance);
+    // expose cx/cy/r/strokeW for the SVG (constant values inlined below)
+    void cx; void cy; void r; void strokeW;
+
+    return { segments: segs, arcs: computedArcs, tolArc: computedArcs.find((a) => a.isTolerance) };
+  }, [categories]);
 
   return (
     <div className={styles.root}>
