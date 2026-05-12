@@ -15,7 +15,7 @@
   border: none;
   cursor: pointer;
   color: var(--text);
-  font-family: var(--dr-font-base);
+    font-family: var(--dr-font-base), serif;
 }
 
 .header:hover { background: rgba(0, 212, 255, 0.03); }
@@ -55,7 +55,7 @@
 .overallScore {
   font-size: 14px;
   font-weight: 800;
-  font-family: var(--dr-font-mono);
+    font-family: var(--dr-font-mono), serif;
 }
 
 .green { color: #1bc47d; }
@@ -124,7 +124,7 @@
 .criterionScore {
   font-size: 11px;
   font-weight: 700;
-  font-family: var(--dr-font-mono);
+    font-family: var(--dr-font-mono), serif;
   flex-shrink: 0;
 }
 
