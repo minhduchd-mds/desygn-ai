@@ -48,6 +48,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   title?: string;
   content: string;
+  htmlCode?: string;
 }
 
 export interface OpenDesignDefinition {

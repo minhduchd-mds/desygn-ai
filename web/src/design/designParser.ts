@@ -191,7 +191,7 @@ ${benchmarks.map((item) => `- ${item.name}: ${item.focus}. Opportunity: ${item.g
 `;
 }
 
-export function buildPreviewText(request: ProjectRequest, presets: Record<OpenDesignPreset, OpenDesignDefinition>) {
+export function buildPreviewText(request: ProjectRequest, presets: Record<OpenDesignPreset, OpenDesignDefinition>): string[] {
   const preset = presets[request.openDesign];
   const imported = parseDesignMd(request.prompt, preset);
   const design = imported ?? preset;

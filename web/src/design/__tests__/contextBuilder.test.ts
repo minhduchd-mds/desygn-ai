@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import JSZip from "jszip";
 import { buildContext, parseFileSources } from "../contextBuilder";
+import { clearCache } from "../../lib/requestCache";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  clearCache();
 });
 
 describe("parseFileSources", () => {
@@ -67,5 +69,21 @@ describe("buildContext", () => {
     expect(context.components).toHaveLength(1);
     expect(context.bootstrapSuggestions).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns cached bootstrap result on second call with same prompt", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ components: ["Button", "Input"] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const sources = { pluginScanResult: [], uploadedFiles: [], textPrompt: "Build a fintech app" };
+    const ctx1 = await buildContext(sources);
+    const ctx2 = await buildContext(sources);
+
+    expect(ctx1.bootstrapSuggestions).toEqual(["Button", "Input"]);
+    expect(ctx2.bootstrapSuggestions).toEqual(["Button", "Input"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

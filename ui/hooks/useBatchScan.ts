@@ -7,11 +7,14 @@ export function useBatchScan() {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const profileRef = useRef<PluginProfile | null>(null);
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       const msg = event.data?.pluginMessage;
       if (!msg || msg.type !== "batch-selection-result") return;
+
+      if (batchTimeoutRef.current) { clearTimeout(batchTimeoutRef.current); batchTimeoutRef.current = null; }
 
       const nodes = msg.nodes as SerializedNode[];
       if (nodes.length === 0) {
@@ -40,6 +43,13 @@ export function useBatchScan() {
     setResult(null);
     profileRef.current = profile ?? null;
     parent.postMessage({ pluginMessage: { type: "request-batch-selection" } }, "*");
+
+    if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
+    batchTimeoutRef.current = setTimeout(() => {
+      setError("Batch scan timed out. Please try again.");
+      setIsScanning(false);
+      batchTimeoutRef.current = null;
+    }, 10000);
   }, []);
 
   const reset = useCallback(() => {

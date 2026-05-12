@@ -104,5 +104,5 @@ export function createZipBlob(entries: ZipEntry[]): Blob {
   writeUint32(endView, 12, central.length);
   writeUint32(endView, 16, offset);
 
-  return new Blob([concat([...localParts, central, end])], { type: "application/zip" });
+  return new Blob([concat([...localParts, central, end]) as unknown as ArrayBuffer], { type: "application/zip" });
 }

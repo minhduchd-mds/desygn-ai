@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Marked, type Tokens } from "marked";
 import JSZip from "jszip";
 import type { Screen } from "../design/screenGenerator";
@@ -55,6 +55,7 @@ function updateScreenFromMarkdown(screen: Screen, markdown: string): Screen {
 export function SplitView({ initialScreens, projectId, onExport }: SplitViewProps) {
   const normalizedScreens = useMemo(() => initialScreens.slice(0, 5), [initialScreens]);
   const [editableScreens, setEditableScreens] = useState<Screen[]>(normalizedScreens);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeScreen, setActiveScreen] = useState(0);
   const [isDark, setIsDark] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -82,10 +83,12 @@ export function SplitView({ initialScreens, projectId, onExport }: SplitViewProp
       ),
     );
 
-    window.setTimeout(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
       const key = `design-md-${projectId}-${current?.name ?? activeScreen}`;
       localStorage.setItem(key, markdown);
       setLastSaved(new Date());
+      debounceRef.current = null;
     }, DEBOUNCE_MS);
   };
 

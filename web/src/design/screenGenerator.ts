@@ -1,4 +1,5 @@
 import type { DesignContext, Screen } from "../../../shared/designContext";
+import { getCached, setCached } from "../lib/requestCache";
 import { SCREEN_NAMES } from "./constants";
 import { loadDesignMdTemplate } from "./templateRegistry";
 
@@ -80,18 +81,21 @@ async function getSelectedTemplateLabel(context: DesignContext): Promise<string>
 }
 
 async function callGenerateScreensApi(context: DesignContext): Promise<string> {
+  const selectedTemplateLabel = await getSelectedTemplateLabel(context);
+  const cacheKey = { context, selectedTemplateLabel };
+  const cached = getCached<string>(cacheKey);
+  if (cached) return cached;
+
   const response = await fetch("/api/generate-screens", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      context,
-      selectedTemplateLabel: await getSelectedTemplateLabel(context),
-    }),
+    body: JSON.stringify({ context, selectedTemplateLabel }),
   });
 
   if (!response.ok) throw new Error(`Screen generation failed with ${response.status}.`);
   const result = await response.json() as { markdown?: string };
   if (!result.markdown) throw new Error("Screen generation returned no text content.");
+  setCached(cacheKey, result.markdown);
   return result.markdown;
 }
 

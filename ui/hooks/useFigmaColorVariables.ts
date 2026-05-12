@@ -19,7 +19,6 @@ export function useFigmaColorVariables(): FigmaColorVariablesState {
     function handleMessage(event: MessageEvent) {
       const msg = event.data?.pluginMessage;
       if (!msg || msg.type !== "figma-color-variables-result") return;
-
       setState({
         tokens: msg.tokens ?? {},
         fileName: msg.fileName ?? "",
@@ -30,7 +29,15 @@ export function useFigmaColorVariables(): FigmaColorVariablesState {
 
     window.addEventListener("message", handleMessage);
     parent.postMessage({ pluginMessage: { type: "get-figma-color-variables" } }, "*");
-    return () => window.removeEventListener("message", handleMessage);
+
+    const timeout = window.setTimeout(() => {
+      setState((current) => current.isLoading ? { ...current, isLoading: false } : current);
+    }, 5000);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   return state;

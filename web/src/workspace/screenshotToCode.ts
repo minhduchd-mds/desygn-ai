@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { WS_TIMEOUT_MS } from "../design/constants";
 
 export interface ScreenshotToCodeOptions {
   imageDataUrl: string;
@@ -66,7 +67,7 @@ export function generateCodeFromScreenshot({
 
     const failTimer = window.setTimeout(() => {
       fail(new Error(`Could not connect to the screenshot-to-code backend at ${wsUrl}. Start the backend or configure VITE_SCREENSHOT_TO_CODE_WS_URL.`));
-    }, 12000);
+    }, WS_TIMEOUT_MS);
 
     socket.addEventListener("open", () => {
       window.clearTimeout(failTimer);

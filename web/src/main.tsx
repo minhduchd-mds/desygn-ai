@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createEmptyContext, type DesignContext, type ValidationReport } from "../../shared/designContext";
 import type { AccountPlan, AppView, AuthMode, ChatMessage, OpenDesignDefinition, OpenDesignPreset, ProjectHistoryItem, ProjectRequest, SessionUser, UserRecord } from "./app/types";
 import { buildContext, parseFileSources } from "./design/contextBuilder";
+import { BA_TEMPLATE_CONTENT } from "./design/constants";
 import { buildDesignMd, buildPreviewText, inferProjectName, parseDesignMd } from "./design/designParser";
 import { computeValidationReport } from "./design/layoutValidator";
 import { generateScreens, type Screen } from "./design/screenGenerator";
@@ -14,6 +15,7 @@ import { analyzeImage } from "./workspace/imageAnalyzer";
 import { sendClaudeChat } from "./workspace/claudeChat";
 import { fileToDataUrl, generateCodeFromScreenshot, getScreenshotToCodeWsUrl } from "./workspace/screenshotToCode";
 import { SplitView } from "./workspace/SplitView";
+import { HtmlPreviewModal, type HtmlPreviewState } from "./workspace/HtmlPreviewModal";
 import "./styles.css";
 
 type PreviewMode = "prompt" | "preview" | "edit" | "split";
@@ -553,12 +555,13 @@ async function decryptChatMessages(emailHash: string, payload: string): Promise<
   return JSON.parse(new TextDecoder().decode(plain)) as ChatMessage[];
 }
 
-function createMessage(role: ChatMessage["role"], content: string, title?: string): ChatMessage {
+function createMessage(role: ChatMessage["role"], content: string, title?: string, htmlCode?: string): ChatMessage {
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     role,
     title,
     content,
+    htmlCode,
   };
 }
 
@@ -723,6 +726,7 @@ function App() {
   const [projectHistory, setProjectHistory] = useState<ProjectHistoryItem[]>(() => getProjectHistory());
   const [activeHistoryPrompt, setActiveHistoryPrompt] = useState(() => getProjectHistory()[0]?.prompt ?? "");
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("prompt");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -737,6 +741,7 @@ function App() {
   const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const [generatedScreens, setGeneratedScreens] = useState<Screen[]>([]);
   const [pendingUploadedFiles, setPendingUploadedFiles] = useState<File[]>([]);
+  const [htmlPreview, setHtmlPreview] = useState<HtmlPreviewState | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const analyzeImageInputRef = useRef<HTMLInputElement | null>(null);
   const baDocInputRef = useRef<HTMLInputElement | null>(null);
@@ -914,6 +919,26 @@ function App() {
     });
   }
 
+  function detectWebIntent(prompt: string): boolean {
+    const p = prompt.toLowerCase();
+    return /tạo\s*(web|website|trang|app|giao diện)|create\s*(web|website|page|app|landing|ui)|build\s*(web|website|page|app|landing)|make\s*(web|website|page|app)|html|landing page|homepage|web app|single.?page|portfolio site/.test(p);
+  }
+
+  async function generateHtmlFromPrompt(prompt: string): Promise<string | null> {
+    try {
+      const res = await fetch("/api/generate-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, style: selectedPreset.label }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json() as { html?: string };
+      return data.html ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   async function sendChatMessage() {
     const prompt = request.prompt.trim();
     if (!prompt) return;
@@ -924,17 +949,22 @@ function App() {
     setRequest((current) => ({ ...current, prompt: "" }));
     setIsGenerating(true);
 
+    const isWebIntent = detectWebIntent(prompt);
+
     try {
-      const response = await sendClaudeChat(chatMessages, {
-        projectName: outputRequest.projectName,
-        category: request.category,
-        selectedTemplate: selectedPreset.label,
-        readinessScore: validationReport?.readinessScore ?? null,
-        activeDesignMd: hasGenerated,
-      });
+      const [chatResponse, htmlCode] = await Promise.all([
+        sendClaudeChat(chatMessages, {
+          projectName: outputRequest.projectName,
+          category: request.category,
+          selectedTemplate: selectedPreset.label,
+          readinessScore: validationReport?.readinessScore ?? null,
+          activeDesignMd: hasGenerated,
+        }),
+        isWebIntent ? generateHtmlFromPrompt(prompt) : Promise.resolve(null),
+      ]);
       setMessages((current) => [
         ...current,
-        createMessage("assistant", response, "Groq chat"),
+        createMessage("assistant", chatResponse, "Groq chat", htmlCode ?? undefined),
       ]);
     } catch (error) {
       setMessages((current) => [
@@ -1430,8 +1460,25 @@ function App() {
 
   if (view === "workspace" && user) {
     return (
-      <main className="workspace-shell">
+      <>
+      <main className={`workspace-shell${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`}>
         <aside className="workspace-sidebar">
+          <button
+            className="sidebar-toggle"
+            type="button"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed((c) => !c)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d={sidebarCollapsed ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
           <nav className="side-nav">
             <a
               href="#new-project"
@@ -1453,23 +1500,24 @@ function App() {
                   fill="white"
                 />
               </svg>
-              New Project
+              <span className="nav-label">New Project</span>
             </a>
-            {/*<a href="#gen-web" className="active" role="button" onClick={(event) => event.preventDefault()}>*/}
-            {/*  Gen Web*/}
-            {/*</a>*/}
             <a href="#projects" role="button" onClick={(event) => { event.preventDefault(); setIsHistoryOpen(true); }}>
-              Projects
+              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
+              <span className="nav-label">Projects</span>
             </a>
             <a href="#templates" role="button" onClick={(event) => { event.preventDefault(); openTemplateLibrary(); }}>
-              Templates
+              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.8"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.8"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.8"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.8"/></svg>
+              <span className="nav-label">Templates</span>
             </a>
             <a href="#library" role="button" onClick={(event) => { event.preventDefault(); showComingSoon("My Library"); }}>
-              My Library
+              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
+              <span className="nav-label">My Library</span>
               <span className="nav-status">Soon</span>
             </a>
             <a href="#settings" role="button" onClick={(event) => { event.preventDefault(); showComingSoon("Settings"); }}>
-              Settings
+              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.8"/></svg>
+              <span className="nav-label">Settings</span>
               <span className="nav-status">Soon</span>
             </a>
             <a
@@ -1481,9 +1529,25 @@ function App() {
                 setView("landing");
               }}
             >
-              Back to website
+              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 3l9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 21V12h6v9M5 21h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span className="nav-label">Back to website</span>
             </a>
           </nav>
+          {sidebarCollapsed && projectHistory.length > 0 && (
+            <div className="sidebar-history-collapsed">
+              <svg className="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 6px", opacity: 0.5 }}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              {projectHistory.slice(0, 6).map((item, index) => (
+                <button
+                  key={item.prompt}
+                  className={`history-dot${(activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0)) ? " active" : ""}`}
+                  title={item.name}
+                  type="button"
+                  onClick={() => openHistoryProject(item)}
+                />
+              ))}
+            </div>
+          )}
+
           <section className={`sidebar-history ${isHistoryOpen ? "is-open" : "is-hidden"}`}>
             <span
               role="button"
@@ -1546,7 +1610,7 @@ function App() {
           {/*// Profile */}
 
           <div className="brand-block">
-            <span className="brand-mark">AI</span>
+            <span className="brand-mark" title={sidebarCollapsed ? user.displayEmail : undefined}>AI</span>
             <div>
               <strong>{PRODUCT_NAME}</strong>
               <span>{user.displayEmail}</span>
@@ -1585,28 +1649,77 @@ function App() {
           />
           <div className="workspace-action-bar">
             <button type="button" onClick={() => analyzeImageInputRef.current?.click()}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
               Analyze image
             </button>
-            <button type="button" onClick={() => baDocInputRef.current?.click()}>
+            <button type="button" className="btn-ba-doc" onClick={() => baDocInputRef.current?.click()}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
               Add BA doc
             </button>
-            <button type="button" onClick={() => void generateFiveScreensFromContext()} disabled={isGenerating}>
+            <button
+              type="button"
+              className="btn-template"
+              onClick={() => {
+                const blob = new Blob([BA_TEMPLATE_CONTENT], { type: "text/markdown;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "BA-template.md";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              BA template
+            </button>
+            <button type="button" className="btn-generate" onClick={() => void generateFiveScreensFromContext()} disabled={isGenerating}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69h6.05l-4.9 3.56a1 1 0 0 0-.36 1.12L17.5 20l-4.9-3.56a1 1 0 0 0-1.18 0L6.5 20l1.88-5.87a1 1 0 0 0-.36-1.12L3.12 9.45h6.05a1 1 0 0 0 .95-.69z"/>
+              </svg>
               Generate 5 screens
             </button>
           </div>
           <div className="chat-scroll" ref={chatScrollRef}>
+            {messages.length === 0 && !isGenerating && !hasGenerated && (
+              <div className="chat-empty-state">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
+                  <path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69h6.05l-4.9 3.56a1 1 0 0 0-.36 1.12L17.5 20l-4.9-3.56a1 1 0 0 0-1.18 0L6.5 20l1.88-5.87a1 1 0 0 0-.36-1.12L3.12 9.45h6.05a1 1 0 0 0 .95-.69z"/>
+                </svg>
+                <p className="chat-empty-title">Ready to generate</p>
+                <p className="chat-empty-hint">Upload a BA doc or describe your app, then click <strong>Generate 5 screens</strong></p>
+              </div>
+            )}
+
             {messages.map((message) => (
               <article key={message.id} className={`message ${message.role}`}>
                 {message.title && <strong>{message.title}</strong>}
                 <p>{message.content}</p>
+                {message.htmlCode && (
+                  <button
+                    type="button"
+                    className="html-preview-trigger"
+                    onClick={() => setHtmlPreview({ html: message.htmlCode!, title: (message.title ?? request.prompt.slice(0, 40)) || "Web Preview" })}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Run preview
+                  </button>
+                )}
               </article>
             ))}
 
             {isGenerating && (
-              <article className="message assistant thinking-row">
-                <span />
-                <p>Create Code Preview...</p>
-              </article>
+              <div className="thinking-row">
+                <span /><span /><span />
+                <p>Generating screens…</p>
+              </div>
             )}
 
             {hasGenerated && (
@@ -1615,42 +1728,59 @@ function App() {
                   <main className="builder-main-panel">
                     <div className="result-toolbar">
                       <div>
-                        <button
-                          className={previewMode === "prompt" ? "active" : ""}
-                          type="button"
-                          onClick={() => setPreviewMode("prompt")}
-                        >
+                        <button className={previewMode === "prompt" ? "active" : ""} type="button" onClick={() => setPreviewMode("prompt")}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                          </svg>
                           Design.md
                         </button>
-                        <button
-                          className={previewMode === "preview" ? "active" : ""}
-                          type="button"
-                          onClick={() => setPreviewMode("preview")}
-                        >
+                        <button className={previewMode === "preview" ? "active" : ""} type="button" onClick={() => setPreviewMode("preview")}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
                           Preview
                         </button>
-                        <button
-                          className={previewMode === "edit" ? "active" : ""}
-                          type="button"
-                          onClick={() => setPreviewMode("edit")}
-                        >
+                        <button className={previewMode === "edit" ? "active" : ""} type="button" onClick={() => setPreviewMode("edit")}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
                           Edit
                         </button>
                         {generatedScreens.length > 0 && (
-                          <button
-                            className={previewMode === "split" ? "active" : ""}
-                            type="button"
-                            onClick={() => setPreviewMode("split")}
-                          >
+                          <button className={previewMode === "split" ? "active" : ""} type="button" onClick={() => setPreviewMode("split")}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/>
+                            </svg>
                             Split View
                           </button>
                         )}
                         <span className={`design-status-badge ${savedDesignMd ? "edited" : ""}`}>{designMdStatus}</span>
                       </div>
                       <nav>
-                        <span className="target-pill">{outputRequest.target}</span>
-                        <button type="button" onClick={downloadDesignMd}>Download</button>
-                        <button type="button" onClick={copyOutput}>{copiedOutput ? "Copied" : "Copy"}</button>
+                        <span className="target-pill">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                          </svg>
+                          {outputRequest.target}
+                        </span>
+                        <button type="button" className="toolbar-btn-icon" title="Download Design.md" onClick={downloadDesignMd}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                          </svg>
+                          <span>Download</span>
+                        </button>
+                        <button type="button" className={`toolbar-btn-icon ${copiedOutput ? "is-copied" : ""}`} title="Copy to clipboard" onClick={copyOutput}>
+                          {copiedOutput ? (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                          )}
+                          <span>{copiedOutput ? "Copied" : "Copy"}</span>
+                        </button>
                       </nav>
                     </div>
                     {validationReport && (
@@ -1838,6 +1968,14 @@ function App() {
           />
         </section>
       </main>
+      {htmlPreview && (
+        <HtmlPreviewModal
+          state={htmlPreview}
+          onClose={() => setHtmlPreview(null)}
+          onHtmlChange={(html) => setHtmlPreview((prev) => prev ? { ...prev, html } : null)}
+        />
+      )}
+      </>
     );
   }
   return (

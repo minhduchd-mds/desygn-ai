@@ -35,7 +35,7 @@ const corsHeaders = {
 };
 
 const systemPrompt =
-  "You are a senior UI/UX designer creating DESIGN.md specifications for AI coding agents (Claude Code, Cursor, Windsurf). Generate precise, structured markdown. Be specific about component variants, props, and token names. Do not add preamble or explanation - output ONLY the markdown specification.";
+  "You are a senior UI/UX architect creating DESIGN.md specifications for the latest AI coding agents (Claude Code, Cursor, Windsurf, Copilot). Output ONLY structured markdown — no preamble, no explanation. Be exhaustive: every screen must include component variants with props, CSS custom-property token names, responsive rules, accessibility requirements (ARIA roles, keyboard nav, WCAG 2.1 AA), interaction states (hover/focus/disabled/loading/error/empty), and motion tokens. Use a strict 8px spacing scale. Include dark-mode token variants where relevant.";
 
 function setCors(response: VercelResponse): void {
   Object.entries(corsHeaders).forEach(([key, value]) => response.setHeader(key, value));
@@ -73,31 +73,50 @@ Generate specifications for exactly these 5 screens:
 4. Form / Create / Edit
 5. Settings / Profile
 
-For EACH screen use this exact structure:
+For EACH screen use this EXACT structure (all sections required):
 
 ## Screen: [Screen Name]
 
 ### Purpose
-[1 sentence]
+[1 sentence describing the user goal]
 
 ### Layout
-- Grid: [columns]
-- Nav: [position]
-- Key regions: [list]
+- Grid: [columns, e.g. 12-col or sidebar+main]
+- Nav: [top | left | none]
+- Breakpoints: mobile 375px | tablet 768px | desktop 1280px
+- Key regions: [header, sidebar, content, footer — list with flex/grid rule]
 
 ### Components
-| Component | Variant | Props |
-|-----------|---------|-------|
-[rows]
+| Component | Variant | Props | State |
+|-----------|---------|-------|-------|
+[rows — include hover/focus/disabled/loading/error/empty states per component]
+
+### Typography
+| Role | Token | Size / Weight / Line-height |
+|------|-------|-----------------------------|
+[heading, body, label, caption, code — at minimum]
 
 ### Color tokens
-[list of --token-name: purpose]
+| Token | Light | Dark | Purpose |
+|-------|-------|------|---------|
+[--color-* tokens — min 6 rows covering surface, primary, text, border, error, success]
 
 ### Spacing
-[key spacing rules]
+- Base: 8px scale (4 / 8 / 12 / 16 / 24 / 32 / 48 / 64)
+- [2-3 specific spacing rules for this screen]
+
+### Motion
+- Enter: [animation token, e.g. fade-up 200ms ease-out]
+- Exit: [animation token]
+- Micro: [hover/focus transition duration]
+
+### Accessibility
+- ARIA roles: [list key landmarks and widget roles]
+- Keyboard: [Tab order, Enter/Space actions, Escape behavior]
+- WCAG 2.1 AA: [contrast ratios, focus indicators, screen reader labels]
 
 ### Interactions
-[key user interactions]`;
+[bullet list of user flows, success/error/empty states, and edge cases]`;
 }
 
 export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {

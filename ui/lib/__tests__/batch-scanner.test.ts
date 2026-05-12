@@ -82,10 +82,10 @@ describe("batchScan", () => {
       id: "test-profile",
       name: "Test System",
       stack: "React+TS+CSS",
+      layout: "",
       tokens: {},
+      components: [],
       guidelines: "",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
     };
 
     const makeHighScoringCard = (id: string, name: string): SerializedNode =>
