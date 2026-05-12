@@ -1,19 +1,24 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useSelection } from "./hooks/useSelection";
 import { useScan } from "./hooks/useScan";
 import { useProfiles } from "./hooks/useProfiles";
 import { ScoreOverview } from "./components/ScoreOverview";
 import { PromptExport } from "./components/PromptExport";
 import { FixPanel } from "./components/FixPanel";
-import { TokenMap } from "./components/TokenMap";
 import { AtomicBadge, LevelIcon, LEVEL_CONFIG } from "./components/AtomicBadge";
 import { BatchPanel } from "./components/BatchPanel";
 import { AutoLayoutFix } from "./components/AutoLayoutFix";
-import { DesignProjectPanel } from "./components/DesignProjectPanel";
+import { ExportReportButton } from "./components/ExportReportButton";
+import { ScanHistory } from "./components/ScanHistory";
 import { useBatchScan } from "./hooks/useBatchScan";
+import { useScanHistory } from "./hooks/useScanHistory";
 import { useFigmaColorVariables } from "./hooks/useFigmaColorVariables";
 import { useDesignSystemSnapshot } from "./hooks/useDesignSystemSnapshot";
 import type { PluginProfile } from "../shared/types";
+
+const TokenMap = lazy(() => import("./components/TokenMap").then(m => ({ default: m.TokenMap })));
+const DesignProjectPanel = lazy(() => import("./components/DesignProjectPanel").then(m => ({ default: m.DesignProjectPanel })));
+
 type NavTab = "scan" | "design";
 
 
@@ -29,6 +34,7 @@ export function App() {
   } = useBatchScan();
   const { activeProfile } = useProfiles();
   const figmaColorVariables = useFigmaColorVariables();
+  const { history: scanHistory, addEntry: addHistoryEntry, clearHistory } = useScanHistory();
   const [activeTab, setActiveTab] = useState<NavTab>("scan");
   const designSystemSnapshot = useDesignSystemSnapshot(activeTab === "design");
   const lastNodeIdRef = useRef<string | null>(null);
@@ -64,6 +70,17 @@ export function App() {
       scan(selectedNode, scanProfile);
     }
   }, [selectedNode, selectionName, reset, batchReset, scan, scanProfile]);
+
+  useEffect(() => {
+    if (result && selectionDisplayName) {
+      addHistoryEntry({
+        componentName: selectionDisplayName,
+        score: result.score,
+        atomicLevel: result.atomicInfo?.level ?? null,
+        issueCount: result.issues.length,
+      });
+    }
+  }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (figmaColorVariables.count === 0 || figmaColorVariables.count === lastVariableCountRef.current) return;
@@ -182,7 +199,9 @@ export function App() {
                   </div>
 
                   {result.colorMappings && result.colorMappings.length > 0 ? (
-                    <TokenMap mappings={result.colorMappings} profileName={scanProfile?.name} />
+                    <Suspense fallback={<div className="card" style={{ minHeight: 120 }} />}>
+                      <TokenMap mappings={result.colorMappings} profileName={scanProfile?.name} />
+                    </Suspense>
                   ) : (
                     <div />
                   )}
@@ -223,6 +242,9 @@ export function App() {
 
                 {/* Full-width: Atomic Badge + Export Plan */}
                 {result.atomicInfo && <AtomicBadge info={result.atomicInfo} exportPlan={result.exportPlan} />}
+
+                {/* Export scan report */}
+                <ExportReportButton result={result} componentName={selectionDisplayName || "component"} />
               </div>
             ) : batchResult ? (
               <BatchPanel result={batchResult} onSelectNode={handleSelectNode} />
@@ -283,19 +305,22 @@ export function App() {
                     </>
                   )}
                 </div>
+                <ScanHistory history={scanHistory} onClear={clearHistory} />
               </div>
             )}
           </div>
         )}
         {activeTab === "design" && (
           <div className="panel-design">
-            <DesignProjectPanel
-              snapshot={designSystemSnapshot.snapshot}
-              isLoading={designSystemSnapshot.isLoading}
-              error={designSystemSnapshot.error}
-              scanResult={result}
-              onRefresh={designSystemSnapshot.refreshSnapshot}
-            />
+            <Suspense fallback={<div className="card" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontSize: 11 }}>Loading...</div>}>
+              <DesignProjectPanel
+                snapshot={designSystemSnapshot.snapshot}
+                isLoading={designSystemSnapshot.isLoading}
+                error={designSystemSnapshot.error}
+                scanResult={result}
+                onRefresh={designSystemSnapshot.refreshSnapshot}
+              />
+            </Suspense>
           </div>
         )}
       </div>

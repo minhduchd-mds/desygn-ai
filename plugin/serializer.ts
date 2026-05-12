@@ -131,7 +131,7 @@ export async function serializeNode(node: SceneNode, depth = 0): Promise<Seriali
         if (!sp) return null;
         // Check if this fill is bound to a Figma variable
         try {
-          const bv = (node as GeometryMixin).boundVariables?.fills;
+          const bv = (node as GeometryMixin & { boundVariables?: { fills?: { id: string }[]; strokes?: { id: string }[] } }).boundVariables?.fills;
           if (bv && bv[i]) {
             sp.boundToVariable = true;
             // Read variable name
@@ -154,7 +154,7 @@ export async function serializeNode(node: SceneNode, depth = 0): Promise<Seriali
         const sp = serializePaint(paint);
         if (!sp) return null;
         try {
-          const bv = (node as GeometryMixin).boundVariables?.strokes;
+          const bv = (node as GeometryMixin & { boundVariables?: { fills?: { id: string }[]; strokes?: { id: string }[] } }).boundVariables?.strokes;
           if (bv && bv[i]) {
             sp.boundToVariable = true;
             try {

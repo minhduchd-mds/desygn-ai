@@ -366,7 +366,7 @@ function analyzeFrame(
   if (frame.layoutMode && frame.layoutMode !== "NONE") return;
 
   // Skip instances (can't modify internals)
-  if (node.type === "INSTANCE") return;
+  if ((node as SceneNode).type === "INSTANCE") return;
 
   const children = getVisibleChildren(frame);
 

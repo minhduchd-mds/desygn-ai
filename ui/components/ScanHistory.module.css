@@ -1,0 +1,107 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--dr-font-base);
+  transition: all 0.2s;
+}
+
+.toggle:hover {
+  border-color: var(--glow);
+  color: var(--glow);
+}
+
+.toggleLabel { flex: 1; text-align: left; }
+.toggleIcon { font-size: 10px; opacity: 0.6; }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(11, 18, 32, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  gap: 8px;
+}
+
+.itemMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--glow2);
+  background: rgba(124, 58, 237, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.score {
+  font-weight: 700;
+  font-family: var(--dr-font-mono);
+  font-size: 12px;
+}
+
+.green { color: #1bc47d; }
+.yellow { color: #f5a623; }
+.red { color: #f24822; }
+
+.issues {
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.time {
+  color: var(--text3);
+  font-size: 10px;
+  font-family: var(--dr-font-mono);
+}

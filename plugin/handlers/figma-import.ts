@@ -5,6 +5,7 @@ import type {
   DesignSystemSnapshot,
   DesignSystemSyncDiagnostics,
   DesignSystemVariableInfo,
+  FigmaImportSource,
 } from "../../shared/types";
 
 function normalizeTokenName(name: string): string {
@@ -299,27 +300,29 @@ async function readAllFileComponents(diagnostics: DesignSystemSyncDiagnostics): 
       if (mainComponent) {
         diagnostics.resolvedInstanceComponents++;
         addComponentNode(mainComponent, getNodePageName(instance), "instance");
-      } else if (instance.componentName) {
-        results.set(`instance:${instance.componentName}:${getNodePageName(instance)}`, {
+      } else if ((instance as InstanceNode & { componentName?: string }).componentName) {
+        const cName = (instance as InstanceNode & { componentName?: string }).componentName!;
+        results.set(`instance:${cName}:${getNodePageName(instance)}`, {
           id: instance.id,
           nodeId: instance.id,
-          name: instance.componentName,
+          name: cName,
           type: "COMPONENT",
           pageName: getNodePageName(instance),
           source: "instance",
-          role: inferComponentRole(instance.componentName),
+          role: inferComponentRole(cName),
         });
       }
     } catch {
-      if (instance.componentName) {
-        results.set(`instance:${instance.componentName}:${getNodePageName(instance)}`, {
+      if ((instance as InstanceNode & { componentName?: string }).componentName) {
+        const cName = (instance as InstanceNode & { componentName?: string }).componentName!;
+        results.set(`instance:${cName}:${getNodePageName(instance)}`, {
           id: instance.id,
           nodeId: instance.id,
-          name: instance.componentName,
+          name: cName,
           type: "COMPONENT",
           pageName: getNodePageName(instance),
           source: "instance",
-          role: inferComponentRole(instance.componentName),
+          role: inferComponentRole(cName),
         });
       }
     }
@@ -390,7 +393,7 @@ export async function importFigmaColorVariables(): Promise<void> {
 }
 
 export async function discoverFigmaSources(): Promise<void> {
-  const sources: { id: string; name: string; type: string; count: number; detail?: string }[] = [];
+  const sources: FigmaImportSource[] = [];
 
   // Local variables — grouped by collection
   try {
