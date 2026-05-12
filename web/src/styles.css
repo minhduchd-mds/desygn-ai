@@ -1165,6 +1165,48 @@ textarea {
   justify-content: center;
 }
 
+.nav-icon {
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+}
+
+.side-nav a:hover .nav-icon {
+  opacity: 1;
+}
+
+/* Collapsed history dots */
+.sidebar-history-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.history-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(148,163,184,0.35);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.history-dot:hover {
+  background: rgba(148,163,184,0.7);
+  transform: scale(1.3);
+}
+
+.history-dot.active {
+  background: #0f6fff;
+}
+
 .workspace-sidebar {
   display: flex;
   flex-direction: column;
