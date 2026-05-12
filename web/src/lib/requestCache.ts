@@ -7,3 +7,7 @@ export function getCached<T>(key: unknown): T | undefined {
 export function setCached(key: unknown, value: unknown): void {
   cache.set(JSON.stringify(key), value);
 }
+
+export function clearCache(): void {
+  cache.clear();
+}
