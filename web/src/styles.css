@@ -1755,13 +1755,16 @@ textarea {
 }
 
 .result-toolbar .target-pill {
-  max-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 170px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(99, 102, 241, 0.18);
   border-radius: 999px;
-  background: #f8fafc;
-  color: #475569;
-  padding: 7px 10px;
+  background: rgba(99, 102, 241, 0.06);
+  color: #6366f1;
+  padding: 5px 10px;
   font-size: 12px;
   font-weight: 650;
   text-overflow: ellipsis;
@@ -1776,19 +1779,42 @@ textarea {
 }
 
 .result-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid #edf0f5;
-  border-radius: 10px;
+  border-radius: 9px;
   background: #ffffff;
   color: #68758b;
-  padding: 8px 12px;
+  padding: 7px 11px;
+  font-size: 12.5px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(25, 40, 72, 0.04);
+  transition: background 0.14s, color 0.14s, border-color 0.14s, box-shadow 0.14s;
+  box-shadow: 0 1px 4px rgba(25, 40, 72, 0.04);
 }
 
-.result-toolbar button.active,
 .result-toolbar button:hover {
-  background: linear-gradient(135deg, #6d5dfc, #4b35f6);
-  color: white;
+  border-color: rgba(99, 102, 241, 0.30);
+  background: rgba(99, 102, 241, 0.04);
+  color: #4f46e5;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.10);
+}
+
+.result-toolbar button.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.28);
+}
+
+.toolbar-btn-icon {
+  border-color: #edf0f5 !important;
+}
+
+.toolbar-btn-icon.is-copied {
+  background: rgba(20, 184, 166, 0.08) !important;
+  border-color: rgba(20, 184, 166, 0.30) !important;
+  color: #0d7a6e !important;
 }
 
 .live-badge {
