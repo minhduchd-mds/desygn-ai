@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run web:build",
+  "buildCommand": "npm run web:build && echo '=== ROOT ===' && ls -la && echo '=== public ===' && ls public/ 2>/dev/null || echo 'NO public dir'",
   "outputDirectory": "public",
   "installCommand": "npm ci",
   "functions": {
