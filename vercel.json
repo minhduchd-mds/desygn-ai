@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run web:build && cp -r ../../public ./public",
+  "buildCommand": "npm run web:build && cp -r ../../public ./public && cp -r ../../api ./api && cp -r ../../shared ./shared",
   "outputDirectory": "public",
   "installCommand": "npm ci",
   "functions": {
