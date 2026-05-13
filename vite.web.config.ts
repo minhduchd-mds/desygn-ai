@@ -91,7 +91,7 @@ export default defineConfig(({ mode }) => {
     ],
     root: "web",
     build: {
-      outDir: "../dist-web",
+      outDir: "../public",
       emptyOutDir: true,
       target: "es2020",
       chunkSizeWarningLimit: 700,
