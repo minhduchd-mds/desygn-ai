@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm run web:build && cp -r ../../public ./public && cp -r ../../api ./api && cp -r ../../shared ./shared",
+  "buildCommand": "npm run web:build && cp -r ../../public ./public",
   "outputDirectory": "public",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci && cp -r ../../api ./api && cp -r ../../shared ./shared",
   "functions": {
     "api/**/*.ts": {
       "runtime": "node@20.x"
