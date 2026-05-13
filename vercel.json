@@ -2,11 +2,6 @@
   "buildCommand": "npm run web:build",
   "outputDirectory": "public",
   "installCommand": "npm ci",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "node@20.x"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
