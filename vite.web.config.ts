@@ -1,9 +1,5 @@
 import { defineConfig, loadEnv, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const apiRoutes: Record<string, string> = {
   "/api/analyze-image": "../api/analyze-image.ts",
@@ -95,7 +91,7 @@ export default defineConfig(({ mode }) => {
     ],
     root: "web",
     build: {
-      outDir: path.resolve(__dirname, "dist-web"),
+      outDir: "../dist-web",
       emptyOutDir: true,
       target: "es2020",
       chunkSizeWarningLimit: 700,
