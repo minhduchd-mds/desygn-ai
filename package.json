@@ -1,6 +1,6 @@
 {
   "name": "design-md-ai",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Figma to Design.md handoff workspace for AI coding agents.",
   "author": "Stefan Holzheu <design@stefan-holzheu.de>",
   "license": "MIT",
