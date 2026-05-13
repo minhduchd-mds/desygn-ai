@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import type { DesignSystemComponentInfo, DesignSystemVariableInfo, ScanResult } from "../../shared/types";
+import { useI18n } from "../i18n/I18nContext";
 import styles from "./UiUxEvaluationPanel.module.css";
 
 interface UiUxEvaluationPanelProps {
@@ -180,20 +181,21 @@ function evaluate(
   return results;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  documentation: "Documentation",
-  guidelines: "Design Guidelines",
-  testing: "Test Readiness",
-  color: "Color System",
-  accessibility: "Accessibility",
-  states: "Interactive States",
-  icons: "Icon System",
-};
-
 export function UiUxEvaluationPanel({ components, variables, scanResult }: UiUxEvaluationPanelProps) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useI18n();
   const criteria = useMemo(() => evaluate(components, variables, scanResult), [components, variables, scanResult]);
   const overallScore = Math.round(criteria.reduce((s, c) => s + c.score, 0) / criteria.length);
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    documentation: t.catDocumentation,
+    guidelines: t.catGuidelines,
+    testing: t.catTesting,
+    color: t.catColor,
+    accessibility: t.catAccessibility,
+    states: t.catStates,
+    icons: t.catIcons,
+  };
 
   const grouped = useMemo(() => {
     const map = new Map<string, EvalCriterion[]>();
@@ -213,11 +215,11 @@ export function UiUxEvaluationPanel({ components, variables, scanResult }: UiUxE
     <div className={styles.root}>
       <button className={styles.header} onClick={() => setExpanded(!expanded)}>
         <div className={styles.headerLeft}>
-          <span className={styles.title}>UI/UX Evaluation</span>
+          <span className={styles.title}>{t.uiUxEvaluation}</span>
           <span className={styles.badges}>
-            {passCount > 0 && <span className={styles.badgePass}>{passCount} pass</span>}
-            {warnCount > 0 && <span className={styles.badgeWarn}>{warnCount} warn</span>}
-            {failCount > 0 && <span className={styles.badgeFail}>{failCount} fail</span>}
+            {passCount > 0 && <span className={styles.badgePass}>{passCount} {t.pass}</span>}
+            {warnCount > 0 && <span className={styles.badgeWarn}>{warnCount} {t.warn}</span>}
+            {failCount > 0 && <span className={styles.badgeFail}>{failCount} {t.fail}</span>}
           </span>
         </div>
         <div className={styles.headerRight}>

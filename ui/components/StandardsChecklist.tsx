@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useI18n } from "../i18n/I18nContext";
 import styles from "./StandardsChecklist.module.css";
 
 export interface StandardItem {
@@ -64,6 +65,7 @@ export function StandardsChecklist({ onStandardsChange }: StandardsChecklistProp
   const [adding, setAdding] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newCategory, setNewCategory] = useState<"uiux" | "ba">("uiux");
+  const { t } = useI18n();
 
   useEffect(() => { onStandardsChange(items); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -113,10 +115,10 @@ export function StandardsChecklist({ onStandardsChange }: StandardsChecklistProp
     <div className={styles.root}>
       <button className={styles.header} onClick={() => setExpanded(!expanded)}>
         <div className={styles.headerLeft}>
-          <span className={styles.title}>Standards Checklist</span>
+          <span className={styles.title}>{t.standardsChecklist}</span>
           <span className={styles.badge}>{checkedCount}/{items.length}</span>
           {requiredChecked < requiredTotal && (
-            <span className={styles.badgeWarn}>{requiredTotal - requiredChecked} required</span>
+            <span className={styles.badgeWarn}>{requiredTotal - requiredChecked} {t.required}</span>
           )}
         </div>
         <span className={styles.chevron}>{expanded ? "▾" : "▸"}</span>
@@ -125,13 +127,13 @@ export function StandardsChecklist({ onStandardsChange }: StandardsChecklistProp
       {expanded && (
         <div className={styles.body}>
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>UI/UX Standards</span>
+            <span className={styles.sectionLabel}>{t.uiUxStandards}</span>
             {uiuxItems.map(item => (
               <label key={item.id} className={styles.item}>
                 <input type="checkbox" checked={item.checked} onChange={() => toggleItem(item.id)} />
                 <span className={styles.itemLabel}>
                   {item.label}
-                  {item.required && <span className={styles.requiredTag}>required</span>}
+                  {item.required && <span className={styles.requiredTag}>{t.required}</span>}
                 </span>
                 {item.id.startsWith("custom-") && (
                   <button className={styles.removeBtn} onClick={(e) => { e.preventDefault(); removeItem(item.id); }}>×</button>
@@ -141,13 +143,13 @@ export function StandardsChecklist({ onStandardsChange }: StandardsChecklistProp
           </div>
 
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>BA Standards</span>
+            <span className={styles.sectionLabel}>{t.baStandards}</span>
             {baItems.map(item => (
               <label key={item.id} className={styles.item}>
                 <input type="checkbox" checked={item.checked} onChange={() => toggleItem(item.id)} />
                 <span className={styles.itemLabel}>
                   {item.label}
-                  {item.required && <span className={styles.requiredTag}>required</span>}
+                  {item.required && <span className={styles.requiredTag}>{t.required}</span>}
                 </span>
                 {item.id.startsWith("custom-") && (
                   <button className={styles.removeBtn} onClick={(e) => { e.preventDefault(); removeItem(item.id); }}>×</button>
@@ -162,14 +164,14 @@ export function StandardsChecklist({ onStandardsChange }: StandardsChecklistProp
                 <option value="uiux">UI/UX</option>
                 <option value="ba">BA</option>
               </select>
-              <input className={styles.addInput} value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="New standard..." onKeyDown={e => e.key === "Enter" && addItem()} />
-              <button className="btn-primary btn-sm" onClick={addItem}>Add</button>
-              <button className="btn-link" onClick={() => setAdding(false)}>Cancel</button>
+              <input className={styles.addInput} value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder={t.newStandard} onKeyDown={e => e.key === "Enter" && addItem()} />
+              <button className="btn-primary btn-sm" onClick={addItem}>{t.add}</button>
+              <button className="btn-link" onClick={() => setAdding(false)}>{t.cancel}</button>
             </div>
           ) : (
             <div className={styles.actions}>
-              <button className="btn-link" onClick={() => setAdding(true)}>+ Add custom standard</button>
-              <button className="btn-link" onClick={resetDefaults} style={{ opacity: 0.5 }}>Reset defaults</button>
+              <button className="btn-link" onClick={() => setAdding(true)}>{t.addCustomStandard}</button>
+              <button className="btn-link" onClick={resetDefaults} style={{ opacity: 0.5 }}>{t.resetDefaults}</button>
             </div>
           )}
         </div>

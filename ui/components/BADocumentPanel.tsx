@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useI18n } from "../i18n/I18nContext";
 import styles from "./BADocumentPanel.module.css";
 
 interface BADocumentPanelProps {
@@ -137,6 +138,7 @@ export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPane
   const [title, setTitle] = useState(initialDoc?.title ?? "");
   const [content, setContent] = useState(initialDoc?.content ?? "");
   const [saved, setSaved] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (initialDoc) return;
@@ -201,10 +203,10 @@ export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPane
     <div className={styles.root}>
       <button className={styles.header} onClick={() => setExpanded(!expanded)}>
         <div className={styles.headerLeft}>
-          <span className={styles.title}>BA Document</span>
+          <span className={styles.title}>{t.baDocument}</span>
           {content && (
             <span className={styles.badge}>
-              {title || "Loaded"} · {screenCount} screens
+              {title || t.baDocLoaded} · {screenCount} {t.screens}
             </span>
           )}
         </div>
@@ -216,14 +218,14 @@ export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPane
           {!content && !editing ? (
             <div className={styles.empty}>
               <p className={styles.emptyText}>
-                Import a BA document to guide screen generation. The agent uses your business requirements to produce accurate layouts.
+                {t.baDocEmptyText}
               </p>
               <div className={styles.emptyActions}>
                 <button className="btn-primary btn-sm" onClick={handleLoadTemplate}>
-                  Use Template
+                  {t.useTemplate}
                 </button>
                 <button className="btn-secondary btn-sm" onClick={handleImportFile}>
-                  Import File (.md, .txt)
+                  {t.importFile}
                 </button>
               </div>
             </div>
@@ -233,21 +235,21 @@ export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPane
                 className={styles.titleInput}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="Document title"
+                placeholder={t.documentTitle}
               />
               <textarea
                 className={styles.textarea}
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 rows={16}
-                placeholder="Paste or write your BA document in Markdown..."
+                placeholder={t.pasteOrWrite}
               />
               <div className={styles.editorActions}>
                 <button className="btn-primary btn-sm" onClick={handleSave}>
-                  Save Document
+                  {t.saveDocument}
                 </button>
                 <button className="btn-secondary btn-sm" onClick={() => setEditing(false)}>
-                  Cancel
+                  {t.cancel}
                 </button>
               </div>
             </div>
@@ -256,16 +258,16 @@ export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPane
               <div className={styles.previewHeader}>
                 <strong>{title}</strong>
                 <div className={styles.previewActions}>
-                  <button className="btn-link" onClick={() => setEditing(true)}>Edit</button>
-                  <button className="btn-link" onClick={handleImportFile}>Re-import</button>
-                  <button className="btn-link" style={{ color: "var(--dr-error, #f24822)" }} onClick={handleClear}>Clear</button>
+                  <button className="btn-link" onClick={() => setEditing(true)}>{t.edit}</button>
+                  <button className="btn-link" onClick={handleImportFile}>{t.reImport}</button>
+                  <button className="btn-link" style={{ color: "var(--dr-error, #f24822)" }} onClick={handleClear}>{t.clear}</button>
                 </div>
               </div>
-              {saved && <span className={styles.savedBadge}>✓ Saved</span>}
-              <pre className={styles.previewContent}>{content.slice(0, 800)}{content.length > 800 ? "\n\n... (truncated preview)" : ""}</pre>
+              {saved && <span className={styles.savedBadge}>{t.saved}</span>}
+              <pre className={styles.previewContent}>{content.slice(0, 800)}{content.length > 800 ? `\n\n${t.truncatedPreview}` : ""}</pre>
               {screenCount > 0 && (
                 <div className={styles.screenList}>
-                  <span className={styles.screenLabel}>Detected Screens:</span>
+                  <span className={styles.screenLabel}>{t.detectedScreens}</span>
                   {parseScreensFromContent(content).map(s => (
                     <span key={s.id} className={styles.screenChip}>{s.name}</span>
                   ))}

@@ -3,12 +3,37 @@ import type { DesignSystemComponentInfo, FigmaProjectFrameRequest, PluginMessage
 const FRAME_WIDTH = 1440;
 const FRAME_PADDING = 48;
 const CARD_WIDTH = 260;
-const CARD_HEIGHT = 140;
+const CARD_HEIGHT = 160;
+const CONTENT_WIDTH = FRAME_WIDTH - FRAME_PADDING * 2;
+
+// ── Color palette ──
+const COLORS = {
+  bg:       { r: 0.965, g: 0.973, b: 0.984 },
+  white:    { r: 1, g: 1, b: 1 },
+  card:     { r: 0.992, g: 0.996, b: 1 },
+  border:   { r: 0.86, g: 0.89, b: 0.93 },
+  borderL:  { r: 0.91, g: 0.93, b: 0.96 },
+  title:    { r: 0.07, g: 0.09, b: 0.13 },
+  heading:  { r: 0.09, g: 0.11, b: 0.15 },
+  body:     { r: 0.33, g: 0.37, b: 0.44 },
+  meta:     { r: 0.5, g: 0.54, b: 0.6 },
+  tag:      { r: 0.18, g: 0.22, b: 0.28 },
+  tagBg:    { r: 0.94, g: 0.96, b: 0.98 },
+  tagStroke:{ r: 0.84, g: 0.87, b: 0.91 },
+  accent:   { r: 0.22, g: 0.47, b: 0.97 },
+  accentBg: { r: 0.93, g: 0.95, b: 1 },
+  empty:    { r: 0.62, g: 0.66, b: 0.72 },
+  emptyBg:  { r: 0.96, g: 0.97, b: 0.98 },
+  instance: { r: 0.12, g: 0.72, b: 0.56 },
+  placeholder:{ r: 0.96, g: 0.68, b: 0.2 },
+};
 
 interface FrameBuildState {
   instanceCount: number;
   placeholderCount: number;
 }
+
+// ── Font helpers ──
 
 function normalizeFontStyle(style: string): string {
   return style.toLowerCase().replace(/\s+/g, "");
@@ -22,40 +47,27 @@ function getFontFromCurrentPage(): FontName | null {
   try {
     const textNodes = figma.currentPage.findAllWithCriteria({ types: ["TEXT"] });
     for (const node of textNodes) {
-      if (node.fontName !== figma.mixed) {
-        return node.fontName;
-      }
+      if (node.fontName !== figma.mixed) return node.fontName;
     }
-  } catch {
-    return null;
-  }
+  } catch { /* ignore */ }
   return null;
 }
 
 async function findAvailableFamilyStyle(baseFont: FontName | null, requestedStyle: "Regular" | "Semi Bold"): Promise<FontName | null> {
   if (!baseFont || !figma.listAvailableFontsAsync) return null;
-
   try {
     const availableFonts = await figma.listAvailableFontsAsync();
-    const familyFonts = availableFonts
-      .map((font) => font.fontName)
-      .filter((font) => font.family === baseFont.family);
-
+    const familyFonts = availableFonts.map(f => f.fontName).filter(f => f.family === baseFont.family);
     if (familyFonts.length === 0) return null;
-
-    const preferredStyles =
-      requestedStyle === "Semi Bold"
-        ? ["semibold", "semibolditalic", "demibold", "medium", "bold", normalizeFontStyle(baseFont.style)]
-        : ["regular", "book", "normal", "medium", normalizeFontStyle(baseFont.style)];
-
+    const preferredStyles = requestedStyle === "Semi Bold"
+      ? ["semibold", "demibold", "medium", "bold", normalizeFontStyle(baseFont.style)]
+      : ["regular", "book", "normal", normalizeFontStyle(baseFont.style)];
     return (
-      familyFonts.find((font) => preferredStyles.includes(normalizeFontStyle(font.style))) ??
-      familyFonts.find((font) => normalizeFontStyle(font.style) === normalizeFontStyle(baseFont.style)) ??
+      familyFonts.find(f => preferredStyles.includes(normalizeFontStyle(f.style))) ??
+      familyFonts.find(f => normalizeFontStyle(f.style) === normalizeFontStyle(baseFont.style)) ??
       familyFonts[0]
     );
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 async function loadPreferredFont(style: "Regular" | "Semi Bold" = "Regular"): Promise<FontName> {
@@ -74,18 +86,15 @@ async function loadPreferredFont(style: "Regular" | "Semi Bold" = "Regular"): Pr
     const key = fontKey(font);
     if (seen.has(key)) continue;
     seen.add(key);
-    try {
-      await figma.loadFontAsync(font);
-      return font;
-    } catch {
-      // Try the next available font.
-    }
+    try { await figma.loadFontAsync(font); return font; } catch { /* next */ }
   }
 
   const fallback = { family: "Arial", style: style === "Semi Bold" ? "Bold" : "Regular" };
   await figma.loadFontAsync(fallback);
   return fallback;
 }
+
+// ── Node helpers ──
 
 function isSceneNode(node: BaseNode | null): node is SceneNode {
   return !!node && "type" in node && node.type !== "DOCUMENT" && node.type !== "PAGE";
@@ -96,29 +105,63 @@ function isComponentLike(node: SceneNode): node is ComponentNode | ComponentSetN
 }
 
 function findDefaultVariant(componentSet: ComponentSetNode): ComponentNode | null {
-  const components = componentSet.children.filter((child): child is ComponentNode => child.type === "COMPONENT");
+  const components = componentSet.children.filter((c): c is ComponentNode => c.type === "COMPONENT");
   if (components.length === 0) return null;
-
   return (
-    components.find((component) => {
-      const values = Object.values(component.variantProperties ?? {}).map((value) => value.toLowerCase());
+    components.find(c => {
+      const values = Object.values(c.variantProperties ?? {}).map(v => v.toLowerCase());
       return values.includes("default");
     }) ?? components[0]
   );
 }
 
-function applyText(node: TextNode, text: string, font: FontName, size: number, color = { r: 0.12, g: 0.14, b: 0.17 }) {
+// ── Font loading for instances ──
+
+async function loadInstanceFonts(node: SceneNode): Promise<void> {
+  const loaded = new Set<string>();
+  const textNodes: TextNode[] = [];
+
+  function collect(n: SceneNode) {
+    if (n.type === "TEXT") {
+      textNodes.push(n);
+    } else if ("children" in n) {
+      for (const child of (n as ChildrenMixin).children) {
+        if (isSceneNode(child)) collect(child);
+      }
+    }
+  }
+  collect(node);
+
+  for (const tn of textNodes) {
+    if (tn.fontName === figma.mixed) {
+      const len = tn.characters.length;
+      for (let i = 0; i < len; i++) {
+        const font = tn.getRangeFontName(i, i + 1) as FontName;
+        const key = fontKey(font);
+        if (!loaded.has(key)) { loaded.add(key); try { await figma.loadFontAsync(font); } catch { /* skip */ } }
+      }
+    } else {
+      const font = tn.fontName as FontName;
+      const key = fontKey(font);
+      if (!loaded.has(key)) { loaded.add(key); try { await figma.loadFontAsync(font); } catch { /* skip */ } }
+    }
+  }
+}
+
+// ── UI primitives ──
+
+function applyText(node: TextNode, text: string, font: FontName, size: number, color: RGB) {
   node.fontName = font;
   node.fontSize = size;
   node.fills = [{ type: "SOLID", color }];
   node.characters = text;
 }
 
-function createLabel(text: string, font: FontName, size: number, color?: RGB): TextNode {
+function createLabel(text: string, font: FontName, size: number, color: RGB, maxWidth?: number): TextNode {
   const label = figma.createText();
   applyText(label, text, font, size, color);
   label.textAutoResize = "HEIGHT";
-  label.resize(360, label.height);
+  if (maxWidth) label.resize(maxWidth, label.height);
   return label;
 }
 
@@ -128,46 +171,92 @@ function createPill(text: string, font: FontName): FrameNode {
   pill.layoutMode = "HORIZONTAL";
   pill.primaryAxisSizingMode = "AUTO";
   pill.counterAxisSizingMode = "AUTO";
+  pill.primaryAxisAlignItems = "CENTER";
+  pill.counterAxisAlignItems = "CENTER";
   pill.paddingLeft = 12;
   pill.paddingRight = 12;
   pill.paddingTop = 6;
   pill.paddingBottom = 6;
   pill.cornerRadius = 999;
-  pill.fills = [{ type: "SOLID", color: { r: 0.94, g: 0.96, b: 0.98 } }];
-  pill.strokes = [{ type: "SOLID", color: { r: 0.84, g: 0.87, b: 0.91 } }];
+  pill.fills = [{ type: "SOLID", color: COLORS.tagBg }];
+  pill.strokes = [{ type: "SOLID", color: COLORS.tagStroke }];
+  pill.strokeWeight = 1;
 
-  const label = createLabel(text, font, 12, { r: 0.18, g: 0.22, b: 0.28 });
-  label.resize(Math.max(60, text.length * 7), label.height);
+  const label = createLabel(text, font, 11, COLORS.tag);
+  label.textAutoResize = "WIDTH_AND_HEIGHT";
   pill.appendChild(label);
   return pill;
 }
 
+function createStatusDot(color: RGB): FrameNode {
+  const dot = figma.createFrame();
+  dot.name = "Status dot";
+  dot.resize(8, 8);
+  dot.cornerRadius = 4;
+  dot.fills = [{ type: "SOLID", color }];
+  return dot;
+}
+
+// ── Component preview & placeholder ──
+
 function createPlaceholder(component: DesignSystemComponentInfo, regularFont: FontName, semiBoldFont: FontName): FrameNode {
   const card = figma.createFrame();
-  card.name = `Component Placeholder / ${component.name}`;
+  card.name = `Placeholder / ${component.name}`;
   card.layoutMode = "VERTICAL";
-  card.primaryAxisSizingMode = "FIXED";
+  card.primaryAxisSizingMode = "AUTO";
   card.counterAxisSizingMode = "FIXED";
-  card.itemSpacing = 10;
+  card.itemSpacing = 8;
   card.paddingLeft = 16;
   card.paddingRight = 16;
-  card.paddingTop = 16;
-  card.paddingBottom = 16;
-  card.resize(CARD_WIDTH, CARD_HEIGHT);
-  card.cornerRadius = 8;
-  card.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-  card.strokes = [{ type: "SOLID", color: { r: 0.82, g: 0.85, b: 0.9 } }];
+  card.paddingTop = 14;
+  card.paddingBottom = 14;
+  card.resize(CARD_WIDTH, 10);
+  card.cornerRadius = 10;
+  card.fills = [{ type: "SOLID", color: COLORS.white }];
+  card.strokes = [{ type: "SOLID", color: COLORS.borderL }];
+  card.strokeWeight = 1;
 
-  const name = createLabel(component.name, semiBoldFont, 15, { r: 0.1, g: 0.12, b: 0.16 });
-  const meta = createLabel(`${component.type} · ${component.pageName}`, regularFont, 12, { r: 0.36, g: 0.4, b: 0.47 });
-  const id = createLabel(`Figma ID: ${component.id}`, regularFont, 10, { r: 0.5, g: 0.54, b: 0.6 });
-  name.resize(CARD_WIDTH - 32, name.height);
-  meta.resize(CARD_WIDTH - 32, meta.height);
-  id.resize(CARD_WIDTH - 32, id.height);
+  // Top row: status dot + type badge
+  const topRow = figma.createFrame();
+  topRow.name = "Top row";
+  topRow.layoutMode = "HORIZONTAL";
+  topRow.primaryAxisSizingMode = "AUTO";
+  topRow.counterAxisSizingMode = "AUTO";
+  topRow.counterAxisAlignItems = "CENTER";
+  topRow.itemSpacing = 6;
+  topRow.fills = [];
+  topRow.appendChild(createStatusDot(component.source === "suggested" ? COLORS.placeholder : COLORS.accent));
+  const typeBadge = createLabel(
+    component.source === "suggested" ? "Suggested" : component.type === "COMPONENT_SET" ? "Component Set" : "Component",
+    regularFont, 10, COLORS.meta,
+  );
+  typeBadge.textAutoResize = "WIDTH_AND_HEIGHT";
+  topRow.appendChild(typeBadge);
+  card.appendChild(topRow);
 
+  // Name
+  const name = createLabel(component.name, semiBoldFont, 14, COLORS.heading, CARD_WIDTH - 32);
   card.appendChild(name);
-  card.appendChild(meta);
-  card.appendChild(id);
+
+  // Page
+  const pageLine = createLabel(`Page: ${component.pageName}`, regularFont, 11, COLORS.body, CARD_WIDTH - 32);
+  card.appendChild(pageLine);
+
+  // Role
+  if (component.role && component.role !== "unknown") {
+    const roleLine = createLabel(`Role: ${component.role}`, regularFont, 11, COLORS.body, CARD_WIDTH - 32);
+    card.appendChild(roleLine);
+  }
+
+  // Variants count
+  if (component.variantProperties) {
+    const vCount = Object.keys(component.variantProperties).length;
+    if (vCount > 0) {
+      const vLine = createLabel(`${vCount} variant properties`, regularFont, 10, COLORS.meta, CARD_WIDTH - 32);
+      card.appendChild(vLine);
+    }
+  }
+
   return card;
 }
 
@@ -176,21 +265,24 @@ async function createComponentPreview(component: DesignSystemComponentInfo): Pro
 
   const nodeId = component.nodeId ?? (component.source === "library" ? undefined : component.id);
   const componentKey = component.componentKey ?? (component.source === "library" ? component.id : undefined);
-  const node = nodeId ? await figma.getNodeByIdAsync(nodeId) : null;
+
   let sourceNode: ComponentNode | ComponentSetNode | null = null;
 
-  if (isSceneNode(node) && isComponentLike(node)) {
-    sourceNode = node;
-  } else {
+  // Try by node ID first
+  if (nodeId) {
     try {
-      if (!componentKey) return null;
-      sourceNode =
-        component.type === "COMPONENT_SET"
-          ? await figma.importComponentSetByKeyAsync(componentKey)
-          : await figma.importComponentByKeyAsync(componentKey);
-    } catch {
-      sourceNode = null;
-    }
+      const node = await figma.getNodeByIdAsync(nodeId);
+      if (isSceneNode(node) && isComponentLike(node)) sourceNode = node;
+    } catch { /* node not available */ }
+  }
+
+  // Try by component key
+  if (!sourceNode && componentKey) {
+    try {
+      sourceNode = component.type === "COMPONENT_SET"
+        ? await figma.importComponentSetByKeyAsync(componentKey)
+        : await figma.importComponentByKeyAsync(componentKey);
+    } catch { /* import failed */ }
   }
 
   if (!sourceNode) return null;
@@ -198,54 +290,64 @@ async function createComponentPreview(component: DesignSystemComponentInfo): Pro
   const source = sourceNode.type === "COMPONENT_SET" ? findDefaultVariant(sourceNode) : sourceNode;
   if (!source) return null;
 
-  const instance = source.createInstance();
-  instance.name = `Instance / ${component.name}`;
-  const scale = Math.min(1, CARD_WIDTH / Math.max(1, instance.width), CARD_HEIGHT / Math.max(1, instance.height));
-  if (scale < 1) instance.rescale(scale);
-  return instance;
-}
+  try {
+    const instance = source.createInstance();
+    instance.name = `Instance / ${component.name}`;
 
-function componentPickKey(component: DesignSystemComponentInfo): string {
-  return component.componentKey ?? component.nodeId ?? `${component.source ?? "unknown"}:${component.pageName}:${component.name}`;
-}
+    // Load fonts before any parent appends
+    await loadInstanceFonts(instance);
 
-function dedupeComponents(components: DesignSystemComponentInfo[]): DesignSystemComponentInfo[] {
-  const seen = new Set<string>();
-  return components.filter((component) => {
-    const key = componentPickKey(component);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
+    // Scale to fit within card bounds while maintaining aspect ratio
+    const maxW = CARD_WIDTH;
+    const maxH = CARD_HEIGHT;
+    const scale = Math.min(1, maxW / Math.max(1, instance.width), maxH / Math.max(1, instance.height));
+    if (scale < 1) instance.rescale(scale);
 
-function pickComponents(
-  components: DesignSystemComponentInfo[],
-  pattern: RegExp,
-  fallbackCount = 4,
-  usedKeys = new Set<string>(),
-): DesignSystemComponentInfo[] {
-  const available = components.filter((component) => !usedKeys.has(componentPickKey(component)));
-  const realComponents = available.filter((component) => component.source !== "suggested");
-  const suggestedComponents = available.filter((component) => component.source === "suggested");
-  const matches = dedupeComponents([
-    ...realComponents.filter((component) => component.role ? pattern.test(component.role) : false),
-    ...realComponents.filter((component) => pattern.test(component.name)),
-    ...suggestedComponents.filter((component) => pattern.test(component.name) || (component.role ? pattern.test(component.role) : false)),
-  ]);
-  const selected = (matches.length > 0 ? matches : [...realComponents, ...suggestedComponents]).slice(0, fallbackCount);
-  for (const component of selected) {
-    usedKeys.add(componentPickKey(component));
+    return instance;
+  } catch {
+    return null;
   }
-  return selected;
 }
 
-function findMappedComponents(project: FigmaProjectFrameRequest, sectionTitle: string): DesignSystemComponentInfo[] {
-  const mappedKeys = project.templateComponentMappings?.[sectionTitle] ?? [];
-  if (mappedKeys.length === 0) return [];
-  const componentsByKey = new Map(project.components.map((component) => [componentPickKey(component), component]));
-  return mappedKeys.map((key) => componentsByKey.get(key)).filter((component): component is DesignSystemComponentInfo => !!component);
+// ── Component card with wrapper frame ──
+
+function createInstanceCard(instance: SceneNode, name: string, semiBoldFont: FontName): FrameNode {
+  const card = figma.createFrame();
+  card.name = `Card / ${name}`;
+  card.layoutMode = "VERTICAL";
+  card.primaryAxisSizingMode = "AUTO";
+  card.counterAxisSizingMode = "FIXED";
+  card.counterAxisAlignItems = "CENTER";
+  card.itemSpacing = 8;
+  card.paddingLeft = 12;
+  card.paddingRight = 12;
+  card.paddingTop = 12;
+  card.paddingBottom = 10;
+  card.resize(CARD_WIDTH, 10);
+  card.cornerRadius = 10;
+  card.fills = [{ type: "SOLID", color: COLORS.white }];
+  card.strokes = [{ type: "SOLID", color: COLORS.borderL }];
+  card.strokeWeight = 1;
+
+  // Instance preview wrapper
+  const previewFrame = figma.createFrame();
+  previewFrame.name = "Preview";
+  previewFrame.resize(Math.min(CARD_WIDTH - 24, instance.width), Math.min(CARD_HEIGHT - 40, instance.height));
+  previewFrame.fills = [];
+  previewFrame.clipsContent = true;
+  previewFrame.appendChild(instance);
+  card.appendChild(previewFrame);
+
+  // Label
+  const label = createLabel(name, semiBoldFont, 11, COLORS.heading, CARD_WIDTH - 24);
+  label.textTruncation = "ENDING";
+  label.textAutoResize = "HEIGHT";
+  card.appendChild(label);
+
+  return card;
 }
+
+// ── Section builders ──
 
 function createSection(title: string, regularFont: FontName, semiBoldFont: FontName, width: number): FrameNode {
   const section = figma.createFrame();
@@ -253,18 +355,18 @@ function createSection(title: string, regularFont: FontName, semiBoldFont: FontN
   section.layoutMode = "VERTICAL";
   section.primaryAxisSizingMode = "AUTO";
   section.counterAxisSizingMode = "FIXED";
-  section.itemSpacing = 16;
+  section.itemSpacing = 20;
   section.paddingLeft = 24;
   section.paddingRight = 24;
   section.paddingTop = 24;
   section.paddingBottom = 24;
-  section.resize(width, 180);
-  section.cornerRadius = 12;
-  section.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-  section.strokes = [{ type: "SOLID", color: { r: 0.86, g: 0.88, b: 0.92 } }];
+  section.resize(width, 10);
+  section.cornerRadius = 16;
+  section.fills = [{ type: "SOLID", color: COLORS.white }];
+  section.strokes = [{ type: "SOLID", color: COLORS.border }];
+  section.strokeWeight = 1;
 
-  const label = createLabel(title, semiBoldFont, 18, { r: 0.09, g: 0.11, b: 0.15 });
-  label.resize(width - 48, label.height);
+  const label = createLabel(title, semiBoldFont, 20, COLORS.heading, width - 48);
   section.appendChild(label);
 
   return section;
@@ -277,12 +379,62 @@ function createRow(name: string, width: number): FrameNode {
   row.layoutWrap = "WRAP";
   row.primaryAxisSizingMode = "FIXED";
   row.counterAxisSizingMode = "AUTO";
-  row.itemSpacing = 16;
-  row.counterAxisSpacing = 16;
-  row.resize(width, CARD_HEIGHT);
+  row.itemSpacing = 14;
+  row.counterAxisSpacing = 14;
+  row.resize(width, 10);
   row.fills = [];
   return row;
 }
+
+function createEmptyState(text: string, font: FontName, width: number): FrameNode {
+  const frame = figma.createFrame();
+  frame.name = "Empty state";
+  frame.layoutMode = "VERTICAL";
+  frame.primaryAxisSizingMode = "AUTO";
+  frame.counterAxisSizingMode = "FIXED";
+  frame.primaryAxisAlignItems = "CENTER";
+  frame.counterAxisAlignItems = "CENTER";
+  frame.paddingTop = 32;
+  frame.paddingBottom = 32;
+  frame.resize(width, 10);
+  frame.cornerRadius = 10;
+  frame.fills = [{ type: "SOLID", color: COLORS.emptyBg }];
+  frame.strokes = [{ type: "SOLID", color: COLORS.borderL }];
+  frame.strokeWeight = 1;
+  frame.dashPattern = [6, 4];
+
+  const label = createLabel(text, font, 12, COLORS.empty);
+  label.textAutoResize = "WIDTH_AND_HEIGHT";
+  frame.appendChild(label);
+  return frame;
+}
+
+// ── Append component cards to a container ──
+
+async function appendComponentCards(
+  container: FrameNode,
+  components: DesignSystemComponentInfo[],
+  fonts: { regular: FontName; semiBold: FontName },
+  state: FrameBuildState,
+) {
+  if (components.length === 0) {
+    container.appendChild(createEmptyState("No matching components", fonts.regular, container.width - 28));
+    return;
+  }
+
+  for (const component of components) {
+    const preview = await createComponentPreview(component);
+    if (preview) {
+      state.instanceCount++;
+      container.appendChild(createInstanceCard(preview, component.name, fonts.semiBold));
+    } else {
+      state.placeholderCount++;
+      container.appendChild(createPlaceholder(component, fonts.regular, fonts.semiBold));
+    }
+  }
+}
+
+// ── Preview slot (used inside template layouts) ──
 
 async function createPreviewSlot(
   title: string,
@@ -290,10 +442,9 @@ async function createPreviewSlot(
   fonts: { regular: FontName; semiBold: FontName },
   state: FrameBuildState,
   width: number,
-  minHeight: number,
 ): Promise<FrameNode> {
   const slot = figma.createFrame();
-  slot.name = `Template Slot / ${title}`;
+  slot.name = `Slot / ${title}`;
   slot.layoutMode = "VERTICAL";
   slot.primaryAxisSizingMode = "AUTO";
   slot.counterAxisSizingMode = "FIXED";
@@ -302,14 +453,33 @@ async function createPreviewSlot(
   slot.paddingRight = 14;
   slot.paddingTop = 14;
   slot.paddingBottom = 14;
-  slot.resize(width, minHeight);
-  slot.cornerRadius = 8;
-  slot.fills = [{ type: "SOLID", color: { r: 0.98, g: 0.99, b: 1 } }];
-  slot.strokes = [{ type: "SOLID", color: { r: 0.82, g: 0.86, b: 0.92 } }];
+  slot.resize(width, 10);
+  slot.cornerRadius = 12;
+  slot.fills = [{ type: "SOLID", color: COLORS.card }];
+  slot.strokes = [{ type: "SOLID", color: COLORS.borderL }];
+  slot.strokeWeight = 1;
 
-  const label = createLabel(title, fonts.semiBold, 14, { r: 0.1, g: 0.12, b: 0.16 });
-  label.resize(width - 28, label.height);
-  slot.appendChild(label);
+  // Slot header: title + count badge
+  const headerRow = figma.createFrame();
+  headerRow.name = "Slot header";
+  headerRow.layoutMode = "HORIZONTAL";
+  headerRow.primaryAxisSizingMode = "FIXED";
+  headerRow.counterAxisSizingMode = "AUTO";
+  headerRow.counterAxisAlignItems = "CENTER";
+  headerRow.itemSpacing = 8;
+  headerRow.resize(width - 28, 10);
+  headerRow.fills = [];
+
+  const label = createLabel(title, fonts.semiBold, 14, COLORS.heading);
+  label.textAutoResize = "WIDTH_AND_HEIGHT";
+  label.layoutGrow = 1;
+  headerRow.appendChild(label);
+
+  const countBadge = createLabel(`${components.length}`, fonts.regular, 11, COLORS.accent);
+  countBadge.textAutoResize = "WIDTH_AND_HEIGHT";
+  headerRow.appendChild(countBadge);
+
+  slot.appendChild(headerRow);
 
   const row = createRow(`${title} Components`, width - 28);
   await appendComponentCards(row, components, fonts, state);
@@ -317,9 +487,165 @@ async function createPreviewSlot(
   return slot;
 }
 
-function getSection(sections: { title: string; components: DesignSystemComponentInfo[] }[], title: string) {
-  return sections.find((section) => section.title === title) ?? { title, components: [] };
+// ── Component picking ──
+
+function componentPickKey(component: DesignSystemComponentInfo): string {
+  return component.componentKey ?? component.nodeId ?? `${component.source ?? "unknown"}:${component.pageName}:${component.name}`;
 }
+
+function dedupeComponents(components: DesignSystemComponentInfo[]): DesignSystemComponentInfo[] {
+  const seen = new Set<string>();
+  return components.filter(c => {
+    const key = componentPickKey(c);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function pickComponents(
+  components: DesignSystemComponentInfo[],
+  pattern: RegExp,
+  fallbackCount = 4,
+  usedKeys = new Set<string>(),
+): DesignSystemComponentInfo[] {
+  const available = components.filter(c => !usedKeys.has(componentPickKey(c)));
+  const realComponents = available.filter(c => c.source !== "suggested");
+  const suggestedComponents = available.filter(c => c.source === "suggested");
+  const matches = dedupeComponents([
+    ...realComponents.filter(c => c.role ? pattern.test(c.role) : false),
+    ...realComponents.filter(c => pattern.test(c.name)),
+    ...suggestedComponents.filter(c => pattern.test(c.name) || (c.role ? pattern.test(c.role) : false)),
+  ]);
+  const selected = (matches.length > 0 ? matches : [...realComponents, ...suggestedComponents]).slice(0, fallbackCount);
+  for (const c of selected) usedKeys.add(componentPickKey(c));
+  return selected;
+}
+
+function findMappedComponents(project: FigmaProjectFrameRequest, sectionTitle: string): DesignSystemComponentInfo[] {
+  const mappedKeys = project.templateComponentMappings?.[sectionTitle] ?? [];
+  if (mappedKeys.length === 0) return [];
+  const componentsByKey = new Map(project.components.map(c => [componentPickKey(c), c]));
+  return mappedKeys.map(k => componentsByKey.get(k)).filter((c): c is DesignSystemComponentInfo => !!c);
+}
+
+function getSection(sections: { title: string; components: DesignSystemComponentInfo[] }[], title: string) {
+  return sections.find(s => s.title === title) ?? { title, components: [] };
+}
+
+// ── Template layouts ──
+
+async function createDashboardLayout(
+  templateSections: { title: string; components: DesignSystemComponentInfo[] }[],
+  fonts: { regular: FontName; semiBold: FontName },
+  state: FrameBuildState,
+  width: number,
+): Promise<FrameNode> {
+  const shell = figma.createFrame();
+  shell.name = "Dashboard / App layout";
+  shell.layoutMode = "HORIZONTAL";
+  shell.primaryAxisSizingMode = "FIXED";
+  shell.counterAxisSizingMode = "AUTO";
+  shell.itemSpacing = 16;
+  shell.paddingLeft = 16;
+  shell.paddingRight = 16;
+  shell.paddingTop = 16;
+  shell.paddingBottom = 16;
+  shell.resize(width, 10);
+  shell.cornerRadius = 12;
+  shell.fills = [{ type: "SOLID", color: COLORS.white }];
+  shell.strokes = [{ type: "SOLID", color: COLORS.border }];
+  shell.strokeWeight = 1;
+
+  const sidebarW = 280;
+  const mainW = width - 32 - sidebarW - 16;
+
+  const nav = getSection(templateSections, "Navigation and header");
+  shell.appendChild(await createPreviewSlot("Navigation & header", nav.components, fonts, state, sidebarW));
+
+  const main = figma.createFrame();
+  main.name = "Dashboard / Main content";
+  main.layoutMode = "VERTICAL";
+  main.primaryAxisSizingMode = "AUTO";
+  main.counterAxisSizingMode = "FIXED";
+  main.itemSpacing = 16;
+  main.resize(mainW, 10);
+  main.fills = [];
+
+  const kpi = getSection(templateSections, "KPI cards and charts");
+  main.appendChild(await createPreviewSlot("KPI cards & charts", kpi.components, fonts, state, mainW));
+  const table = getSection(templateSections, "Data table and activity");
+  main.appendChild(await createPreviewSlot("Data table & activity", table.components, fonts, state, mainW));
+  shell.appendChild(main);
+
+  return shell;
+}
+
+async function createLandingLayout(
+  templateSections: { title: string; components: DesignSystemComponentInfo[] }[],
+  fonts: { regular: FontName; semiBold: FontName },
+  state: FrameBuildState,
+  width: number,
+): Promise<FrameNode> {
+  const page = figma.createFrame();
+  page.name = "Landing Page / Website layout";
+  page.layoutMode = "VERTICAL";
+  page.primaryAxisSizingMode = "AUTO";
+  page.counterAxisSizingMode = "FIXED";
+  page.itemSpacing = 16;
+  page.paddingLeft = 16;
+  page.paddingRight = 16;
+  page.paddingTop = 16;
+  page.paddingBottom = 16;
+  page.resize(width, 10);
+  page.cornerRadius = 12;
+  page.fills = [{ type: "SOLID", color: COLORS.white }];
+  page.strokes = [{ type: "SOLID", color: COLORS.border }];
+  page.strokeWeight = 1;
+
+  const innerW = width - 32;
+  const hero = getSection(templateSections, "Hero and primary CTA");
+  page.appendChild(await createPreviewSlot("Hero / navigation / primary CTA", hero.components, fonts, state, innerW));
+  const features = getSection(templateSections, "Feature grid");
+  page.appendChild(await createPreviewSlot("Feature grid", features.components, fonts, state, innerW));
+  const proof = getSection(templateSections, "Pricing, proof, and footer");
+  page.appendChild(await createPreviewSlot("Pricing / proof / footer", proof.components, fonts, state, innerW));
+
+  return page;
+}
+
+async function createGenericLayout(
+  templateSections: { title: string; components: DesignSystemComponentInfo[] }[],
+  layoutName: string,
+  fonts: { regular: FontName; semiBold: FontName },
+  state: FrameBuildState,
+  width: number,
+): Promise<FrameNode> {
+  const page = figma.createFrame();
+  page.name = `${layoutName} / App layout`;
+  page.layoutMode = "VERTICAL";
+  page.primaryAxisSizingMode = "AUTO";
+  page.counterAxisSizingMode = "FIXED";
+  page.itemSpacing = 16;
+  page.paddingLeft = 16;
+  page.paddingRight = 16;
+  page.paddingTop = 16;
+  page.paddingBottom = 16;
+  page.resize(width, 10);
+  page.cornerRadius = 12;
+  page.fills = [{ type: "SOLID", color: COLORS.white }];
+  page.strokes = [{ type: "SOLID", color: COLORS.border }];
+  page.strokeWeight = 1;
+
+  const innerW = width - 32;
+  for (const section of templateSections) {
+    page.appendChild(await createPreviewSlot(section.title, section.components, fonts, state, innerW));
+  }
+
+  return page;
+}
+
+// ── Template preview wrapper ──
 
 async function createTemplatePreview(
   project: FigmaProjectFrameRequest,
@@ -327,131 +653,53 @@ async function createTemplatePreview(
   fonts: { regular: FontName; semiBold: FontName },
   state: FrameBuildState,
 ): Promise<FrameNode> {
-  const width = FRAME_WIDTH - FRAME_PADDING * 2;
-  const preview = createSection(`${project.layoutTemplate || "Dashboard"} preview`, fonts.regular, fonts.semiBold, width);
-  preview.name = `Template Preview / ${project.layoutTemplate || "Dashboard"} / mapped components`;
+  const width = CONTENT_WIDTH;
+  const templateName = project.layoutTemplate || "Dashboard";
 
-  if (project.layoutTemplate === "Landing page") {
-    const page = figma.createFrame();
-    page.name = "Landing Page / Website layout";
-    page.layoutMode = "VERTICAL";
-    page.primaryAxisSizingMode = "AUTO";
-    page.counterAxisSizingMode = "FIXED";
-    page.itemSpacing = 20;
-    page.paddingLeft = 20;
-    page.paddingRight = 20;
-    page.paddingTop = 20;
-    page.paddingBottom = 20;
-    page.resize(width - 48, 900);
-    page.cornerRadius = 12;
-    page.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-    page.strokes = [{ type: "SOLID", color: { r: 0.86, g: 0.88, b: 0.92 } }];
+  const wrapper = createSection(`${templateName} — Component mapping`, fonts.regular, fonts.semiBold, width);
+  wrapper.name = `Template Preview / ${templateName}`;
 
-    const hero = getSection(templateSections, "Hero and primary CTA");
-    const features = getSection(templateSections, "Feature grid");
-    const proof = getSection(templateSections, "Pricing, proof, and footer");
-    page.appendChild(await createPreviewSlot("Hero / navigation / primary CTA", hero.components, fonts, state, width - 88, 300));
-    page.appendChild(await createPreviewSlot("Feature grid", features.components, fonts, state, width - 88, 220));
-    page.appendChild(await createPreviewSlot("Pricing / proof / footer", proof.components, fonts, state, width - 88, 220));
-    preview.appendChild(page);
-    return preview;
+  const innerWidth = width - 48;
+
+  let layout: FrameNode;
+  switch (templateName) {
+    case "Dashboard":
+      layout = await createDashboardLayout(templateSections, fonts, state, innerWidth);
+      break;
+    case "Landing page":
+      layout = await createLandingLayout(templateSections, fonts, state, innerWidth);
+      break;
+    default:
+      layout = await createGenericLayout(templateSections, templateName, fonts, state, innerWidth);
+      break;
   }
 
-  if (project.layoutTemplate === "Dashboard") {
-    const shell = figma.createFrame();
-    shell.name = "Dashboard / App layout";
-    shell.layoutMode = "HORIZONTAL";
-    shell.primaryAxisSizingMode = "FIXED";
-    shell.counterAxisSizingMode = "AUTO";
-    shell.itemSpacing = 18;
-    shell.paddingLeft = 20;
-    shell.paddingRight = 20;
-    shell.paddingTop = 20;
-    shell.paddingBottom = 20;
-    shell.resize(width - 48, 720);
-    shell.cornerRadius = 12;
-    shell.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-    shell.strokes = [{ type: "SOLID", color: { r: 0.86, g: 0.88, b: 0.92 } }];
+  wrapper.appendChild(layout);
 
-    const nav = getSection(templateSections, "Navigation and header");
-    const kpi = getSection(templateSections, "KPI cards and charts");
-    const table = getSection(templateSections, "Data table and activity");
-    shell.appendChild(await createPreviewSlot("Navigation and header", nav.components, fonts, state, 260, 620));
-    const main = figma.createFrame();
-    main.name = "Dashboard main content";
-    main.layoutMode = "VERTICAL";
-    main.primaryAxisSizingMode = "AUTO";
-    main.counterAxisSizingMode = "FIXED";
-    main.itemSpacing = 18;
-    main.resize(width - 48 - 260 - 58, 620);
-    main.fills = [];
-    main.appendChild(await createPreviewSlot("KPI cards and charts", kpi.components, fonts, state, width - 48 - 260 - 58, 250));
-    main.appendChild(await createPreviewSlot("Data table and activity", table.components, fonts, state, width - 48 - 260 - 58, 320));
-    shell.appendChild(main);
-    preview.appendChild(shell);
-    return preview;
-  }
+  // Summary line
+  const summary = createLabel(
+    `${state.instanceCount} live instances · ${state.placeholderCount} placeholders`,
+    fonts.regular, 12, COLORS.meta, innerWidth,
+  );
+  wrapper.appendChild(summary);
 
-  if (project.layoutTemplate === "Admin table") {
-    const page = figma.createFrame();
-    page.name = "Admin Table / App layout";
-    page.layoutMode = "VERTICAL";
-    page.primaryAxisSizingMode = "AUTO";
-    page.counterAxisSizingMode = "FIXED";
-    page.itemSpacing = 18;
-    page.paddingLeft = 20;
-    page.paddingRight = 20;
-    page.paddingTop = 20;
-    page.paddingBottom = 20;
-    page.resize(width - 48, 760);
-    page.cornerRadius = 12;
-    page.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-    page.strokes = [{ type: "SOLID", color: { r: 0.86, g: 0.88, b: 0.92 } }];
-    for (const section of templateSections) {
-      page.appendChild(await createPreviewSlot(section.title, section.components, fonts, state, width - 88, section.title.includes("Table") ? 320 : 170));
-    }
-    preview.appendChild(page);
-    return preview;
-  }
-
-  for (const section of templateSections) {
-    preview.appendChild(await createPreviewSlot(section.title, section.components, fonts, state, width - 48, CARD_HEIGHT + 56));
-  }
-
-  return preview;
+  return wrapper;
 }
 
-async function appendComponentCards(
-  container: FrameNode,
-  components: DesignSystemComponentInfo[],
-  fonts: { regular: FontName; semiBold: FontName },
-  state: FrameBuildState,
-) {
-  for (const component of components) {
-    const preview = await createComponentPreview(component);
-    if (preview) {
-      state.instanceCount++;
-      container.appendChild(preview);
-    } else {
-      state.placeholderCount++;
-      container.appendChild(createPlaceholder(component, fonts.regular, fonts.semiBold));
-    }
-  }
-}
+// ── Template section definitions ──
 
 function getTemplateSections(project: FigmaProjectFrameRequest): { title: string; components: DesignSystemComponentInfo[] }[] {
   const components = project.components;
   const usedKeys = new Set<string>();
   const pick = (title: string, pattern: RegExp, fallbackCount: number) => {
-    const mapped = findMappedComponents(project, title).filter((component) => !usedKeys.has(componentPickKey(component)));
+    const mapped = findMappedComponents(project, title).filter(c => !usedKeys.has(componentPickKey(c)));
     if (mapped.length > 0) {
-      for (const component of mapped) {
-        usedKeys.add(componentPickKey(component));
-      }
+      for (const c of mapped) usedKeys.add(componentPickKey(c));
       return mapped;
     }
     return pickComponents(components, pattern, fallbackCount, usedKeys);
   };
+
   switch (project.layoutTemplate) {
     case "Admin table":
       return [
@@ -499,10 +747,14 @@ function getTemplateSections(project: FigmaProjectFrameRequest): { title: string
   }
 }
 
+// ── Main frame builder ──
+
 async function createProjectFrame(project: FigmaProjectFrameRequest): Promise<void> {
   const regularFont = await loadPreferredFont("Regular");
   const semiBoldFont = await loadPreferredFont("Semi Bold");
+  const fonts = { regular: regularFont, semiBold: semiBoldFont };
 
+  // Root frame
   const frame = figma.createFrame();
   frame.name = `${project.projectName || "DesignReady"} / Project Layout`;
   frame.layoutMode = "VERTICAL";
@@ -513,58 +765,91 @@ async function createProjectFrame(project: FigmaProjectFrameRequest): Promise<vo
   frame.paddingRight = FRAME_PADDING;
   frame.paddingTop = FRAME_PADDING;
   frame.paddingBottom = FRAME_PADDING;
-  frame.resize(FRAME_WIDTH, 900);
-  frame.fills = [{ type: "SOLID", color: { r: 0.97, g: 0.98, b: 0.99 } }];
+  frame.resize(FRAME_WIDTH, 10);
+  frame.fills = [{ type: "SOLID", color: COLORS.bg }];
 
-  const title = createLabel(project.projectName || "DesignReady Project", semiBoldFont, 36, { r: 0.07, g: 0.09, b: 0.13 });
-  title.resize(FRAME_WIDTH - FRAME_PADDING * 2, title.height);
-  const subtitle = createLabel(
-    `${project.industry} · ${project.style} · ${project.presetName}`,
-    regularFont,
-    16,
-    { r: 0.33, g: 0.37, b: 0.44 },
-  );
-  subtitle.resize(FRAME_WIDTH - FRAME_PADDING * 2, subtitle.height);
-
+  // ── Header ──
   const header = figma.createFrame();
   header.name = "Project Header";
   header.layoutMode = "VERTICAL";
   header.primaryAxisSizingMode = "AUTO";
   header.counterAxisSizingMode = "FIXED";
   header.itemSpacing = 12;
-  header.resize(FRAME_WIDTH - FRAME_PADDING * 2, 120);
+  header.resize(CONTENT_WIDTH, 10);
   header.fills = [];
+
+  const title = createLabel(project.projectName || "DesignReady Project", semiBoldFont, 36, COLORS.title, CONTENT_WIDTH);
   header.appendChild(title);
+
+  const subtitle = createLabel(
+    `${project.industry} · ${project.style} · ${project.presetName}`,
+    regularFont, 16, COLORS.body, CONTENT_WIDTH,
+  );
   header.appendChild(subtitle);
 
+  // Tag row
   const tagRow = figma.createFrame();
   tagRow.name = "Project Metadata";
   tagRow.layoutMode = "HORIZONTAL";
-  tagRow.primaryAxisSizingMode = "AUTO";
+  tagRow.layoutWrap = "WRAP";
+  tagRow.primaryAxisSizingMode = "FIXED";
   tagRow.counterAxisSizingMode = "AUTO";
   tagRow.itemSpacing = 8;
+  tagRow.counterAxisSpacing = 8;
+  tagRow.resize(CONTENT_WIDTH, 10);
   tagRow.fills = [];
-  tagRow.appendChild(createPill(`${project.components.length} components`, regularFont));
-  tagRow.appendChild(createPill(`${project.components.filter((component) => component.source !== "suggested").length} real`, regularFont));
-  tagRow.appendChild(createPill(`${project.components.filter((component) => component.source === "suggested").length} suggested`, regularFont));
+
+  const totalCount = project.components.length;
+  const realCount = project.components.filter(c => c.source !== "suggested").length;
+  const suggestedCount = totalCount - realCount;
+
+  tagRow.appendChild(createPill(`${totalCount} components`, regularFont));
+  if (realCount > 0) tagRow.appendChild(createPill(`${realCount} real`, regularFont));
+  if (suggestedCount > 0) tagRow.appendChild(createPill(`${suggestedCount} suggested`, regularFont));
   tagRow.appendChild(createPill(`${project.variables.length} variables`, regularFont));
   tagRow.appendChild(createPill(project.layoutTemplate || "Dashboard", regularFont));
   tagRow.appendChild(createPill("AI-ready layout", regularFont));
   header.appendChild(tagRow);
 
+  frame.appendChild(header);
+
+  // ── Template preview ──
   const state: FrameBuildState = { instanceCount: 0, placeholderCount: 0 };
   const templateSections = getTemplateSections(project);
+  frame.appendChild(await createTemplatePreview(project, templateSections, fonts, state));
 
-  frame.appendChild(header);
-  frame.appendChild(await createTemplatePreview(project, templateSections, { regular: regularFont, semiBold: semiBoldFont }, state));
+  // ── Component inventory (all components in a grid) ──
+  if (project.components.length > 0) {
+    const inventory = createSection("Component inventory", regularFont, semiBoldFont, CONTENT_WIDTH);
+    inventory.name = "Component Inventory";
+
+    const inventoryRow = createRow("All components", CONTENT_WIDTH - 48);
+    const shown = new Set<string>();
+    for (const comp of project.components) {
+      const key = componentPickKey(comp);
+      if (shown.has(key)) continue;
+      shown.add(key);
+      const preview = await createComponentPreview(comp);
+      if (preview) {
+        state.instanceCount++;
+        inventoryRow.appendChild(createInstanceCard(preview, comp.name, semiBoldFont));
+      } else {
+        state.placeholderCount++;
+        inventoryRow.appendChild(createPlaceholder(comp, regularFont, semiBoldFont));
+      }
+    }
+    inventory.appendChild(inventoryRow);
+    frame.appendChild(inventory);
+  }
+
+  // ── Finalize ──
   figma.currentPage.appendChild(frame);
   figma.currentPage.selection = [frame];
   figma.viewport.scrollAndZoomIntoView([frame]);
 
-  const message =
-    state.instanceCount > 0
-      ? `Created ${project.layoutTemplate} template with ${state.instanceCount} component instances and ${state.placeholderCount} placeholders.`
-      : `Created ${project.layoutTemplate} template with ${state.placeholderCount} placeholders. Local component nodes were not available for instancing.`;
+  const message = state.instanceCount > 0
+    ? `Created ${project.layoutTemplate || "Dashboard"} layout with ${state.instanceCount} live instances and ${state.placeholderCount} placeholders.`
+    : `Created ${project.layoutTemplate || "Dashboard"} layout with ${state.placeholderCount} component placeholders.`;
   figma.notify(message, { timeout: 5000 });
   figma.ui.postMessage({
     type: "figma-project-frame-result",
@@ -575,6 +860,8 @@ async function createProjectFrame(project: FigmaProjectFrameRequest): Promise<vo
     message,
   } satisfies PluginMessage);
 }
+
+// ── Handler ──
 
 export async function handleProjectFrameMessage(msg: PluginMessage): Promise<boolean> {
   if (msg.type !== "create-figma-project-frame") return false;

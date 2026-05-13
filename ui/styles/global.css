@@ -187,6 +187,23 @@ html, body {
   flex-shrink: 0;
 }
 
+.btn-lang {
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--dr-accent, #00d4ff);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-lang:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
 .topbar-error {
   font-size: 11px;
   color: var(--dr-error);
@@ -701,15 +718,35 @@ html, body {
   min-height: 32px;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(11, 18, 32, 0.95);
   color: var(--text);
   font: inherit;
   font-family: var(--dr-font-base);
   padding: 6px 10px;
   font-size: 12px;
   outline: none;
-  appearance: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+  color-scheme: dark;
+}
+
+.design-field select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2388929e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  appearance: none;
+}
+
+.design-field select option {
+  background: #0d1420;
+  color: #d0d7de;
+  padding: 6px 10px;
+}
+
+.design-field select option:checked {
+  background: rgba(0, 212, 255, 0.2);
+  color: #fff;
 }
 
 .design-field input:focus,
@@ -776,8 +813,8 @@ html, body {
 }
 
 .design-result-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
@@ -929,14 +966,30 @@ html, body {
   min-height: 32px;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(11, 18, 32, 0.95);
   color: var(--text);
   font: inherit;
   font-family: var(--dr-font-base);
   padding: 6px 10px;
+  padding-right: 28px;
   appearance: none;
   outline: none;
   transition: border-color 0.2s;
+  color-scheme: dark;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2388929e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.template-mapping-row select option {
+  background: #0d1420;
+  color: #d0d7de;
+}
+
+.template-mapping-row select option:checked {
+  background: rgba(0, 212, 255, 0.2);
+  color: #fff;
 }
 
 .template-mapping-row select:focus { border-color: rgba(0, 212, 255, 0.4); }
@@ -1038,6 +1091,150 @@ html, body {
   scrollbar-color: var(--border2) transparent;
 }
 
+/* ── Workflow Progress Bar ── */
+
+.wf-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(11, 18, 32, 0.94);
+  overflow: hidden;
+}
+
+.wf-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wf-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--dr-font-mono);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.wf-step.done .wf-num {
+  border-color: rgba(0, 212, 255, 0.6);
+  color: var(--glow);
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+}
+
+.wf-label {
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+.wf-step.done .wf-label { color: var(--text); }
+
+.wf-line {
+  flex: 1;
+  height: 1px;
+  margin: 0 6px;
+  background: var(--border);
+  min-width: 8px;
+}
+
+.wf-step.done .wf-line {
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.5), var(--border));
+}
+
+/* ── Workflow Flow (single column) ── */
+
+.wf-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.wf-flow.created {
+  animation: projectCreatedIn 0.32s ease both;
+}
+
+/* ── Workflow Section ── */
+
+.wf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.wf-section-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Step Badge ── */
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--glow);
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  margin-right: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.step-hint {
+  width: 100%;
+  color: var(--text2);
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* ── 2-column row inside flow ── */
+
+.wf-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ── Score colors ── */
+
+.score-good { color: #1bc47d !important; }
+.score-warn { color: #f5a623 !important; }
+.score-bad  { color: #f24822 !important; }
+
 /* ── Resize Handle ── */
 
 .resize-handle {
@@ -1096,7 +1293,11 @@ html, body {
 @media (max-width: 640px) {
   .design-form-grid,
   .design-result-grid,
+  .wf-row-2,
   .action-stack {
     grid-template-columns: 1fr;
   }
+
+  .wf-label { display: none; }
+  .wf-line { min-width: 4px; }
 }

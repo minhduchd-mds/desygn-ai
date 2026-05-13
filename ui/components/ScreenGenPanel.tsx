@@ -3,6 +3,7 @@ import type { DesignSystemComponentInfo, DesignSystemVariableInfo } from "../../
 import type { BADocument } from "./BADocumentPanel";
 import type { StandardItem } from "./StandardsChecklist";
 import { sendPluginMessage } from "../lib/pluginMessage";
+import { useI18n } from "../i18n/I18nContext";
 import styles from "./ScreenGenPanel.module.css";
 
 interface ScreenGenPanelProps {
@@ -137,6 +138,7 @@ export function ScreenGenPanel({
   const [generating, setGenerating] = useState(false);
   const [genStatus, setGenStatus] = useState<string | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const { t } = useI18n();
 
   const presetScreens = useMemo(() => SCREEN_PRESETS[layoutTemplate] ?? SCREEN_PRESETS["Dashboard"]!, [layoutTemplate]);
 
@@ -207,8 +209,8 @@ export function ScreenGenPanel({
     <div className={styles.root}>
       <button className={styles.header} onClick={() => setExpanded(!expanded)}>
         <div className={styles.headerLeft}>
-          <span className={styles.title}>Screen Generation</span>
-          <span className={styles.badge}>{activeScreens.length} screens</span>
+          <span className={styles.title}>{t.screenGeneration}</span>
+          <span className={styles.badge}>{activeScreens.length} {t.screens}</span>
         </div>
         <span className={styles.chevron}>{expanded ? "▾" : "▸"}</span>
       </button>
@@ -217,7 +219,7 @@ export function ScreenGenPanel({
         <div className={styles.body}>
           <div className={styles.config}>
             <label className={styles.field}>
-              <span>Number of screens</span>
+              <span>{t.numberOfScreens}</span>
               <input
                 type="range"
                 min={1}
@@ -254,7 +256,7 @@ export function ScreenGenPanel({
                   onClick={e => { e.preventDefault(); copyScreenPrompt(idx); }}
                   style={{ flexShrink: 0, fontSize: 10 }}
                 >
-                  {copiedIdx === idx ? "Copied!" : "Copy"}
+                  {copiedIdx === idx ? t.copied : t.copy}
                 </button>
               </label>
             ))}
@@ -262,18 +264,17 @@ export function ScreenGenPanel({
 
           <div className={styles.actions}>
             <button className="btn-primary btn-sm" onClick={handleGenerate} disabled={generating || activeScreens.length === 0}>
-              {generating ? "Generating..." : `Export ${activeScreens.length} Screen${activeScreens.length > 1 ? "s" : ""} to Figma`}
+              {generating ? t.generating : t.exportToFigma(activeScreens.length)}
             </button>
             <button className="btn-secondary btn-sm" onClick={copyAllPrompts}>
-              {copiedIdx === -1 ? "Copied!" : "Copy All Prompts"}
+              {copiedIdx === -1 ? t.copied : t.copyAllPrompts}
             </button>
           </div>
 
           {genStatus && <div className={styles.status}>{genStatus}</div>}
 
           <p className={styles.hint}>
-            Each prompt includes your components, tokens, BA requirements, and standards checklist.
-            Use "Copy" to paste into Claude/Cursor for code generation, or "Export to Figma" for visual preview.
+            {t.screenGenHint}
           </p>
         </div>
       )}

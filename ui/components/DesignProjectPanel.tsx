@@ -6,6 +6,7 @@ import type {
   ScanResult,
 } from "../../shared/types";
 import { createZipBlob } from "../lib/zip";
+import { useI18n } from "../i18n/I18nContext";
 import { UiUxEvaluationPanel } from "./UiUxEvaluationPanel";
 import { BADocumentPanel } from "./BADocumentPanel";
 import type { BADocument } from "./BADocumentPanel";
@@ -3039,25 +3040,53 @@ export function DesignProjectPanel({ snapshot, isLoading, error, scanResult, onR
     );
   };
 
+  const { t } = useI18n();
+
+  const WORKFLOW_STEPS = [
+    { id: "setup", label: t.projectSetup, icon: "1" },
+    { id: "review", label: t.reviewOverview, icon: "2" },
+    { id: "quality", label: t.qualityStandards, icon: "3" },
+    { id: "content", label: t.contentGeneration, icon: "4" },
+    { id: "export", label: t.exportDeliver, icon: "5" },
+  ] as const;
+
+  const currentStep = !created ? 0 : 1;
+
   return (
     <div className="design-project">
+      {/* ── Workflow Progress ── */}
+      {created && (
+        <div className="wf-progress">
+          {WORKFLOW_STEPS.map((step, i) => (
+            <div key={step.id} className={`wf-step ${i < currentStep ? "done" : ""}`}>
+              <span className="wf-num">{step.icon}</span>
+              <span className="wf-label">{step.label}</span>
+              {i < WORKFLOW_STEPS.length - 1 && <span className="wf-line" />}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ══════════ STEP 1: PROJECT SETUP ══════════ */}
       <section className="design-config">
         <div className="design-config-header">
           <div>
-            <h2>AI Training Folder</h2>
-            <p>Generate Claude Code and Codex markdown context from the current Figma design system.</p>
-            <p>Owner: {DEFAULT_OWNER_NAME} / Contact: {DEFAULT_OWNER_CONTACT}</p>
+            <h2>
+              <span className="step-badge">{t.step1}</span>
+              {t.projectSetup}
+            </h2>
+            <p className="step-hint">{t.step1Hint}</p>
           </div>
           <button className={`btn-secondary btn-sm sync-figma-button ${isLoading ? "loading" : ""}`} onClick={onRefresh} disabled={isLoading}>
             {isLoading && <span className="button-spinner" aria-hidden />}
-            {isLoading ? "Syncing..." : "Sync Figma"}
+            {isLoading ? t.syncing : t.syncFigma}
           </button>
         </div>
 
         {error && <div className="design-error">{error}</div>}
         {!error && !isLoading && snapshot && (
           <div className="design-sync-status">
-            Synced {snapshot.components.length} components, {snapshot.pages.length} pages, and {snapshot.variables.length} variables from Figma.
+            {t.syncedStatus(snapshot.components.length, snapshot.pages.length, snapshot.variables.length)}
           </div>
         )}
         {!error && !isLoading && snapshot?.components.length === 0 && snapshot.diagnostics && (
@@ -3066,23 +3095,23 @@ export function DesignProjectPanel({ snapshot, isLoading, error, scanResult, onR
 
         <div className="design-form-grid">
           <label className="design-field">
-            <span>Project name</span>
-            <input value={effectiveProjectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Design system name" />
+            <span>{t.projectName}</span>
+            <input value={effectiveProjectName} onChange={(event) => setProjectName(event.target.value)} placeholder={t.projectName} />
           </label>
           <label className="design-field">
-            <span>Category</span>
+            <span>{t.category}</span>
             <select value={industry} onChange={(event) => setIndustry(event.target.value)}>
               {INDUSTRIES.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
           <label className="design-field">
-            <span>Design style</span>
+            <span>{t.designStyle}</span>
             <select value={style} onChange={(event) => setStyle(event.target.value)}>
               {DESIGN_STYLES.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
           <label className="design-field">
-            <span>Open Design preset</span>
+            <span>{t.openDesignPreset}</span>
             <select value={presetId} onChange={(event) => setPresetId(event.target.value)}>
               {OPEN_DESIGN_PRESETS.map((preset) => (
                 <option key={preset.id} value={preset.id}>
@@ -3092,13 +3121,13 @@ export function DesignProjectPanel({ snapshot, isLoading, error, scanResult, onR
             </select>
           </label>
           <label className="design-field">
-            <span>Layout template</span>
+            <span>{t.layoutTemplate}</span>
             <select value={layoutTemplate} onChange={(event) => setLayoutTemplate(event.target.value)}>
               {LAYOUT_TEMPLATES.map((template) => <option key={template}>{template}</option>)}
             </select>
           </label>
           <div className="design-field">
-            <span>Language models</span>
+            <span>{t.languageModels}</span>
             <div className="model-toggle-row">
               {MODEL_TARGETS.map((model) => (
                 <button
@@ -3116,181 +3145,221 @@ export function DesignProjectPanel({ snapshot, isLoading, error, scanResult, onR
 
         {(components.length === 0 || variables.length === 0) && (
           <div className="design-empty-suggestion">
-            <span>Figma file is missing {components.length === 0 ? "components" : ""}{components.length === 0 && variables.length === 0 ? " and " : ""}{variables.length === 0 ? "variables" : ""}.</span>
-            <button className="btn-link" onClick={() => setUseStarter(true)}>Use starter proposal</button>
+            <span>Figma file is missing {components.length === 0 ? t.missingComponents : ""}{components.length === 0 && variables.length === 0 ? t.missingBoth : ""}{variables.length === 0 ? t.missingVariables : ""}.</span>
+            <button className="btn-link" onClick={() => setUseStarter(true)}>{t.useStarterProposal}</button>
           </div>
         )}
 
         <button className={`btn-primary create-project-button ${isCreating ? "loading" : ""}`} onClick={createProject} disabled={isCreating || isLoading}>
           {isCreating && <span className="button-spinner light" aria-hidden />}
-          {isCreating ? "Creating..." : "Create Project"}
+          {isCreating ? t.creating : t.createProject}
         </button>
       </section>
 
       {created && (
-        <div className="design-result-grid created">
-          <section className="design-card">
-            <span className="design-card-label">Dashboard</span>
-            <div className="design-metrics">
-              <Metric label="Components" value={snapshot?.components.length ?? 0} />
-              <Metric label="Pages" value={snapshot?.pages.length ?? 0} />
-              <Metric label="Variables" value={variables.length} />
-              <Metric label="Files" value={markdownFiles.length} />
-              <Metric label="Tokens" value={formatTokenEstimate(tokenEstimate)} />
-              <Metric label="UI score" value={uiQualityScore} suffix="/10" />
-            </div>
-            <div className="ui-audit-list">
-              {(snapshot?.pages ?? []).map((page) => (
-                <div key={page.id} className="ui-audit-row">
-                  <span>{page.name}</span>
-                  <strong>{page.componentCount}</strong>
-                </div>
-              ))}
-              {(snapshot?.pages.length ?? 0) === 0 && (
-                <div className="ui-audit-row">
-                  <span>No pages synced yet</span>
-                  <strong>0</strong>
-                </div>
-              )}
-            </div>
-            <div className="ui-audit-list">
-              {uiAudit.map((item) => (
-                <div key={item.id} className="ui-audit-row">
-                  <span>{item.label}</span>
-                  <strong>{item.score}/10</strong>
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="wf-flow created">
 
-          <section className="design-card">
-            <span className="design-card-label">Folder Structure</span>
-            <div className="folder-tree">
-              <div className="folder-root">{root}/</div>
-              {markdownFiles.map((file) => (
-                <div key={file.path} className="folder-file">
-                  {file.path.replace(`${root}/`, "")}
-                </div>
-              ))}
+          {/* ══════════ STEP 2: REVIEW ══════════ */}
+          <div className="wf-section">
+            <div className="wf-section-header">
+              <span className="step-badge">{t.step2}</span>
+              <h3>{t.reviewOverview}</h3>
+              <p className="step-hint">{t.step2Hint}</p>
             </div>
-          </section>
 
-          <section className="design-card">
-            <span className="design-card-label">Template Mapping</span>
-            <div className="template-mapping-list">
-              {templateSections.map((section) => {
-                const selectedKeys = templateComponentMappings[section.title] ?? [];
-                const suggested = getSuggestedComponentForSection(section, components);
-                return (
-                  <div className="template-mapping-row" key={section.title}>
-                    <span>{section.title}</span>
-                    <select value="" onChange={(event) => addTemplateComponentMapping(section.title, event.target.value)}>
-                      <option value="">
-                        Add component{suggested ? ` - auto: ${suggested.name}` : ""}
-                      </option>
-                      {components.map((component) => {
-                        const key = getComponentMappingKey(component);
-                        return (
-                          <option key={key} value={key} disabled={selectedKeys.includes(key)}>
-                            {component.name} - {component.role ?? "unknown"} - {component.source ?? "unknown"}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    <div className="mapping-order-list">
-                      {selectedKeys.map((key, index) => {
-                        const component = getComponentByMappingKey(components, key);
-                        return (
-                          <div className="mapping-order-item" key={key}>
-                            <strong>{index + 1}</strong>
-                            <span>{component ? `${component.name} - ${component.role ?? "unknown"} - ${component.source ?? "unknown"}` : key}</span>
-                            <button type="button" onClick={() => moveTemplateComponentMapping(section.title, key, -1)} disabled={index === 0}>Up</button>
-                            <button type="button" onClick={() => moveTemplateComponentMapping(section.title, key, 1)} disabled={index === selectedKeys.length - 1}>Down</button>
-                            <button type="button" onClick={() => removeTemplateComponentMapping(section.title, key)}>Remove</button>
-                          </div>
-                        );
-                      })}
-                      {selectedKeys.length === 0 && <div className="mapping-empty">Auto match will be used for this section.</div>}
+            <div className="wf-row-2">
+              <section className="design-card">
+                <span className="design-card-label">{t.dashboard}</span>
+                <div className="design-metrics">
+                  <Metric label={t.components} value={snapshot?.components.length ?? 0} />
+                  <Metric label={t.pages} value={snapshot?.pages.length ?? 0} />
+                  <Metric label={t.variables} value={variables.length} />
+                  <Metric label={t.files} value={markdownFiles.length} />
+                  <Metric label={t.tokens} value={formatTokenEstimate(tokenEstimate)} />
+                  <Metric label={t.uiScore} value={uiQualityScore} suffix="/10" />
+                </div>
+                <div className="ui-audit-list">
+                  {(snapshot?.pages ?? []).map((page) => (
+                    <div key={page.id} className="ui-audit-row">
+                      <span>{page.name}</span>
+                      <strong>{page.componentCount}</strong>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mapping-note">
-              Manual mapping is used first, in the order shown here. Auto match fills any empty section.
-            </div>
-          </section>
-
-          <section className="design-card">
-            <span className="design-card-label">Variables</span>
-            <div className="variable-list">
-              {variables.slice(0, 14).map((variable) => (
-                <div key={variable.id} className="variable-row">
-                  <span className="variable-name">{variable.name}</span>
-                  <span className="variable-value">{variable.value}</span>
+                  ))}
+                  {(snapshot?.pages.length ?? 0) === 0 && (
+                    <div className="ui-audit-row">
+                      <span>{t.noPagesYet}</span>
+                      <strong>0</strong>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {variables.length > 14 && <span className="variable-more">+{variables.length - 14} more variables</span>}
+              </section>
+
+              <section className="design-card">
+                <span className="design-card-label">{t.variables}</span>
+                <div className="variable-list">
+                  {variables.slice(0, 14).map((variable) => (
+                    <div key={variable.id} className="variable-row">
+                      <span className="variable-name">{variable.name}</span>
+                      <span className="variable-value">{variable.value}</span>
+                    </div>
+                  ))}
+                  {variables.length > 14 && <span className="variable-more">{t.moreVariables(variables.length - 14)}</span>}
+                </div>
+              </section>
             </div>
-          </section>
 
-          {/* UI/UX Evaluation Agent */}
-          <UiUxEvaluationPanel
-            components={components}
-            variables={variables}
-            scanResult={scanResult}
-          />
+            <div className="wf-row-2">
+              <section className="design-card">
+                <span className="design-card-label">{t.folderStructure}</span>
+                <div className="folder-tree">
+                  <div className="folder-root">{root}/</div>
+                  {markdownFiles.map((file) => (
+                    <div key={file.path} className="folder-file">
+                      {file.path.replace(`${root}/`, "")}
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-          {/* BA Document Integration */}
-          <BADocumentPanel
-            onDocumentChange={handleBAChange}
-            initialDoc={baDocument}
-          />
+              <section className="design-card">
+                <span className="design-card-label">{t.templateMapping}</span>
+                <div className="template-mapping-list">
+                  {templateSections.map((section) => {
+                    const selectedKeys = templateComponentMappings[section.title] ?? [];
+                    const suggested = getSuggestedComponentForSection(section, components);
+                    return (
+                      <div className="template-mapping-row" key={section.title}>
+                        <span>{section.title}</span>
+                        <select value="" onChange={(event) => addTemplateComponentMapping(section.title, event.target.value)}>
+                          <option value="">
+                            {t.addComponent}{suggested ? ` - auto: ${suggested.name}` : ""}
+                          </option>
+                          {components.map((component) => {
+                            const key = getComponentMappingKey(component);
+                            return (
+                              <option key={key} value={key} disabled={selectedKeys.includes(key)}>
+                                {component.name} - {component.role ?? "unknown"} - {component.source ?? "unknown"}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <div className="mapping-order-list">
+                          {selectedKeys.map((key, index) => {
+                            const component = getComponentByMappingKey(components, key);
+                            return (
+                              <div className="mapping-order-item" key={key}>
+                                <strong>{index + 1}</strong>
+                                <span>{component ? `${component.name} - ${component.role ?? "unknown"} - ${component.source ?? "unknown"}` : key}</span>
+                                <button type="button" onClick={() => moveTemplateComponentMapping(section.title, key, -1)} disabled={index === 0}>{t.up}</button>
+                                <button type="button" onClick={() => moveTemplateComponentMapping(section.title, key, 1)} disabled={index === selectedKeys.length - 1}>{t.down}</button>
+                                <button type="button" onClick={() => removeTemplateComponentMapping(section.title, key)}>{t.remove}</button>
+                              </div>
+                            );
+                          })}
+                          {selectedKeys.length === 0 && <div className="mapping-empty">{t.autoMatch}</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mapping-note">{t.mappingNote}</div>
+              </section>
+            </div>
+          </div>
 
-          {/* Standards Checklist */}
-          <StandardsChecklist onStandardsChange={handleStandardsChange} />
+          {/* ══════════ STEP 3: QUALITY ══════════ */}
+          <div className="wf-section">
+            <div className="wf-section-header">
+              <span className="step-badge">{t.step3}</span>
+              <h3>{t.qualityStandards}</h3>
+              <p className="step-hint">{t.step3Hint}</p>
+            </div>
 
-          {/* Screen Generation */}
-          <ScreenGenPanel
-            components={components}
-            variables={variables}
-            baDocument={baDocument}
-            standards={standards}
-            layoutTemplate={layoutTemplate}
-            projectName={effectiveProjectName}
-            industry={industry}
-            style={style}
-          />
+            <UiUxEvaluationPanel
+              components={components}
+              variables={variables}
+              scanResult={scanResult}
+            />
 
-          {/* Export Hub */}
-          <ExportHub
-            onDownloadProject={() => downloadProject(files, projectName || "design-system")}
-            onExportFigmaFrame={exportFigmaFrame}
-            onCopyPrompt={copyPrompt}
-            onExportBAReport={() => {
-              const report = buildBAReport(uiAudit, standards, baDocument, effectiveProjectName);
-              const blob = new Blob([report], { type: "text/markdown" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `${effectiveProjectName.replace(/\s+/g, "-").toLowerCase()}-ba-report.md`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            isExporting={isExportingFrame}
-            isCopied={copied}
-            frameStatus={frameExportStatus}
-            tokenEstimate={tokenEstimate}
-            fileCount={markdownFiles.length}
-          />
+            <div className="wf-row-2">
+              <section className="design-card">
+                <span className="design-card-label">{t.uiAuditScores}</span>
+                <div className="ui-audit-list" style={{ maxHeight: "none" }}>
+                  {uiAudit.map((item) => (
+                    <div key={item.id} className="ui-audit-row">
+                      <span>{item.label}</span>
+                      <strong className={item.score >= 7 ? "score-good" : item.score >= 5 ? "score-warn" : "score-bad"}>{item.score}/10</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-          {/* AI Prompt Preview */}
-          <section className="design-card">
-            <span className="design-card-label">AI Prompt Preview</span>
-            <pre className="prompt-preview">
-              {aiPrompt.length > PROMPT_PREVIEW_LIMIT ? `${aiPrompt.slice(0, PROMPT_PREVIEW_LIMIT)}\n\n... preview truncated. Download Project for full compact export.` : aiPrompt}
-            </pre>
-          </section>
+              <StandardsChecklist onStandardsChange={handleStandardsChange} />
+            </div>
+          </div>
+
+          {/* ══════════ STEP 4: CONTENT ══════════ */}
+          <div className="wf-section">
+            <div className="wf-section-header">
+              <span className="step-badge">{t.step4}</span>
+              <h3>{t.contentGeneration}</h3>
+              <p className="step-hint">{t.step4Hint}</p>
+            </div>
+
+            <BADocumentPanel
+              onDocumentChange={handleBAChange}
+              initialDoc={baDocument}
+            />
+
+            <ScreenGenPanel
+              components={components}
+              variables={variables}
+              baDocument={baDocument}
+              standards={standards}
+              layoutTemplate={layoutTemplate}
+              projectName={effectiveProjectName}
+              industry={industry}
+              style={style}
+            />
+          </div>
+
+          {/* ══════════ STEP 5: EXPORT ══════════ */}
+          <div className="wf-section">
+            <div className="wf-section-header">
+              <span className="step-badge">{t.step5}</span>
+              <h3>{t.exportDeliver}</h3>
+              <p className="step-hint">{t.step5Hint}</p>
+            </div>
+
+            <ExportHub
+              onDownloadProject={() => downloadProject(files, projectName || "design-system")}
+              onExportFigmaFrame={exportFigmaFrame}
+              onCopyPrompt={copyPrompt}
+              onExportBAReport={() => {
+                const report = buildBAReport(uiAudit, standards, baDocument, effectiveProjectName);
+                const blob = new Blob([report], { type: "text/markdown" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${effectiveProjectName.replace(/\s+/g, "-").toLowerCase()}-ba-report.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              isExporting={isExportingFrame}
+              isCopied={copied}
+              frameStatus={frameExportStatus}
+              tokenEstimate={tokenEstimate}
+              fileCount={markdownFiles.length}
+            />
+
+            <section className="design-card">
+              <span className="design-card-label">{t.aiPromptPreview}</span>
+              <pre className="prompt-preview">
+                {aiPrompt.length > PROMPT_PREVIEW_LIMIT ? `${aiPrompt.slice(0, PROMPT_PREVIEW_LIMIT)}\n\n${t.previewTruncated}` : aiPrompt}
+              </pre>
+            </section>
+          </div>
+
         </div>
       )}
     </div>

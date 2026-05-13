@@ -14,6 +14,7 @@ import { useBatchScan } from "./hooks/useBatchScan";
 import { useScanHistory } from "./hooks/useScanHistory";
 import { useFigmaColorVariables } from "./hooks/useFigmaColorVariables";
 import { useDesignSystemSnapshot } from "./hooks/useDesignSystemSnapshot";
+import { useI18n } from "./i18n/I18nContext";
 import type { PluginProfile } from "../shared/types";
 
 const TokenMap = lazy(() => import("./components/TokenMap").then(m => ({ default: m.TokenMap })));
@@ -124,6 +125,7 @@ export function App() {
   }, [activeTab, hasResult]);
 
   // State 3: Scanned → full dashboard
+  const { t, locale, toggleLocale } = useI18n();
 
   return (
     <div className="app app-dashboard">
@@ -135,11 +137,11 @@ export function App() {
       <div className="scanline" />
 
       <header className="dashboard-topbar">
-        <h1 className="dashboard-logo">DesignReady</h1>
+        <h1 className="dashboard-logo">{t.appName}</h1>
 
         <div className="topbar-selection">
           <span className="topbar-status-dot" />
-          <span className="topbar-component-label">{selectedNode ? "Selected" : "·"}</span>
+          <span className="topbar-component-label">{selectedNode ? t.selected : "·"}</span>
           {result?.atomicInfo && (
             <LevelIcon
               level={result.atomicInfo.level}
@@ -156,9 +158,12 @@ export function App() {
         </div>
 
         <div className="topbar-actions">
+          <button className="btn-lang" onClick={toggleLocale} title={t.language} type="button">
+            {locale === "en" ? "VI" : "EN"}
+          </button>
           {result && selectedNode && (
             <button className="btn-secondary btn-sm" onClick={handleScan} disabled={isScanning}>
-              {isScanning ? "..." : "Rescan"}
+              {isScanning ? "..." : t.rescan}
             </button>
           )}
         </div>
@@ -167,8 +172,8 @@ export function App() {
       {/* Tab Bar — only after scan */}
       <nav className="dashboard-tabs">
         {[
-          { id: "scan" as NavTab, label: "Scan" },
-          { id: "design" as NavTab, label: "Design.md" },
+          { id: "scan" as NavTab, label: t.tabScan },
+          { id: "design" as NavTab, label: t.tabDesign },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -275,11 +280,11 @@ export function App() {
                   </div>
                   <div className="empty-title">
                     {selectedNode
-                      ? `Selected: ${selectionDisplayName}`
-                      : "Select a frame"}
+                      ? `${t.selectedLabel}: ${selectionDisplayName}`
+                      : t.selectFrame}
                   </div>
                   <div className="empty-hint">
-                    Score your Figma designs for AI-readiness, fix common issues, and generate structured code prompts.
+                    {t.emptyHint}
                   </div>
                   {selectedNode && (
                     <>
@@ -290,7 +295,7 @@ export function App() {
                           onClick={handleScan}
                           disabled={isScanning || isBatchScanning}
                         >
-                          {isScanning ? "Scanning..." : "Scan Component"}
+                          {isScanning ? t.scanning : t.scanComponent}
                         </button>
                         {isMultiSelect && (
                           <button
@@ -298,7 +303,7 @@ export function App() {
                             onClick={handleBatchScan}
                             disabled={isScanning || isBatchScanning}
                           >
-                            {isBatchScanning ? "Scanning..." : `Batch Scan (${selectionCount})`}
+                            {isBatchScanning ? t.scanning : `${t.batchScan} (${selectionCount})`}
                           </button>
                         )}
                       </div>
