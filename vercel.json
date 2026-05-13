@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run web:build",
-  "outputDirectory": "dist-web",
+  "outputDirectory": "web/dist-web",
   "installCommand": "npm ci",
   "functions": {
     "api/**/*.ts": {
