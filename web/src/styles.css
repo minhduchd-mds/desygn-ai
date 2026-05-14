@@ -1822,6 +1822,7 @@ textarea {
   align-self: flex-end;
   flex-direction: row-reverse;
   max-width: min(560px, 75%);
+  width: auto;
 }
 
 .message-avatar {
@@ -1843,11 +1844,14 @@ textarea {
 }
 
 .message.user .message-body {
+  display: inline-block;
   padding: 10px 16px;
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #fff;
   border-radius: 20px 20px 4px 20px;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.22);
+  width: fit-content;
+  max-width: 100%;
 }
 
 .message.user .message-body p {
