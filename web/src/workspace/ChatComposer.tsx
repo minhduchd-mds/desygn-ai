@@ -13,6 +13,7 @@ interface ChatComposerProps {
   request: ProjectRequest;
   selectedPreset: OpenDesignDefinition;
   setRequest: SetProjectRequest;
+  workspaceTab: "chat" | "code";
   onSendChat: () => void;
   onGenerateDesignMd: () => void;
   onCreateImage: () => void;
@@ -26,6 +27,7 @@ export function ChatComposer({
   request,
   selectedPreset,
   setRequest,
+  workspaceTab,
   onSendChat,
   onGenerateDesignMd,
   onCreateImage,
@@ -92,7 +94,7 @@ export function ChatComposer({
                 onSendChat();
               }
             }}
-            placeholder="Chat with Groq, ask for BA notes, or describe the next design task..."
+            placeholder={workspaceTab === "chat" ? "Message Groq AI..." : "Describe your design task or paste BA notes..."}
             rows={1}
           />
         </div>
@@ -157,6 +159,7 @@ export function ChatComposer({
                 </div>
               )}
             </div>
+            {workspaceTab === "code" && (
             <div className="composer-dropdown">
               <button
                 type="button"
@@ -196,6 +199,8 @@ export function ChatComposer({
                 </div>
               )}
             </div>
+            )}
+            {workspaceTab === "code" && (
             <div className="composer-dropdown">
               <button
                 type="button"
@@ -253,9 +258,11 @@ export function ChatComposer({
                 </div>
               )}
             </div>
+            )}
           </div>
           <div className="composer-actions">
             <span>{isGenerating ? "Thinking" : "Ready"}</span>
+            {workspaceTab === "code" && (
             <button
               className="design-md-send-button"
               type="button"
@@ -264,6 +271,7 @@ export function ChatComposer({
             >
               Design.md
             </button>
+            )}
             <button
               className="send-button"
               type="submit"

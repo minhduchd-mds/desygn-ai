@@ -646,7 +646,7 @@ button {
 
 .template-search span,
 .composer-search span {
-  color: #475569;
+  color: #94a3b8;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -656,10 +656,10 @@ button {
 .template-search input,
 .composer-search input {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  background: #ffffff;
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
   padding: 13px 14px;
   font: inherit;
   outline: none;
@@ -667,8 +667,8 @@ button {
 
 .template-search input:focus,
 .composer-search input:focus {
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .template-filter-panel {
@@ -1247,7 +1247,230 @@ textarea {
   gap: 6px;
 }
 
+/* ── Workspace Tab Switcher ──────────────────────────── */
 
+.workspace-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  margin: 0 4px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.workspace-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.workspace-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.workspace-tab.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.workspace-tab svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* ── Theme Toggle ──────────────────────────────────── */
+
+.theme-toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
+  margin-bottom: -4px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.theme-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Light theme overrides ──────────────────────────── */
+
+.builder-workspace.theme-light {
+  background:
+    radial-gradient(ellipse at 80% -10%, rgba(99, 102, 241, 0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 10% 100%, rgba(20, 184, 166, 0.04) 0%, transparent 40%),
+    #f8f9fc;
+}
+
+.theme-light .message-markdown {
+  color: #1e293b;
+}
+
+.theme-light .message-markdown strong {
+  color: #0f172a;
+}
+
+.theme-light .message-markdown em {
+  color: #475569;
+}
+
+.theme-light .message-markdown code {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4338ca;
+}
+
+.theme-light .message-markdown pre {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.theme-light .message-markdown pre code {
+  color: #334155;
+}
+
+.theme-light .message-markdown h1,
+.theme-light .message-markdown h2,
+.theme-light .message-markdown h3 {
+  color: #0f172a;
+}
+
+.theme-light .message-markdown blockquote {
+  background: rgba(99, 102, 241, 0.04);
+  color: #475569;
+}
+
+.theme-light .message-markdown a {
+  color: #4f46e5;
+}
+
+.theme-light .message-markdown hr {
+  border-top-color: #e2e8f0;
+}
+
+.theme-light .message-markdown li::marker {
+  color: #4f46e5;
+}
+
+.theme-light .composer-box {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: #d6ddea;
+  box-shadow: 0 18px 54px rgba(25, 40, 72, 0.10);
+}
+
+.theme-light .composer-box textarea {
+  color: #1e293b;
+}
+
+.theme-light .composer-box textarea::placeholder {
+  color: #94a3b8;
+}
+
+.theme-light .composer-icon {
+  color: #374151;
+}
+
+.theme-light .send-button {
+  background: #111827;
+  color: #fff;
+}
+
+.theme-light .design-md-send-button {
+  background: #fff;
+  border-color: #d6ddea;
+  color: #111827;
+}
+
+.theme-light .design-md-send-button:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.theme-light .workspace-action-bar button {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: rgba(99, 102, 241, 0.18);
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.theme-light .workspace-action-bar button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(99, 102, 241, 0.38);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+
+.theme-light .workspace-action-bar button.btn-ba-doc {
+  color: #0d7a6e;
+  border-color: rgba(20, 184, 166, 0.28);
+}
+
+.theme-light .workspace-action-bar button.btn-template {
+  color: #0d7a6e;
+  background: rgba(240, 253, 250, 0.70);
+  border-color: rgba(20, 184, 166, 0.20);
+}
+
+.theme-light .chat-empty-title {
+  color: #374151;
+}
+
+.theme-light .chat-empty-hint {
+  color: #64748b;
+}
+
+.theme-light .chat-empty-hint strong {
+  color: #4f46e5;
+}
+
+.theme-light .thinking-row {
+  background: rgba(245, 243, 255, 0.8);
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+.theme-light .theme-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.theme-light .theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1e293b;
+}
 
 .sidebar-history {
     display: flex;
@@ -1421,9 +1644,9 @@ textarea {
   padding: 24px 36px 0;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 80% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 45%),
-    radial-gradient(ellipse at 10% 100%, rgba(20, 184, 166, 0.10) 0%, transparent 40%),
-    #f0f2ff;
+    radial-gradient(ellipse at 80% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 10% 100%, rgba(20, 184, 166, 0.05) 0%, transparent 40%),
+    #1a1a1a;
 }
 
 .workspace-action-bar {
@@ -1439,28 +1662,28 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.80);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(8px);
-  color: #374151;
+  color: #c4c9d4;
   padding: 7px 13px;
   font-size: 13px;
   font-weight: 600;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .workspace-action-bar button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(99, 102, 241, 0.38);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
 }
 
 .workspace-action-bar button:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .workspace-action-bar button.btn-generate {
@@ -1477,27 +1700,27 @@ textarea {
 }
 
 .workspace-action-bar button.btn-ba-doc {
-  border-color: rgba(20, 184, 166, 0.28);
-  color: #0d7a6e;
+  border-color: rgba(20, 184, 166, 0.2);
+  color: #5eead4;
 }
 
 .workspace-action-bar button.btn-ba-doc:hover:not(:disabled) {
-  background: rgba(20, 184, 166, 0.06);
-  border-color: rgba(20, 184, 166, 0.48);
-  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.12);
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.35);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
 }
 
 .workspace-action-bar button.btn-template {
-  border-color: rgba(20, 184, 166, 0.20);
-  color: #0d7a6e;
-  background: rgba(240, 253, 250, 0.70);
+  border-color: rgba(20, 184, 166, 0.15);
+  color: #5eead4;
+  background: rgba(20, 184, 166, 0.08);
   backdrop-filter: blur(8px);
 }
 
 .workspace-action-bar button.btn-template:hover:not(:disabled) {
-  background: rgba(204, 251, 241, 0.60);
-  border-color: rgba(20, 184, 166, 0.42);
-  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.10);
+  background: rgba(20, 184, 166, 0.15);
+  border-color: rgba(20, 184, 166, 0.3);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.12);
 }
 
 .workspace-action-bar button:disabled {
@@ -1798,10 +2021,10 @@ textarea {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  background: white;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+  background: #1e1e22;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
 }
 
 .result-message .output-panel {
@@ -2039,7 +2262,7 @@ textarea {
 }
 
 .chat-empty-icon {
-  color: #6366f1;
+  color: #818cf8;
   opacity: 0.5;
 }
 
@@ -2047,15 +2270,19 @@ textarea {
   margin: 0;
   font-size: 15px;
   font-weight: 650;
-  color: #374151;
+  color: #e2e8f0;
 }
 
 .chat-empty-hint {
   margin: 0;
   font-size: 13px;
-  color: #64748b;
+  color: #94a3b8;
   line-height: 1.55;
   max-width: 320px;
+}
+
+.chat-empty-hint strong {
+  color: #c4b5fd;
 }
 
 .chat-composer {
@@ -2076,10 +2303,10 @@ textarea {
   display: grid;
   gap: 10px;
   padding: 16px 18px 12px;
-  border: 1px solid #d6ddea;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 18px 54px rgba(25, 40, 72, 0.14);
+  background: rgba(38, 38, 42, 0.95);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.35);
 }
 
 .composer-input-row {
@@ -2095,7 +2322,12 @@ textarea {
   resize: none;
   outline: none;
   background: transparent;
+  color: #e2e8f0;
   font-size: 15px;
+}
+
+.composer-box textarea::placeholder {
+  color: #6b7280;
 }
 
 .composer-icon,
@@ -2115,13 +2347,13 @@ textarea {
 
 .composer-icon {
   background: transparent;
-  color: #1f2937;
+  color: #94a3b8;
   font-size: 24px;
 }
 
 .send-button {
-  background: #050505;
-  color: white;
+  background: #e2e8f0;
+  color: #1a1a1a;
   font-weight: 650;
 }
 
@@ -2136,10 +2368,10 @@ textarea {
 
 .design-md-send-button {
   width: auto;
-  border: 1px solid #d6ddea;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: #ffffff;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c4c9d4;
   padding: 0 12px;
   font-size: 12px;
   font-weight: 800;
@@ -2147,8 +2379,8 @@ textarea {
 }
 
 .design-md-send-button:hover {
-  border-color: #0f766e;
-  color: #0f766e;
+  border-color: #5eead4;
+  color: #5eead4;
 }
 
 .design-md-send-button:disabled {
@@ -2214,10 +2446,10 @@ textarea {
   gap: 8px;
   max-width: 190px;
   min-height: 34px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  background: #ffffff;
-  color: #1f2937;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c4c9d4;
   padding: 6px 10px 6px 12px;
   font-size: 13px;
   line-height: 1.4;
@@ -2225,11 +2457,11 @@ textarea {
 
 .composer-dropdown > button:hover,
 .composer-dropdown > button[aria-expanded="true"] {
-  background: #eef4f5;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .composer-dropdown > button > span {
-  color: #667085;
+  color: #94a3b8;
   font-size: 14px;
 }
 
@@ -2255,10 +2487,10 @@ textarea {
   max-height: 260px;
   overflow: auto;
   padding: 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+  background: #2a2a2e;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
 }
 
 .tools-menu {
@@ -2275,8 +2507,8 @@ textarea {
   top: 0;
   z-index: 1;
   margin: -6px -6px 6px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #2a2a2e;
   padding: 10px;
 }
 
@@ -2294,7 +2526,7 @@ textarea {
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #1f2937;
+  color: #c4c9d4;
   padding: 7px 10px;
   text-align: left;
   white-space: nowrap;
@@ -2316,8 +2548,8 @@ textarea {
 .design-menu button em {
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #f1f5f9;
-  color: #64748b;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
   padding: 3px 6px;
   font-size: 10px;
   font-style: normal;
@@ -2332,7 +2564,7 @@ textarea {
 
 .composer-empty {
   margin: 8px 6px 6px;
-  color: #64748b;
+  color: #94a3b8;
   font-size: 13px;
 }
 
@@ -2346,14 +2578,14 @@ textarea {
   width: 20px;
   height: 20px;
   place-items: center;
-  color: #111827;
+  color: #c4c9d4;
   font-size: 15px;
 }
 
 .composer-menu button:hover,
 .composer-menu button.selected {
-  background: #eef4ff;
-  color: #0f6fff;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
 }
 
 .composer-menu button.selected::after {

@@ -736,6 +736,8 @@ function App() {
   const [chatHistoryReady, setChatHistoryReady] = useState(false);
   const [copiedOutput, setCopiedOutput] = useState(false);
   const [loadedTemplatePresets, setLoadedTemplatePresets] = useState<Record<string, OpenDesignDefinition>>({});
+  const [workspaceTab, setWorkspaceTab] = useState<"chat" | "code">("chat");
+  const [chatTheme, setChatTheme] = useState<"dark" | "light">("dark");
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>("light");
   const [savedDesignMd, setSavedDesignMd] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -1482,6 +1484,16 @@ function App() {
               />
             </svg>
           </button>
+          <div className="workspace-tabs">
+            <button type="button" className={`workspace-tab${workspaceTab === "chat" ? " active" : ""}`} onClick={() => setWorkspaceTab("chat")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Chat
+            </button>
+            <button type="button" className={`workspace-tab${workspaceTab === "code" ? " active" : ""}`} onClick={() => setWorkspaceTab("code")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              Code
+            </button>
+          </div>
           <nav className="side-nav">
             <a
               href="#new-project"
@@ -1624,7 +1636,7 @@ function App() {
           </div>
         </aside>
 
-        <section className="chat-workspace builder-workspace">
+        <section className={`chat-workspace builder-workspace${chatTheme === "light" ? " theme-light" : ""}`}>
           <input
             ref={analyzeImageInputRef}
             type="file"
@@ -1650,6 +1662,17 @@ function App() {
               event.currentTarget.value = "";
             }}
           />
+          <div className="theme-toggle-wrap">
+            <button type="button" className="theme-toggle" onClick={() => setChatTheme((t) => t === "dark" ? "light" : "dark")}>
+              {chatTheme === "dark" ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              )}
+              {chatTheme === "dark" ? "Light" : "Dark"}
+            </button>
+          </div>
+          {workspaceTab === "code" && (
           <div className="workspace-action-bar">
             <button type="button" onClick={() => analyzeImageInputRef.current?.click()}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1688,14 +1711,27 @@ function App() {
               Generate 5 screens
             </button>
           </div>
+          )}
           <div className="chat-scroll" ref={chatScrollRef}>
             {messages.length === 0 && !isGenerating && !hasGenerated && (
               <div className="chat-empty-state">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
-                  <path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69h6.05l-4.9 3.56a1 1 0 0 0-.36 1.12L17.5 20l-4.9-3.56a1 1 0 0 0-1.18 0L6.5 20l1.88-5.87a1 1 0 0 0-.36-1.12L3.12 9.45h6.05a1 1 0 0 0 .95-.69z"/>
-                </svg>
-                <p className="chat-empty-title">Ready to generate</p>
-                <p className="chat-empty-hint">Upload a BA doc or describe your app, then click <strong>Generate 5 screens</strong></p>
+                {workspaceTab === "chat" ? (
+                  <>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    <p className="chat-empty-title">Start a conversation</p>
+                    <p className="chat-empty-hint">Ask anything — powered by Groq AI</p>
+                  </>
+                ) : (
+                  <>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
+                      <path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69h6.05l-4.9 3.56a1 1 0 0 0-.36 1.12L17.5 20l-4.9-3.56a1 1 0 0 0-1.18 0L6.5 20l1.88-5.87a1 1 0 0 0-.36-1.12L3.12 9.45h6.05a1 1 0 0 0 .95-.69z"/>
+                    </svg>
+                    <p className="chat-empty-title">Ready to generate</p>
+                    <p className="chat-empty-hint">Upload a BA doc or describe your app, then click <strong>Generate 5 screens</strong></p>
+                  </>
+                )}
               </div>
             )}
 
@@ -1975,6 +2011,7 @@ function App() {
             request={request}
             selectedPreset={selectedPreset}
             setRequest={setRequest}
+            workspaceTab={workspaceTab}
             onSendChat={sendChatMessage}
             onGenerateDesignMd={generateProject}
             onCreateImage={createImageFromPrompt}
