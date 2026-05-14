@@ -1288,6 +1288,19 @@ function App() {
     ]);
   }
 
+  function deleteHistoryItem(item: ProjectHistoryItem, event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    setProjectHistory((current) => {
+      const next = current.filter((h) => h.prompt !== item.prompt);
+      saveProjectHistory(next);
+      return next;
+    });
+    if (activeHistoryPrompt === item.prompt) {
+      setActiveHistoryPrompt("");
+    }
+  }
+
   function startNewProject() {
     setRequest(DEFAULT_PROJECT);
     setGeneratedRequest(null);
@@ -1593,9 +1606,9 @@ function App() {
                     key={item.prompt}
                     href={`#history-${index}`}
                     role="button"
-                    className={
-                      activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0) ? "active" : ""
-                    }
+                    className={`history-item${
+                      activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0) ? " active" : ""
+                    }`}
                     aria-current={
                       activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0) ? "true" : undefined
                     }
@@ -1605,6 +1618,17 @@ function App() {
                     }}
                   >
                     <span className="truncate">{item.name}</span>
+                    <button
+                      type="button"
+                      className="history-delete-btn"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={(event) => deleteHistoryItem(item, event)}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      </svg>
+                    </button>
                   </a>
                 ))}
               </div>
