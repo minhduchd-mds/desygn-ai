@@ -15,6 +15,39 @@ interface ChatResponse {
   error?: string;
 }
 
+/**
+ * Parse Vercel AI SDK Data Stream Protocol.
+ * Text deltas arrive as `0:"text"\n`, errors as `3:"message"\n`.
+ * We only need text deltas for the streaming UX.
+ */
+function parseAIStreamLine(line: string, onToken: (token: string) => void): void {
+  if (!line) return;
+  const colonIdx = line.indexOf(":");
+  if (colonIdx < 1) return;
+
+  const type = line.slice(0, colonIdx);
+  const value = line.slice(colonIdx + 1);
+
+  if (type === "0") {
+    // Text delta — value is a JSON-encoded string
+    try {
+      const text = JSON.parse(value) as string;
+      if (text) onToken(text);
+    } catch {
+      // skip malformed chunks
+    }
+  } else if (type === "3") {
+    // Error
+    try {
+      const errMsg = JSON.parse(value) as string;
+      throw new Error(errMsg);
+    } catch (e) {
+      if (e instanceof Error && e.message !== "Unexpected end of JSON input") throw e;
+    }
+  }
+  // Types 2 (data), d (finish), e (step finish) are ignored — we only need text.
+}
+
 export async function sendClaudeChat(
   messages: ChatMessage[],
   context: ChatContext,
@@ -25,7 +58,7 @@ export async function sendClaudeChat(
     context,
   });
 
-  // Streaming path — used when onToken callback is provided
+  // ── Streaming path (AI SDK Data Stream Protocol) ──
   if (onToken) {
     let response: Response;
     try {
@@ -38,8 +71,17 @@ export async function sendClaudeChat(
       throw new Error("Chat API is unavailable. Start the dev server or deploy to Vercel.");
     }
 
-    if (!response.ok || !response.body) {
-      throw new Error(`Chat stream failed with status ${response.status}.`);
+    if (!response.ok) {
+      let errorMsg = `Chat stream failed (${response.status}).`;
+      try {
+        const errBody = (await response.json()) as { error?: string };
+        if (errBody.error) errorMsg = errBody.error;
+      } catch { /* ignore */ }
+      throw new Error(errorMsg);
+    }
+
+    if (!response.body) {
+      throw new Error("No response stream received.");
     }
 
     const reader = response.body.getReader();
@@ -51,33 +93,32 @@ export async function sendClaudeChat(
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
+
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const data = line.slice(6).trim();
-        if (data === "[DONE]") return full;
-        if (!data) continue;
-
-        let parsed: { delta?: string; error?: string };
-        try {
-          parsed = JSON.parse(data) as { delta?: string; error?: string };
-        } catch {
-          continue; // skip non-JSON lines
-        }
-
-        if (parsed.error) throw new Error(parsed.error);
-        if (parsed.delta) {
-          full += parsed.delta;
-          onToken(parsed.delta);
-        }
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        parseAIStreamLine(trimmed, (text) => {
+          full += text;
+          onToken(text);
+        });
       }
     }
+
+    // Flush remaining buffer
+    if (buffer.trim()) {
+      parseAIStreamLine(buffer.trim(), (text) => {
+        full += text;
+        onToken(text);
+      });
+    }
+
     return full || "No response generated.";
   }
 
-  // Non-streaming fallback
+  // ── Non-streaming fallback ──
   let response: Response;
   try {
     response = await fetch("/api/chat", {
