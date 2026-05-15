@@ -25,17 +25,13 @@ interface VercelResponse {
   end: () => void;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { getAllowedOrigin, setCorsHeaders } from "./lib/cors";
 
 const systemPrompt =
   'You are a UI design system expert. The user is starting a new project with no existing components. Based on their project description and any BA documentation provided, suggest the minimal component set needed. Return ONLY valid JSON object with key "components" containing an array of component name strings. Maximum 12 components. Example: {"components": ["Button","Input","Card","Modal","Toast"]}';
 
 function setCors(response: VercelResponse): void {
-  Object.entries(corsHeaders).forEach(([key, value]) => response.setHeader(key, value));
+  setCorsHeaders(response, getAllowedOrigin({ headers: {} }));
 }
 
 function sanitize(input: string): string {

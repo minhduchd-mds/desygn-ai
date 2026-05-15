@@ -30,17 +30,13 @@ interface VercelResponse {
   end: () => void;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { getAllowedOrigin, setCorsHeaders } from "./lib/cors";
 
 const systemPrompt =
   "You are a senior UI/UX architect creating DESIGN.md specifications for the latest AI coding agents (Claude Code, Cursor, Windsurf, Copilot). Output ONLY structured markdown — no preamble, no explanation. Be exhaustive: every screen must include component variants with props, CSS custom-property token names, responsive rules, accessibility requirements (ARIA roles, keyboard nav, WCAG 2.1 AA), interaction states (hover/focus/disabled/loading/error/empty), and motion tokens. Use a strict 8px spacing scale. Include dark-mode token variants where relevant.";
 
 function setCors(response: VercelResponse): void {
-  Object.entries(corsHeaders).forEach(([key, value]) => response.setHeader(key, value));
+  setCorsHeaders(response, getAllowedOrigin({ headers: {} }));
 }
 
 function buildGenerationPrompt(context: DesignContextPayload, selectedTemplateLabel: string): string {

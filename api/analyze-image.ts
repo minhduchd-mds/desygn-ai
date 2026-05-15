@@ -45,11 +45,7 @@ interface VercelResponse {
   end: () => void;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { getAllowedOrigin, setCorsHeaders } from "./lib/cors";
 
 const visionSystemPrompt = `You are a UI layout analysis expert. Analyze the provided UI screenshot.
 Return ONLY valid JSON with this exact schema (no markdown, no explanation):
@@ -61,8 +57,9 @@ Return ONLY valid JSON with this exact schema (no markdown, no explanation):
   "density": "compact" or "comfortable" or "spacious"
 }`;
 
-function setCors(response: VercelResponse): void {
-  Object.entries(corsHeaders).forEach(([key, value]) => response.setHeader(key, value));
+function setCors(req: VercelRequest, res: VercelResponse): void {
+  const origin = getAllowedOrigin({ headers: {} });
+  setCorsHeaders(res, origin);
 }
 
 function isMimeType(value: unknown): value is MimeType {
@@ -103,7 +100,7 @@ function scoreTemplates(layoutPattern: LayoutPattern, contextSummary: string, te
 }
 
 export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
-  setCors(response);
+  setCors(request, response);
 
   if (request.method === "OPTIONS") { response.status(200).end(); return; }
   if (request.method !== "POST") { response.status(405).json({ error: "Method not allowed." }); return; }

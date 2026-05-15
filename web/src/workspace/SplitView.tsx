@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Marked, type Tokens } from "marked";
+import DOMPurify from "dompurify";
 import JSZip from "jszip";
 import type { Screen } from "../design/screenGenerator";
 import { parseScreensFromMarkdown } from "../design/screenGenerator";
@@ -160,7 +161,7 @@ export function SplitView({ initialScreens, projectId, onExport }: SplitViewProp
               </button>
             ))}
           </aside>
-          <article className={styles.previewContent} dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          <article className={styles.previewContent} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewHtml) }} />
         </div>
       </div>
     </section>

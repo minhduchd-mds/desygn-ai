@@ -21,11 +21,7 @@ interface VercelResponse {
   end: () => void;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { getAllowedOrigin, setCorsHeaders } from "./lib/cors";
 
 const systemPrompt =
   "You are an expert frontend developer. Output ONLY a complete, self-contained HTML document. No markdown, no code fences, no explanation — just raw HTML starting with <!DOCTYPE html>. Include all CSS in <style> and all JS in <script>. Use modern CSS with custom properties. Make the UI visually polished, dark-themed (--bg: #0f172a, --primary: #6366f1), and fully responsive. No external libraries except Google Fonts.";
@@ -50,7 +46,7 @@ Output ONLY the complete HTML document starting with <!DOCTYPE html>.`;
 }
 
 function setCors(res: VercelResponse): void {
-  Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+  setCorsHeaders(res, getAllowedOrigin({ headers: {} }));
 }
 
 export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {

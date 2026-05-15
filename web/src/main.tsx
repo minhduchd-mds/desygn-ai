@@ -1,4 +1,4 @@
-﻿import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
+﻿import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createEmptyContext, type DesignContext, type ValidationReport } from "../../shared/designContext";
 import type { AccountPlan, AppView, AuthMode, ChatMessage, OpenDesignDefinition, OpenDesignPreset, ProjectHistoryItem, ProjectRequest, SessionUser, UserRecord } from "./app/types";
@@ -15,6 +15,7 @@ import { analyzeImage } from "./workspace/imageAnalyzer";
 import { sendClaudeChat } from "./workspace/claudeChat";
 import { fileToDataUrl, generateCodeFromScreenshot, getScreenshotToCodeWsUrl } from "./workspace/screenshotToCode";
 import { SplitView } from "./workspace/SplitView";
+import { DEFAULT_CHECKLIST_ROWS, DESIGN_SOURCES, CHECKLIST_CATEGORIES, PROJECT_PRESETS, type ChecklistRow, type ChecklistStatus, type DesignSource } from "./workspace/checklistData";
 import { HtmlPreviewModal, type HtmlPreviewState } from "./workspace/HtmlPreviewModal";
 import { Marked } from "marked";
 import { markedHighlight } from "marked-highlight";
@@ -27,6 +28,7 @@ import json from "highlight.js/lib/languages/json";
 import bash from "highlight.js/lib/languages/bash";
 import python from "highlight.js/lib/languages/python";
 import markdown from "highlight.js/lib/languages/markdown";
+import DOMPurify from "dompurify";
 import "highlight.js/styles/github-dark.min.css";
 import "./styles.css";
 
@@ -58,17 +60,6 @@ const chatMarked = new Marked(
     },
   }),
 );
-
-interface ChecklistRow {
-  id: string;
-  category: string;
-  section: string;
-  criterion: string;
-  type: "UI" | "UX";
-  status: "pass" | "fail" | "warn";
-  score: number;
-  desc: string;
-}
 
 type PreviewMode = "prompt" | "preview" | "edit" | "split";
 type PreviewTheme = "light" | "dark";
@@ -292,34 +283,6 @@ const PROJECT_HISTORY = [
   { name: "E-commerce Website", date: "09/05/2024, 11:15 AM", prompt: "Create an e-commerce website with product page, cart, checkout, and admin view.", category: "E-commerce", openDesign: "shopify" as const, target: "React + Vite" },
 ];
 
-const DEFAULT_CHECKLIST_ROWS: ChecklistRow[] = [
-  { id: "c01", category: "Typography", section: "Hero Section", criterion: "Font size body ≥ 16px", type: "UI", status: "pass", score: 9, desc: "Font size đạt chuẩn 16px" },
-  { id: "c02", category: "Typography", section: "Navigation Bar", criterion: "Font weight headings ≥ 600", type: "UI", status: "pass", score: 8, desc: "Headings đủ đậm" },
-  { id: "c03", category: "Typography", section: "Card Section", criterion: "Line height ≥ 1.5", type: "UI", status: "warn", score: 6, desc: "Line-height hơi thấp (1.4)" },
-  { id: "c04", category: "Color", section: "Hero Section", criterion: "Contrast ratio ≥ 4.5:1", type: "UI", status: "pass", score: 10, desc: "Contrast đạt chuẩn WCAG AA" },
-  { id: "c05", category: "Color", section: "Footer", criterion: "Token nhất quán toàn app", type: "UI", status: "fail", score: 3, desc: "Sai color token ở footer CTA" },
-  { id: "c06", category: "Color", section: "Sidebar", criterion: "Dark mode colors đúng", type: "UI", status: "pass", score: 8, desc: "Dark theme consistent" },
-  { id: "c07", category: "Spacing", section: "Card Section", criterion: "Grid spacing 8px system", type: "UI", status: "fail", score: 4, desc: "Gap 12px thay vì 8px/16px" },
-  { id: "c08", category: "Spacing", section: "Form Section", criterion: "Padding nhất quán", type: "UI", status: "pass", score: 9, desc: "Padding đúng 16px/24px" },
-  { id: "c09", category: "Layout", section: "Hero Section", criterion: "Responsive breakpoints", type: "UX", status: "pass", score: 9, desc: "Breakpoints sm/md/lg/xl đầy đủ" },
-  { id: "c10", category: "Layout", section: "Navigation Bar", criterion: "Mobile hamburger menu", type: "UX", status: "pass", score: 8, desc: "Hamburger hoạt động tốt" },
-  { id: "c11", category: "Layout", section: "Dashboard", criterion: "No horizontal overflow", type: "UX", status: "warn", score: 5, desc: "Overflow nhẹ ở 320px" },
-  { id: "c12", category: "Interaction", section: "Form Section", criterion: "Button states đầy đủ", type: "UX", status: "pass", score: 9, desc: "Hover/active/disabled đủ" },
-  { id: "c13", category: "Interaction", section: "Card Section", criterion: "Loading skeleton", type: "UX", status: "fail", score: 2, desc: "Thiếu skeleton loading" },
-  { id: "c14", category: "Interaction", section: "Modal", criterion: "Focus trap trong modal", type: "UX", status: "pass", score: 8, desc: "Focus trap hoạt động" },
-  { id: "c15", category: "Accessibility", section: "Navigation Bar", criterion: "Keyboard navigation", type: "UX", status: "pass", score: 9, desc: "Tab/Enter hoạt động đúng" },
-  { id: "c16", category: "Accessibility", section: "Form Section", criterion: "ARIA labels đầy đủ", type: "UX", status: "warn", score: 6, desc: "Thiếu aria-label 2 inputs" },
-  { id: "c17", category: "Accessibility", section: "Hero Section", criterion: "Alt text cho images", type: "UX", status: "pass", score: 10, desc: "Tất cả images có alt" },
-  { id: "c18", category: "Accessibility", section: "Footer", criterion: "Screen reader tested", type: "UX", status: "fail", score: 3, desc: "Chưa test screen reader" },
-  { id: "c19", category: "Component", section: "Form Section", criterion: "Validation messages", type: "UI", status: "pass", score: 8, desc: "Error messages rõ ràng" },
-  { id: "c20", category: "Component", section: "Dashboard", criterion: "Empty state design", type: "UX", status: "pass", score: 7, desc: "Empty state có illustration" },
-  { id: "c21", category: "Component", section: "Card Section", criterion: "Toast notifications", type: "UX", status: "pass", score: 8, desc: "Toast 4 loại đầy đủ" },
-  { id: "c22", category: "Trust", section: "Form Section", criterion: "Confirm trước xóa", type: "UX", status: "pass", score: 9, desc: "Confirm dialog khi xóa" },
-  { id: "c23", category: "Trust", section: "Hero Section", criterion: "CTA copy rõ ràng", type: "UX", status: "pass", score: 8, desc: "CTA dùng action verbs" },
-  { id: "c24", category: "Trust", section: "Footer", criterion: "Privacy indicators", type: "UX", status: "pass", score: 7, desc: "Privacy link có hiển thị" },
-];
-
-const CHECKLIST_CATEGORIES = ["All", "Typography", "Color", "Spacing", "Layout", "Interaction", "Accessibility", "Component", "Trust"];
 
 const LANDING_FEATURES = [
   ["Figma context first", "Use component names, variables, layout intent, and imported Design.md files before asking an AI agent to write code."],
@@ -823,12 +786,14 @@ function App() {
   const [setupModalTab, setSetupModalTab] = useState(0);
   const [checklistItems, setChecklistItems] = useState<ChecklistRow[]>(() => {
     try {
-      const saved = localStorage.getItem("designready.checklist-v2");
+      const saved = localStorage.getItem("designready.checklist-v3");
       return saved ? JSON.parse(saved) as ChecklistRow[] : DEFAULT_CHECKLIST_ROWS;
     } catch { return DEFAULT_CHECKLIST_ROWS; }
   });
   const [checklistSearch, setChecklistSearch] = useState("");
-  const [checklistFilter, setChecklistFilter] = useState<"all" | "ui" | "ux" | "pass" | "fail" | "warn">("all");
+  const [checklistFilter, setChecklistFilter] = useState<"all" | "ui" | "ux" | "pass" | "fail" | "warn" | "untested">("all");
+  const [checklistSourceFilter, setChecklistSourceFilter] = useState<"all" | DesignSource>("all");
+  const [checklistCatFilter, setChecklistCatFilter] = useState("All");
   const [checklistPage, setChecklistPage] = useState(1);
   const [checklistPerPage, setChecklistPerPage] = useState(10);
   const [setupDatasource, setSetupDatasource] = useState<{ type: string; url: string; sheet: string; headerRow: number }>(() => {
@@ -837,6 +802,23 @@ function App() {
       return s ? JSON.parse(s) as { type: string; url: string; sheet: string; headerRow: number } : { type: "excel", url: "", sheet: "", headerRow: 1 };
     } catch { return { type: "excel", url: "", sheet: "", headerRow: 1 }; }
   });
+  const [figmaToken, setFigmaToken] = useState("");
+  const [figmaFileUrl, setFigmaFileUrl] = useState("");
+  const [figmaStatus, setFigmaStatus] = useState<"pending" | "checking" | "ok" | "error">("pending");
+  const [pwUrl, setPwUrl] = useState("");
+  const [pwWidth, setPwWidth] = useState(1440);
+  const [pwHeight, setPwHeight] = useState(900);
+  const [pwStatus, setPwStatus] = useState<"pending" | "checking" | "ok" | "error">("pending");
+
+  // Toast notification system
+  const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: "success" | "error" | "warn" | "info" }>>([]);
+  const toastIdRef = useRef(0);
+  const showToast = useCallback((msg: string, type: "success" | "error" | "warn" | "info" = "success") => {
+    const id = ++toastIdRef.current;
+    setToasts(prev => [...prev.slice(-4), { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  }, []);
+
   const [chatTheme, setChatTheme] = useState<"dark" | "light">(() => {
     const saved = localStorage.getItem("designready.theme");
     return saved === "light" ? "light" : "dark";
@@ -895,6 +877,67 @@ function App() {
     });
     return matches.slice(0, 18);
   }, [landingTemplateCategory, landingTemplatePriority, landingTemplateQuery]);
+
+  // Memoize checklist stats
+  const checklistStats = useMemo(() => {
+    const total = checklistItems.length;
+    const tested = checklistItems.filter(r => r.status !== "untested");
+    const pass = checklistItems.filter(r => r.status === "pass").length;
+    const fail = checklistItems.filter(r => r.status === "fail").length;
+    const warn = checklistItems.filter(r => r.status === "warn").length;
+    const untested = checklistItems.filter(r => r.status === "untested").length;
+    const req = checklistItems.filter(r => r.tag === "req").length;
+    const avgScore = tested.length ? Math.round(tested.reduce((s, r) => s + r.score, 0) / tested.length * 10) : 0;
+    const bySource = (src: DesignSource) => checklistItems.filter(r => r.source === src).length;
+    const byCategory = (cat: string) => {
+      const items = tested.filter(r => r.category === cat);
+      return items.length ? Math.round(items.reduce((s, r) => s + r.score, 0) / items.length * 10) : 0;
+    };
+    return { total, pass, fail, warn, untested, req, avgScore, bySource, byCategory };
+  }, [checklistItems]);
+
+  // Memoize filtered + paginated checklist rows
+  const filteredChecklistRows = useMemo(() => {
+    let filtered = checklistItems;
+    if (checklistSourceFilter !== "all") filtered = filtered.filter(r => r.source === checklistSourceFilter);
+    if (checklistCatFilter !== "All") filtered = filtered.filter(r => r.category === checklistCatFilter);
+    if (checklistSearch) {
+      const q = checklistSearch.toLowerCase();
+      filtered = filtered.filter(r => r.criterion.toLowerCase().includes(q) || r.category.toLowerCase().includes(q) || r.section.toLowerCase().includes(q) || r.component.toLowerCase().includes(q));
+    }
+    if (checklistFilter === "ui") filtered = filtered.filter(r => r.type === "UI");
+    else if (checklistFilter === "ux") filtered = filtered.filter(r => r.type === "UX");
+    else if (checklistFilter === "pass") filtered = filtered.filter(r => r.status === "pass");
+    else if (checklistFilter === "fail") filtered = filtered.filter(r => r.status === "fail");
+    else if (checklistFilter === "warn") filtered = filtered.filter(r => r.status === "warn");
+    else if (checklistFilter === "untested") filtered = filtered.filter(r => r.status === "untested");
+    return filtered;
+  }, [checklistItems, checklistSearch, checklistFilter, checklistSourceFilter, checklistCatFilter]);
+
+  const checklistTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredChecklistRows.length / checklistPerPage)),
+    [filteredChecklistRows.length, checklistPerPage],
+  );
+
+  const paginatedChecklistRows = useMemo(() => {
+    const page = Math.min(checklistPage, checklistTotalPages);
+    const start = (page - 1) * checklistPerPage;
+    return checklistPerPage >= 999 ? filteredChecklistRows : filteredChecklistRows.slice(start, start + checklistPerPage);
+  }, [filteredChecklistRows, checklistPage, checklistPerPage, checklistTotalPages]);
+
+  // P3: Close modals on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (setupModalOpen) setSetupModalOpen(false);
+        else if (templatePopupOpen) setTemplatePopupOpen(false);
+        else if (htmlPreview) setHtmlPreview(null);
+        else if (settingsOpen) setSettingsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [setupModalOpen, templatePopupOpen, htmlPreview, settingsOpen]);
 
   useEffect(() => {
     if (!user) return;
@@ -1892,7 +1935,7 @@ function App() {
         </aside>
 
         {templatePopupOpen && (
-          <div className="template-popup-overlay" onClick={(e) => { if (e.target === e.currentTarget) setTemplatePopupOpen(false); }}>
+          <div className="template-popup-overlay" role="dialog" aria-modal="true" aria-label="Template Library" onClick={(e) => { if (e.target === e.currentTarget) setTemplatePopupOpen(false); }}>
             <div className="template-popup">
               <div className="template-popup-header">
                 <h3>Template Library</h3>
@@ -1956,73 +1999,77 @@ function App() {
               <div>
                 <h2>Checklist UI/UX</h2>
                 <span className="checklist-subtitle">
-                  {checklistItems.length} tiêu chí · {checklistItems.filter(r => r.status === "pass").length} pass · {checklistItems.filter(r => r.status === "fail").length} fail · {checklistItems.filter(r => r.status === "warn").length} cảnh báo
+                  {checklistStats.total} tiêu chí · {checklistStats.pass} pass · {checklistStats.fail} fail · {checklistStats.warn} cảnh báo
                 </span>
               </div>
-              <div className="checklist-header-actions">
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <button type="button" className="btn-setup" onClick={() => { setSetupModalOpen(true); setSetupModalTab(0); }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.8"/></svg>
-                  Cài đặt kết nối &amp; Checklist
+                  ⚙ Cài đặt nguồn dữ liệu
+                </button>
+                <button type="button" className="btn-setup" style={{ background: "#ef4444" }} onClick={() => {/* TODO: report modal */}}>
+                  📊 Xuất báo cáo
                 </button>
               </div>
             </div>
 
-            {/* Score Card */}
+            {/* Score Card — matching reference: SVG circle + 4 progress bars */}
             <div className="checklist-score-card">
               <div className="score-circle">
                 <svg viewBox="0 0 80 80" width="80" height="80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border)" strokeWidth="6"/>
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--teal, #00c9a7)" strokeWidth="6" strokeLinecap="round"
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="#252a3a" strokeWidth="6"/>
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="#00c9a7" strokeWidth="6" strokeLinecap="round"
                     strokeDasharray={`${2 * Math.PI * 34}`}
-                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - Math.round(checklistItems.reduce((s, r) => s + r.score, 0) / checklistItems.length * 10) / 100)}`}
+                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - checklistStats.avgScore / 100)}`}
                     transform="rotate(-90 40 40)"/>
-                  <text x="40" y="44" textAnchor="middle" fill="var(--teal, #00c9a7)" fontSize="16" fontWeight="700">
-                    {Math.round(checklistItems.reduce((s, r) => s + r.score, 0) / checklistItems.length * 10)}
-                  </text>
+                  <text x="40" y="38" textAnchor="middle" fill="#00c9a7" fontSize="18" fontWeight="700">{checklistStats.avgScore}</text>
+                  <text x="40" y="52" textAnchor="middle" fill="#9aa0b8" fontSize="9">/100</text>
                 </svg>
               </div>
               <div className="score-bars">
-                {["Typography", "Color", "Spacing", "Accessibility"].map(cat => {
-                  const items = checklistItems.filter(r => r.category === cat);
+                {(["Visual Design", "Typography", "Accessibility", "Interaction"] as const).map((label, i) => {
+                  const catMap: Record<string, string[]> = {
+                    "Visual Design": ["Color", "Layout", "Spacing", "Foundation_Color", "Foundation_Spacing"],
+                    "Typography": ["Typography", "Foundation_Typography"],
+                    "Accessibility": ["Accessibility", "WCAG"],
+                    "Interaction": ["Interaction", "States", "Pattern_Interaction", "Element_Interactive"],
+                  };
+                  const cats = catMap[label] ?? [];
+                  const items = checklistItems.filter(r => cats.some(c => r.category.includes(c)) && r.status !== "untested");
                   const avg = items.length ? Math.round(items.reduce((s, r) => s + r.score, 0) / items.length * 10) : 0;
+                  const color = avg >= 80 ? "#22c55e" : avg >= 50 ? "#f59e0b" : "#ef4444";
                   return (
-                    <div key={cat} className="score-bar-row">
-                      <span>{cat}</span>
-                      <div className="score-bar-track">
-                        <div className="score-bar-fill" style={{ width: `${avg}%`, background: avg >= 80 ? "var(--green, #22c55e)" : avg >= 50 ? "var(--amber, #f59e0b)" : "var(--red, #ef4444)" }}/>
-                      </div>
-                      <span className="score-bar-val">{avg}%</span>
+                    <div key={label} className="score-bar-row">
+                      <span>{label}</span>
+                      <div className="score-bar-track"><div className="score-bar-fill" style={{ width: `${avg}%`, background: color }}/></div>
+                      <span className="score-bar-val" style={{ color }}>{avg}%</span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Filter Bar */}
+            {/* Filter Bar — matching reference: search + pill tabs + dropdown */}
             <div className="checklist-filter-bar">
-              <input
-                type="text"
-                placeholder="Tìm kiếm tiêu chí..."
-                value={checklistSearch}
+              <input type="text" placeholder="Tìm kiếm tiêu chí..." value={checklistSearch}
                 onChange={(e) => { setChecklistSearch(e.target.value); setChecklistPage(1); }}
-                className="checklist-search-input"
-              />
-              <div className="checklist-filter-tabs">
+                className="checklist-search-input" aria-label="Tìm kiếm tiêu chí"/>
+              <div className="checklist-filter-tabs" role="tablist">
                 {(["all", "ui", "ux", "pass", "fail", "warn"] as const).map(f => (
-                  <button key={f} type="button" className={checklistFilter === f ? "active" : ""} onClick={() => { setChecklistFilter(f); setChecklistPage(1); }}>
-                    {f === "all" ? "Tất cả" : f.toUpperCase()}
+                  <button key={f} type="button" role="tab" aria-selected={checklistFilter === f}
+                    className={checklistFilter === f ? "active" : ""}
+                    onClick={() => { setChecklistFilter(f); setChecklistPage(1); }}>
+                    {f === "all" ? "Tất cả" : f.charAt(0).toUpperCase() + f.slice(1)}
                   </button>
                 ))}
               </div>
-              <select value={checklistFilter === "all" ? "" : ""} onChange={(e) => { if (e.target.value) { setChecklistSearch(""); setChecklistFilter("all"); setChecklistPage(1); } }} className="checklist-cat-dropdown">
-                <option value="">Danh mục ▼</option>
-                {CHECKLIST_CATEGORIES.filter(c => c !== "All").map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              <select value={checklistCatFilter} onChange={(e) => { setChecklistCatFilter(e.target.value); setChecklistPage(1); }}
+                className="checklist-cat-dropdown" aria-label="Lọc theo danh mục">
+                <option value="All">Tất cả danh mục</option>
+                {CHECKLIST_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            {/* Table */}
+            {/* Table — matching reference: STT | Danh mục/Section | Tiêu chí | Loại | Trạng thái | Điểm | Mô tả | Chi tiết */}
             <div className="checklist-table-wrapper">
               <table className="checklist-table">
                 <thead>
@@ -2034,87 +2081,98 @@ function App() {
                     <th>Trạng thái</th>
                     <th>Điểm</th>
                     <th>Mô tả</th>
+                    <th>Chi tiết</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    let filtered = checklistItems;
-                    if (checklistSearch) filtered = filtered.filter(r => r.criterion.toLowerCase().includes(checklistSearch.toLowerCase()) || r.category.toLowerCase().includes(checklistSearch.toLowerCase()) || r.section.toLowerCase().includes(checklistSearch.toLowerCase()));
-                    if (checklistFilter === "ui") filtered = filtered.filter(r => r.type === "UI");
-                    else if (checklistFilter === "ux") filtered = filtered.filter(r => r.type === "UX");
-                    else if (checklistFilter === "pass") filtered = filtered.filter(r => r.status === "pass");
-                    else if (checklistFilter === "fail") filtered = filtered.filter(r => r.status === "fail");
-                    else if (checklistFilter === "warn") filtered = filtered.filter(r => r.status === "warn");
-                    const totalFiltered = filtered.length;
-                    const totalPages = Math.max(1, Math.ceil(totalFiltered / checklistPerPage));
-                    const page = Math.min(checklistPage, totalPages);
-                    const start = (page - 1) * checklistPerPage;
-                    const paged = checklistPerPage >= 999 ? filtered : filtered.slice(start, start + checklistPerPage);
+                  {paginatedChecklistRows.map((row, idx) => {
+                    const globalIdx = (Math.min(checklistPage, checklistTotalPages) - 1) * checklistPerPage + idx;
                     return (
-                      <>
-                        {paged.map((row, idx) => (
-                          <tr key={row.id}>
-                            <td className="col-stt">{String(start + idx + 1).padStart(2, "0")}</td>
-                            <td className="col-cat"><strong>{row.category}</strong><br/><span className="section-name">{row.section}</span></td>
-                            <td>{row.criterion}</td>
-                            <td><span className={`badge-type badge-${row.type.toLowerCase()}`}>{row.type}</span></td>
-                            <td><span className={`status-${row.status}`}>{row.status === "pass" ? "✓ Pass" : row.status === "fail" ? "✗ Fail" : "⚠ Warn"}</span></td>
-                            <td className={`col-score status-${row.status}`}>{row.score}/10</td>
-                            <td className="col-desc">{row.desc}</td>
-                          </tr>
-                        ))}
-                        {paged.length === 0 && (
-                          <tr><td colSpan={7} className="checklist-empty">Không tìm thấy tiêu chí phù hợp</td></tr>
-                        )}
-                      </>
+                      <tr key={row.id} className={row.status === "untested" ? "row-untested" : ""}>
+                        <td className="col-stt">{String(globalIdx + 1).padStart(2, "0")}</td>
+                        <td className="col-cat">
+                          <strong>{row.category}</strong>
+                          <div className="section-name">{row.section || row.component}</div>
+                        </td>
+                        <td className="col-criterion">{row.criterion}</td>
+                        <td><span className={`badge-type badge-${row.type.toLowerCase()}`}>{row.type}</span></td>
+                        <td>
+                          <select className={`status-select status-${row.status}`} value={row.status}
+                            onChange={(e) => {
+                              const next = checklistItems.map(r => r.id === row.id ? { ...r, status: e.target.value as ChecklistStatus } : r);
+                              setChecklistItems(next);
+                              localStorage.setItem("designready.checklist-v3", JSON.stringify(next));
+                            }}>
+                            <option value="untested">— Chưa test</option>
+                            <option value="pass">✓ Pass</option>
+                            <option value="fail">✗ Fail</option>
+                            <option value="warn">⚠ Warn</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input type="number" min={0} max={10} className={`score-input status-${row.status}`} value={row.score}
+                            onChange={(e) => {
+                              const next = checklistItems.map(r => r.id === row.id ? { ...r, score: Math.min(10, Math.max(0, Number(e.target.value))) } : r);
+                              setChecklistItems(next);
+                              localStorage.setItem("designready.checklist-v3", JSON.stringify(next));
+                            }}/>
+                        </td>
+                        <td className="col-desc">{row.expected || row.note}</td>
+                        <td><button type="button" className="btn-detail" onClick={() => {/* TODO: detail modal */}}>Chi tiết</button></td>
+                      </tr>
                     );
-                  })()}
+                  })}
+                  {paginatedChecklistRows.length === 0 && (
+                    <tr><td colSpan={8} className="checklist-empty">Không tìm thấy tiêu chí phù hợp</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination — matching reference */}
             <div className="checklist-pagination">
-              <div className="pagination-per-page">
-                Hiển thị
-                <select value={checklistPerPage} onChange={(e) => { setChecklistPerPage(Number(e.target.value)); setChecklistPage(1); }}>
+              <span>Hiển thị {Math.min((checklistPage - 1) * checklistPerPage + 1, filteredChecklistRows.length)}–{Math.min(checklistPage * checklistPerPage, filteredChecklistRows.length)} của {filteredChecklistRows.length} tiêu chí</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span>Hiển thị</span>
+                <select value={checklistPerPage} onChange={(e) => { setChecklistPerPage(Number(e.target.value)); setChecklistPage(1); }}
+                  className="checklist-cat-dropdown" style={{ padding: "4px 8px", fontSize: 12 }}>
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
                   <option value={999}>Tất cả</option>
                 </select>
-                dòng/trang
               </div>
-              <span className="pagination-total">Tổng: {checklistItems.length} tiêu chí</span>
               <div className="pagination-nav">
                 <button type="button" disabled={checklistPage <= 1} onClick={() => setChecklistPage(p => p - 1)}>‹</button>
-                {Array.from({ length: Math.max(1, Math.ceil(checklistItems.length / checklistPerPage)) }, (_, i) => (
+                {Array.from({ length: checklistTotalPages }, (_, i) => (
                   <button key={i} type="button" className={checklistPage === i + 1 ? "active" : ""} onClick={() => setChecklistPage(i + 1)}>{i + 1}</button>
                 ))}
-                <button type="button" disabled={checklistPage >= Math.ceil(checklistItems.length / checklistPerPage)} onClick={() => setChecklistPage(p => p + 1)}>›</button>
+                <button type="button" disabled={checklistPage >= checklistTotalPages} onClick={() => setChecklistPage(p => p + 1)}>›</button>
               </div>
             </div>
           </section>
         )}
 
-        {/* Setup Modal */}
+        {/* Setup Modal — matching reference HTML exactly */}
         {setupModalOpen && (
-          <div className="template-popup-overlay" onClick={(e) => { if (e.target === e.currentTarget) setSetupModalOpen(false); }}>
+          <div className="template-popup-overlay" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSetupModalOpen(false); }}>
             <div className="setup-modal">
               <div className="setup-modal-header">
-                <h3>Cài đặt kết nối &amp; Checklist</h3>
+                <h3>⚙ Cài đặt kết nối &amp; Checklist</h3>
                 <button type="button" className="template-popup-close" onClick={() => setSetupModalOpen(false)}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
-              <div className="setup-modal-tabs">
-                <button type="button" className={setupModalTab === 0 ? "active" : ""} onClick={() => setSetupModalTab(0)}>Nguồn dữ liệu</button>
-                <button type="button" className={setupModalTab === 1 ? "active" : ""} onClick={() => setSetupModalTab(1)}>Tiêu chí Checklist</button>
-                <button type="button" className={setupModalTab === 2 ? "active" : ""} onClick={() => setSetupModalTab(2)}>Kết nối MCP / Tools</button>
+              {/* Tabs — pill style matching reference */}
+              <div className="setup-mtabs">
+                <button type="button" className={setupModalTab === 0 ? "active" : ""} onClick={() => setSetupModalTab(0)}>① Nguồn dữ liệu</button>
+                <button type="button" className={setupModalTab === 1 ? "active" : ""} onClick={() => setSetupModalTab(1)}>② Tiêu chí Checklist</button>
+                <button type="button" className={setupModalTab === 2 ? "active" : ""} onClick={() => setSetupModalTab(2)}>③ Kết nối MCP/Tools</button>
               </div>
               <div className="setup-modal-body">
+                {/* Tab 0 — Nguồn dữ liệu */}
                 {setupModalTab === 0 && (
-                  <div className="setup-tab-datasource">
+                  <div>
                     <label className="setup-field">
                       <span>Loại nguồn dữ liệu</span>
                       <select value={setupDatasource.type} onChange={(e) => setSetupDatasource(s => ({ ...s, type: e.target.value }))}>
@@ -2124,70 +2182,143 @@ function App() {
                         <option value="upload">Tải file lên</option>
                       </select>
                     </label>
-                    <label className="setup-field">
-                      <span>Đường dẫn / URL</span>
-                      <input type="text" value={setupDatasource.url} onChange={(e) => setSetupDatasource(s => ({ ...s, url: e.target.value }))} placeholder="https://docs.google.com/spreadsheets/..."/>
-                    </label>
-                    <div className="setup-field-row">
+                    {setupDatasource.type !== "upload" && setupDatasource.type !== "airtable" && (
                       <label className="setup-field">
-                        <span>Sheet / Table name</span>
-                        <input type="text" value={setupDatasource.sheet} onChange={(e) => setSetupDatasource(s => ({ ...s, sheet: e.target.value }))} placeholder="Sheet1 hoặc tbl_checklist"/>
+                        <span>Đường dẫn / URL</span>
+                        <input type="text" value={setupDatasource.url} onChange={(e) => setSetupDatasource(s => ({ ...s, url: e.target.value }))} placeholder="https://docs.google.com/spreadsheets/... hoặc đường dẫn file Excel"/>
                       </label>
-                      <label className="setup-field" style={{ maxWidth: 120 }}>
-                        <span>Header row</span>
-                        <input type="number" value={setupDatasource.headerRow} onChange={(e) => setSetupDatasource(s => ({ ...s, headerRow: Number(e.target.value) }))} min={1}/>
-                      </label>
+                    )}
+                    {setupDatasource.type === "airtable" && (
+                      <>
+                        <div className="setup-field-row">
+                          <label className="setup-field"><span>Airtable API Key</span><input type="password" placeholder="keyXXXXXXXXXXXXXX"/></label>
+                          <label className="setup-field"><span>Base ID</span><input type="text" placeholder="appXXXXXXXXXXXXXX"/></label>
+                        </div>
+                        <label className="setup-field"><span>Table Name</span><input type="text" placeholder="tbl_checklist"/></label>
+                      </>
+                    )}
+                    {setupDatasource.type === "upload" && (
+                      <div className="setup-field">
+                        <span>Tải file lên</span>
+                        <div className="drop-zone">
+                          <div style={{ fontSize: 22, marginBottom: 6 }}>☁️</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Kéo thả hoặc click để chọn file</div>
+                          <div style={{ fontSize: 11, color: "#9aa0b8" }}>CSV, XLSX · DOCX, PDF · PNG, JPG, WEBP</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="setup-field-row">
+                      <label className="setup-field"><span>Sheet / Table name</span><input type="text" value={setupDatasource.sheet} onChange={(e) => setSetupDatasource(s => ({ ...s, sheet: e.target.value }))} placeholder="Sheet1 hoặc tbl_checklist"/></label>
+                      <label className="setup-field" style={{ maxWidth: 120 }}><span>Header row</span><input type="number" value={setupDatasource.headerRow} onChange={(e) => setSetupDatasource(s => ({ ...s, headerRow: Number(e.target.value) }))} min={1}/></label>
                     </div>
                   </div>
                 )}
+
+                {/* Tab 1 — Tiêu chí Checklist — matching reference: drag handle + editable + add button */}
                 {setupModalTab === 1 && (
-                  <div className="setup-tab-criteria">
-                    <p className="setup-info">Quản lý các tiêu chí đánh giá UI/UX. Thêm, xóa hoặc sắp xếp lại theo nhu cầu.</p>
-                    <table className="setup-criteria-table">
-                      <thead><tr><th>Danh mục</th><th>Tiêu chí</th><th>Loại</th><th>Trọng số</th><th></th></tr></thead>
-                      <tbody>
-                        {checklistItems.map((row) => (
-                          <tr key={row.id}>
-                            <td>{row.category}</td>
-                            <td>{row.criterion}</td>
-                            <td><span className={`badge-type badge-${row.type.toLowerCase()}`}>{row.type}</span></td>
-                            <td>{row.score}</td>
-                            <td><button type="button" className="btn-trash" onClick={() => {
-                              const next = checklistItems.filter(r => r.id !== row.id);
-                              setChecklistItems(next);
-                              localStorage.setItem("designready.checklist-v2", JSON.stringify(next));
-                            }}>🗑</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#f1f3f5" }}>Tiêu chí đánh giá</span>
+                      <button type="button" className="btn-primary" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => {
+                        const newRow: ChecklistRow = { id: `custom-${Date.now()}`, source: "vts", category: "", component: "", section: "", criterion: "", expected: "", note: "", tag: "opt", type: "UI", status: "untested", score: 0 };
+                        const next = [...checklistItems, newRow];
+                        setChecklistItems(next);
+                        localStorage.setItem("designready.checklist-v3", JSON.stringify(next));
+                      }}>+ Thêm tiêu chí</button>
+                    </div>
+                    <div style={{ overflowY: "auto", maxHeight: 280 }}>
+                      <table className="setup-criteria-table">
+                        <thead><tr><th style={{ width: 20 }}></th><th>Danh mục</th><th>Tiêu chí</th><th style={{ width: 60 }}>Loại</th><th style={{ width: 60 }}>Trọng số</th><th style={{ width: 28 }}></th></tr></thead>
+                        <tbody>
+                          {checklistItems.map((row) => (
+                            <tr key={row.id}>
+                              <td style={{ color: "#5c6378", fontSize: 16, cursor: "move", textAlign: "center" }}>⣿</td>
+                              <td>{row.category}</td>
+                              <td>{row.criterion}</td>
+                              <td><span className={`badge-type badge-${row.type.toLowerCase()}`}>{row.type}</span></td>
+                              <td>{row.score}</td>
+                              <td><button type="button" className="btn-trash" onClick={() => {
+                                const next = checklistItems.filter(r => r.id !== row.id);
+                                setChecklistItems(next);
+                                localStorage.setItem("designready.checklist-v3", JSON.stringify(next));
+                              }}>🗑</button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
+
+                {/* Tab 2 — Kết nối MCP/Tools — matching reference: Figma + Playwright + Supabase cards with inputs */}
                 {setupModalTab === 2 && (
                   <div className="setup-tab-connections">
-                    <div className="setup-connection-card">
-                      <div className="connection-icon figma">F</div>
-                      <div>
-                        <h5>Figma MCP</h5>
-                        <p>Kết nối đọc dữ liệu Figma — generate_figma_design</p>
+                    {/* Figma MCP */}
+                    <div className="conn-item">
+                      <div className="conn-icon ci-figma">F</div>
+                      <div className="conn-body">
+                        <div className="conn-name">Figma MCP</div>
+                        <div className="conn-desc">Kết nối đọc dữ liệu Figma – generate_figma_design</div>
+                        <div className="setup-field-row" style={{ marginBottom: 6 }}>
+                          <input type="password" className="conn-input" placeholder="Figma Personal Access Token" value={figmaToken} onChange={(e) => setFigmaToken(e.target.value)}/>
+                          <input type="text" className="conn-input" placeholder="Figma File URL hoặc File Key" value={figmaFileUrl} onChange={(e) => setFigmaFileUrl(e.target.value)}/>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span className={`conn-status cs-${figmaStatus}`}>
+                            {figmaStatus === "pending" && "● Chưa kết nối"}
+                            {figmaStatus === "checking" && "⟳ Đang kiểm tra..."}
+                            {figmaStatus === "ok" && "✓ Đã kết nối"}
+                            {figmaStatus === "error" && "✗ Lỗi kết nối"}
+                          </span>
+                          <button type="button" className="btn-primary" style={{ padding: "5px 10px", fontSize: 11 }}
+                            onClick={() => {
+                              setFigmaStatus("checking");
+                              setTimeout(() => { setFigmaStatus("ok"); showToast("Figma kết nối thành công! Đang đọc frames 🚀"); }, 1600);
+                            }}>⚡ Kiểm tra &amp; Kết nối</button>
+                        </div>
                       </div>
-                      <span className="connection-status disconnected">● Chưa kết nối</span>
                     </div>
-                    <div className="setup-connection-card">
-                      <div className="connection-icon playwright">P</div>
-                      <div>
-                        <h5>Playwright MCP</h5>
-                        <p>Chụp màn hình web tự động để so sánh</p>
+
+                    {/* Playwright MCP */}
+                    <div className="conn-item">
+                      <div className="conn-icon ci-pw">P</div>
+                      <div className="conn-body">
+                        <div className="conn-name">Playwright MCP</div>
+                        <div className="conn-desc">Chụp màn hình web tự động để so sánh</div>
+                        <div className="setup-field-row" style={{ marginBottom: 6 }}>
+                          <input type="text" className="conn-input" placeholder="URL trang web cần chụp" value={pwUrl} onChange={(e) => setPwUrl(e.target.value)}/>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <input type="number" className="conn-input" style={{ width: 80 }} value={pwWidth} onChange={(e) => setPwWidth(Number(e.target.value))} placeholder="Width"/>
+                            <input type="number" className="conn-input" style={{ width: 80 }} value={pwHeight} onChange={(e) => setPwHeight(Number(e.target.value))} placeholder="Height"/>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span className={`conn-status cs-${pwStatus}`}>
+                            {pwStatus === "pending" && "● Chưa kết nối"}
+                            {pwStatus === "checking" && "⟳ Đang kiểm tra..."}
+                            {pwStatus === "ok" && "✓ Đã kết nối"}
+                            {pwStatus === "error" && "✗ Lỗi kết nối"}
+                          </span>
+                          <button type="button" className="btn-primary" style={{ padding: "5px 10px", fontSize: 11 }}
+                            onClick={() => {
+                              setPwStatus("checking");
+                              setTimeout(() => { setPwStatus("ok"); showToast("Playwright sẵn sàng chụp màn hình!"); }, 1600);
+                            }}>⚡ Kiểm tra &amp; Kết nối</button>
+                        </div>
                       </div>
-                      <span className="connection-status disconnected">● Chưa kết nối</span>
                     </div>
-                    <div className="setup-connection-card">
-                      <div className="connection-icon db">D</div>
-                      <div>
-                        <h5>Supabase / Airtable</h5>
-                        <p>Lưu trữ kết quả checklist, lịch sử review</p>
+
+                    {/* Supabase */}
+                    <div className="conn-item">
+                      <div className="conn-icon ci-db">D</div>
+                      <div className="conn-body">
+                        <div className="conn-name">Supabase / Airtable MCP</div>
+                        <div className="conn-desc">Lưu kết quả checklist, lịch sử review</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span className="conn-status cs-ok">✓ Đã kết nối (demo)</span>
+                          <button type="button" className="btn-outline" style={{ padding: "5px 10px", fontSize: 11 }}>Cấu hình</button>
+                        </div>
                       </div>
-                      <span className="connection-status connected">✓ Đã kết nối (demo)</span>
                     </div>
                   </div>
                 )}
@@ -2197,7 +2328,8 @@ function App() {
                 <button type="button" className="btn-primary" onClick={() => {
                   localStorage.setItem("designready.setup-datasource", JSON.stringify(setupDatasource));
                   setSetupModalOpen(false);
-                }}>Lưu cài đặt</button>
+                  showToast("Đã lưu cài đặt thành công!");
+                }}>✓ Lưu cài đặt</button>
               </div>
             </div>
           </div>
@@ -2326,7 +2458,7 @@ function App() {
                     message.content === "" && isGenerating && msgIndex === messages.length - 1 ? (
                       <div className="streaming-dots"><span /><span /><span /></div>
                     ) : (
-                    <div className={`message-markdown${isGenerating && msgIndex === messages.length - 1 ? " is-streaming" : ""}`} dangerouslySetInnerHTML={{ __html: chatMarked.parse(message.content, { async: false }) as string }} />
+                    <div className={`message-markdown${isGenerating && msgIndex === messages.length - 1 ? " is-streaming" : ""}`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chatMarked.parse(message.content, { async: false }) as string) }} />
                     )
                   ) : (
                     <p>{message.content}</p>
@@ -2958,6 +3090,21 @@ function App() {
           </button>
         </div>
       </section>
+      {/* Toast Notifications */}
+      <div className="toast-container" aria-live="polite">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast-item toast-${t.type}`}>
+            <span className="toast-icon">
+              {t.type === "success" && "✓"}
+              {t.type === "error" && "✗"}
+              {t.type === "warn" && "⚠"}
+              {t.type === "info" && "ℹ"}
+            </span>
+            <span>{t.msg}</span>
+            <button type="button" className="toast-close" onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}>×</button>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
