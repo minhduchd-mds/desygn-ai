@@ -76,7 +76,7 @@ type TemplatePriorityFilter = "All" | "Product" | "Technical";
 type TemplateCategoryFilter = "All" | DesignMdTemplateCategory;
 
 const DESIGN_MD_EDIT_PREFIX = "design-md-ai.design-md-edit.v1";
-const PRODUCT_NAME = "Design-md-ai";
+const PRODUCT_NAME = "Desygn AI";
 const REPOSITORY_URL = "https://github.com/minhduchd-mds/Design-md-ai";
 const CUSTOM_USAGE_TEXT = "Download DESIGN.md, then place it at ./DESIGN.md";
 const TEMPLATE_PRIORITY_FILTERS: TemplatePriorityFilter[] = ["All", "Product", "Technical"];
@@ -1423,22 +1423,38 @@ function App() {
       <>
       <main className={`workspace-shell${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`}>
         <aside className="workspace-sidebar">
-          <button
-            className="sidebar-toggle"
-            type="button"
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            onClick={() => setSidebarCollapsed((c) => !c)}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path
-                d={sidebarCollapsed ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"}
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          <div className="sidebar-brand-header">
+            <div className="sidebar-brand-logo">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <defs>
+                  <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                    <stop offset="0%" stopColor="#8b5cf6"/>
+                    <stop offset="100%" stopColor="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+                <rect width="32" height="32" rx="8" fill="url(#logoGrad)" opacity="0.15"/>
+                <path d="M10 8h8a6 6 0 010 12h-4l-4 4V8z" fill="url(#logoGrad)"/>
+                <rect x="13" y="12" width="6" height="6" rx="1" fill="#fff" opacity="0.7"/>
+              </svg>
+              <span className="sidebar-brand-name">{PRODUCT_NAME}</span>
+            </div>
+            <button
+              className="sidebar-toggle"
+              type="button"
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={() => setSidebarCollapsed((c) => !c)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path
+                  d={sidebarCollapsed ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
           <div className="workspace-tabs">
             <button type="button" className={`workspace-tab${workspaceTab === "chat" ? " active" : ""}`} onClick={() => setWorkspaceTab("chat")}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -1485,18 +1501,6 @@ function App() {
             <a href="#settings" role="button" onClick={(event) => { event.preventDefault(); setSettingsOpen((v) => !v); }}>
               <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.8"/></svg>
               <span className="nav-label">Settings</span>
-            </a>
-            <a
-              className="ghost-button"
-              href="#landing"
-              role="button"
-              onClick={(event) => {
-                event.preventDefault();
-                setView("landing");
-              }}
-            >
-              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 3l9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 21V12h6v9M5 21h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span className="nav-label">Back to website</span>
             </a>
           </nav>
           {sidebarCollapsed && projectHistory.length > 0 && (
@@ -1639,19 +1643,16 @@ function App() {
             </section>
           )}
 
-          {/*// Pro account  */}
+          {/* Pro badge */}
           <section className="plan-card">
-            <span>{user.plan === "pro" ? "Pro account" : "Free account"}</span>
-            <p className="p-2">
-              {user.plan === "pro"
-                ? "Full Design.md controls are enabled."
-                : "Core Design.md preview is enabled. Pro export controls are in development."}
-            </p>
-            <button onClick={upgradeToPro}>{user.plan === "pro" ? "Pro Active" : "Upgrade Pro"}</button>
+            <div className="plan-card-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#8b5cf6"/></svg>
+              <span>{user.plan === "pro" ? "Pro Active" : "Free"}</span>
+            </div>
+            {user.plan !== "pro" && <button onClick={upgradeToPro}>Upgrade Pro</button>}
           </section>
 
-          {/*// Profile */}
-
+          {/* Profile */}
           <div className="brand-block">
             <span className="brand-mark" title={sidebarCollapsed ? user.displayEmail : undefined}>AI</span>
             <div>
@@ -1659,7 +1660,7 @@ function App() {
               <span>{user.displayEmail}</span>
             </div>
             <button className="ghost-button logout-button" type="button" onClick={logout}>
-              Logout
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </button>
           </div>
         </aside>
@@ -2413,25 +2414,52 @@ function App() {
           </div>
           )}
           <div className="chat-scroll" ref={chatScrollRef}>
-            {messages.length === 0 && !isGenerating && !hasGenerated && (
-              <div className="chat-empty-state">
-                {workspaceTab === "chat" ? (
-                  <>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
-                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                    </svg>
-                    <p className="chat-empty-title">Start a conversation</p>
-                    <p className="chat-empty-hint">Hỏi bất cứ gì — Trợ lý ảo luôn sẵn sàng phục vụ ☕</p>
-                  </>
-                ) : (
-                  <>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="chat-empty-icon">
-                      <path d="M12 3l1.88 5.76a1 1 0 0 0 .95.69h6.05l-4.9 3.56a1 1 0 0 0-.36 1.12L17.5 20l-4.9-3.56a1 1 0 0 0-1.18 0L6.5 20l1.88-5.87a1 1 0 0 0-.36-1.12L3.12 9.45h6.05a1 1 0 0 0 .95-.69z"/>
-                    </svg>
-                    <p className="chat-empty-title">Ready to generate</p>
-                    <p className="chat-empty-hint">Upload a BA doc or describe your app, then click <strong>Generate 5 screens</strong></p>
-                  </>
-                )}
+            {messages.length <= 1 && !isGenerating && !hasGenerated && (
+              <div className="welcome-hero">
+                <div className="welcome-brand-icon">
+                  <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                    <defs><linearGradient id="wGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#06b6d4"/></linearGradient></defs>
+                    <path d="M10 8h8a6 6 0 010 12h-4l-4 4V8z" fill="url(#wGrad)"/>
+                    <rect x="13" y="12" width="6" height="6" rx="1" fill="#fff" opacity="0.7"/>
+                  </svg>
+                  <span>{PRODUCT_NAME}</span>
+                </div>
+                <h1 className="welcome-title">Welcome back <span className="welcome-sparkle">✨</span></h1>
+                <p className="welcome-subtitle">Create AI-ready Design.md context for your coding agents in seconds.</p>
+                <div className="welcome-cards">
+                  <button type="button" className="welcome-card" onClick={() => { setWorkspaceTab("code"); void generateFiveScreensFromContext(); }}>
+                    <div className="welcome-card-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    </div>
+                    <span className="welcome-card-arrow">→</span>
+                    <h3>Create Design.md</h3>
+                    <p>Generate a full Design.md from your request</p>
+                  </button>
+                  <button type="button" className="welcome-card" onClick={() => baDocInputRef.current?.click()}>
+                    <div className="welcome-card-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <span className="welcome-card-arrow">→</span>
+                    <h3>Upload Design.md</h3>
+                    <p>Upload existing files and enhance with AI</p>
+                  </button>
+                  <button type="button" className="welcome-card" onClick={() => analyzeImageInputRef.current?.click()}>
+                    <div className="welcome-card-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <span className="welcome-card-arrow">→</span>
+                    <h3>Import Screenshots</h3>
+                    <p>Extract design context from images</p>
+                  </button>
+                  <button type="button" className="welcome-card" onClick={() => openTemplateLibrary()}>
+                    <div className="welcome-card-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    </div>
+                    <span className="welcome-card-arrow">→</span>
+                    <h3>Use Template</h3>
+                    <p>Start from a template and customize</p>
+                  </button>
+                </div>
               </div>
             )}
 

@@ -1146,20 +1146,45 @@ textarea {
   grid-template-columns: 52px minmax(0, 1fr);
 }
 
+/* ── Sidebar Brand Header ── */
+.sidebar-brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.sidebar-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-is-collapsed .sidebar-brand-name { display: none; }
+.sidebar-is-collapsed .sidebar-brand-header { justify-content: center; }
+
 .sidebar-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
   background: transparent;
   color: #a6b2c4;
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s, color 0.15s;
-  align-self: flex-end;
 }
 
 .sidebar-toggle:hover {
@@ -1255,12 +1280,13 @@ textarea {
 
 .brand-mark {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   place-items: center;
   border-radius: 8px;
-  background: #0f6fff;
-  font-weight: 650;
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .brand-block div {
@@ -1312,9 +1338,10 @@ textarea {
 }
 
 .workspace-tab.active {
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.2));
   color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 4px rgba(139,92,246,0.2);
+  border: 1px solid rgba(139,92,246,0.3);
 }
 
 .workspace-tab svg {
@@ -1552,8 +1579,9 @@ textarea {
 }
 .sidebar-history a.active,
 .side-nav a.active {
-    background: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.1));
     color: #ffffff;
+    border-left: 2px solid #8b5cf6;
 }
 .sidebar-history .truncate{
     white-space: nowrap;
@@ -1692,11 +1720,26 @@ textarea {
 .plan-card {
   flex: 0 0 auto;
   margin-top: 0;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.08));
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 10px;
+  box-shadow: none;
 }
+
+.plan-card button {
+  background: rgba(139,92,246,0.2);
+  border: 1px solid rgba(139,92,246,0.3);
+  color: #a78bfa;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.plan-card button:hover { background: rgba(139,92,246,0.3); }
 
 .chat-workspace {
   display: flex;
@@ -1710,10 +1753,25 @@ textarea {
 .builder-workspace {
   padding: 24px 36px 0;
   overflow: hidden;
+  position: relative;
   background:
-    radial-gradient(ellipse at 80% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 10% 100%, rgba(20, 184, 166, 0.05) 0%, transparent 40%),
-    #1a1a1a;
+    radial-gradient(ellipse at 50% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% -10%, rgba(99, 102, 241, 0.06) 0%, transparent 45%),
+    #0d0f17;
+}
+
+/* Purple glow at bottom */
+.builder-workspace::after {
+  content: "";
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 120px;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.15) 0%, rgba(99,102,241,0.08) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .workspace-action-bar {
@@ -2507,6 +2565,135 @@ textarea {
   color: #c4b5fd;
 }
 
+/* ── Welcome Hero (Desygn AI) ── */
+.welcome-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 32px;
+  text-align: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.welcome-brand-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #a78bfa;
+  margin-bottom: 8px;
+}
+
+.welcome-title {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #c084fc, #818cf8, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.welcome-sparkle {
+  -webkit-text-fill-color: initial;
+  background: none;
+  display: inline;
+}
+
+.welcome-subtitle {
+  font-size: 15px;
+  color: #94a3b8;
+  margin: 4px 0 24px;
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.welcome-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.welcome-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 16px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 14px;
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.welcome-card:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+.welcome-card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.welcome-card-arrow {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  font-size: 16px;
+  color: #6366f1;
+  opacity: 0.5;
+}
+
+.welcome-card:hover .welcome-card-arrow { opacity: 1; }
+
+.welcome-card h3 {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #f1f5f9;
+}
+
+.welcome-card p {
+  margin: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+  .welcome-cards { grid-template-columns: repeat(2, 1fr); }
+  .welcome-title { font-size: 28px; }
+}
+
+/* ── Plan card updated ── */
+.plan-card-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a78bfa;
+}
+
 .chat-composer {
   position: sticky;
   bottom: 0;
@@ -2574,8 +2761,8 @@ textarea {
 }
 
 .send-button {
-  background: #e2e8f0;
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
   font-weight: 650;
 }
 
