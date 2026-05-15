@@ -1425,16 +1425,34 @@ function App() {
         <aside className="workspace-sidebar">
           <div className="sidebar-brand-header">
             <div className="sidebar-brand-logo">
-              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <svg width="30" height="30" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
-                    <stop offset="0%" stopColor="#8b5cf6"/>
+                  <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40">
+                    <stop offset="0%" stopColor="#a855f7"/>
+                    <stop offset="50%" stopColor="#6366f1"/>
                     <stop offset="100%" stopColor="#06b6d4"/>
                   </linearGradient>
+                  <linearGradient id="cubeGrad" x1="14" y1="12" x2="28" y2="28">
+                    <stop offset="0%" stopColor="#c084fc"/>
+                    <stop offset="100%" stopColor="#818cf8"/>
+                  </linearGradient>
                 </defs>
-                <rect width="32" height="32" rx="8" fill="url(#logoGrad)" opacity="0.15"/>
-                <path d="M10 8h8a6 6 0 010 12h-4l-4 4V8z" fill="url(#logoGrad)"/>
-                <rect x="13" y="12" width="6" height="6" rx="1" fill="#fff" opacity="0.7"/>
+                {/* Outer D shape */}
+                <path d="M8 6h16a10 10 0 010 20H8V6z" fill="url(#logoGrad)" opacity="0.85"/>
+                {/* Inner darker D */}
+                <path d="M12 10h10a6 6 0 010 12H12V10z" fill="#1e1145" opacity="0.7"/>
+                {/* 3D cube */}
+                <rect x="16" y="14" width="8" height="8" rx="1.5" fill="url(#cubeGrad)" opacity="0.8"/>
+                <path d="M16 14l2-2h8l-2 2" fill="#c084fc" opacity="0.5"/>
+                <path d="M24 14l2-2v8l-2 2" fill="#818cf8" opacity="0.4"/>
+                {/* Dots pattern */}
+                <circle cx="5" cy="12" r="1" fill="#a855f7" opacity="0.5"/>
+                <circle cx="5" cy="16" r="1" fill="#a855f7" opacity="0.4"/>
+                <circle cx="5" cy="20" r="1" fill="#6366f1" opacity="0.5"/>
+                <circle cx="5" cy="24" r="1" fill="#6366f1" opacity="0.4"/>
+                <circle cx="2" cy="14" r="0.8" fill="#a855f7" opacity="0.3"/>
+                <circle cx="2" cy="18" r="0.8" fill="#818cf8" opacity="0.3"/>
+                <circle cx="2" cy="22" r="0.8" fill="#06b6d4" opacity="0.3"/>
               </svg>
               <span className="sidebar-brand-name">{PRODUCT_NAME}</span>
             </div>
@@ -2417,10 +2435,11 @@ function App() {
             {messages.length <= 1 && !isGenerating && !hasGenerated && (
               <div className="welcome-hero">
                 <div className="welcome-brand-icon">
-                  <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                    <defs><linearGradient id="wGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#06b6d4"/></linearGradient></defs>
-                    <path d="M10 8h8a6 6 0 010 12h-4l-4 4V8z" fill="url(#wGrad)"/>
-                    <rect x="13" y="12" width="6" height="6" rx="1" fill="#fff" opacity="0.7"/>
+                  <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
+                    <defs><linearGradient id="wGrad" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stopColor="#a855f7"/><stop offset="50%" stopColor="#6366f1"/><stop offset="100%" stopColor="#06b6d4"/></linearGradient></defs>
+                    <path d="M8 6h16a10 10 0 010 20H8V6z" fill="url(#wGrad)" opacity="0.85"/>
+                    <path d="M12 10h10a6 6 0 010 12H12V10z" fill="#1e1145" opacity="0.7"/>
+                    <rect x="16" y="14" width="8" height="8" rx="1.5" fill="#c084fc" opacity="0.8"/>
                   </svg>
                   <span>{PRODUCT_NAME}</span>
                 </div>
@@ -2463,15 +2482,11 @@ function App() {
               </div>
             )}
 
-            {messages.map((message, msgIndex) => (
+            {messages.map((message, msgIndex) => {
+              // Hide initial assistant message when welcome hero is visible
+              if (messages.length <= 1 && !isGenerating && !hasGenerated && msgIndex === 0 && message.role === "assistant") return null;
+              return (
               <article key={message.id} className={`message ${message.role}${isGenerating && msgIndex === messages.length - 1 && message.role === "assistant" && message.content === "" ? " is-thinking" : ""}`}>
-                {message.role === "assistant" && (
-                  <div className="message-avatar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                )}
                 <div className="message-body">
                   {message.role === "assistant" ? (
                     message.content === "" && isGenerating && msgIndex === messages.length - 1 ? (
@@ -2515,7 +2530,8 @@ function App() {
                   )}
                 </div>
               </article>
-            ))}
+              );
+            })}
 
             {isGenerating && workspaceTab === "code" && (
               <div className="thinking-row">
