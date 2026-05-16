@@ -213,6 +213,42 @@
   font-size: 0.9em;
 }
 
+// ─── Code Block Copy Button (v0.dev style) ───────────
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-sm;
+  background: rgba(30, 30, 46, 0.85);
+  color: $slate-400;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  backdrop-filter: blur(4px);
+
+  pre:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.2);
+    color: $indigo-200;
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  &.is-copied {
+    opacity: 1;
+    color: $green-400;
+    border-color: rgba(74, 222, 128, 0.3);
+  }
+}
+
 // ─── Benchmark Panel ──────────────────────────────────
 
 .benchmark-panel span {

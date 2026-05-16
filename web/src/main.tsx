@@ -25,6 +25,7 @@ import type { HtmlPreviewState } from "./workspace/HtmlPreviewModal";
 import { SettingsModal, type IntegrationItem } from "./workspace/SettingsModal";
 import { PanelErrorBoundary } from "./workspace/PanelErrorBoundary";
 import { WorkspaceResult } from "./workspace/WorkspaceResult";
+import { CodeBlockCopyContainer } from "./workspace/CodeBlockCopy";
 import { eventBus } from "./lib/eventBus";
 import { errorBus } from "./lib/errorBus";
 import { useCommandShortcuts } from "./lib/useCommandShortcuts";
@@ -512,7 +513,7 @@ const ChatMessageItem = React.memo(function ChatMessageItem({
           isThinking ? (
             <div className="streaming-dots"><span /><span /><span /></div>
           ) : (
-            <div className={`message-markdown${isStreaming ? " is-streaming" : ""}`} dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+            <CodeBlockCopyContainer className={`message-markdown${isStreaming ? " is-streaming" : ""}`} html={renderedHtml} />
           )
         ) : (
           <p>{message.content}</p>
