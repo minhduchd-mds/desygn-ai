@@ -10,3 +10,7 @@ coverage/
 storybook-static
 .claude/
 .env.local
+
+# Build output (Vite web:build outputs to public/)
+public/
+.idea/
