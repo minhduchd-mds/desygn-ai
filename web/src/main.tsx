@@ -474,6 +474,79 @@ function MarkdownSectionContent({ content }: { content: string }) {
   );
 }
 
+// ─── Performance: Memoized Chat Message ─────────────────────
+interface ChatMessageItemProps {
+  message: ChatMessage;
+  msgIndex: number;
+  isLast: boolean;
+  isGenerating: boolean;
+  copiedMessageId: string | null;
+  onCopy: (msg: ChatMessage) => void;
+  onRegenerate: (index: number) => void;
+  onPreview: (html: string, title: string) => void;
+  promptSlice: string;
+}
+
+const ChatMessageItem = React.memo(function ChatMessageItem({
+  message, msgIndex, isLast, isGenerating, copiedMessageId,
+  onCopy, onRegenerate, onPreview, promptSlice,
+}: ChatMessageItemProps) {
+  const isThinking = isGenerating && isLast && message.role === "assistant" && message.content === "";
+  const isStreaming = isGenerating && isLast;
+
+  const renderedHtml = useMemo(() => {
+    if (message.role !== "assistant" || !message.content) return "";
+    return DOMPurify.sanitize(chatMarked.parse(message.content, { async: false }) as string);
+  }, [message.content, message.role]);
+
+  return (
+    <article className={`message ${message.role}${isThinking ? " is-thinking" : ""}`}>
+      <div className="message-body">
+        {message.role === "assistant" ? (
+          isThinking ? (
+            <div className="streaming-dots"><span /><span /><span /></div>
+          ) : (
+            <div className={`message-markdown${isStreaming ? " is-streaming" : ""}`} dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+          )
+        ) : (
+          <p>{message.content}</p>
+        )}
+        {message.htmlCode && (
+          <button
+            type="button"
+            className="html-preview-trigger"
+            onClick={() => onPreview(message.htmlCode!, (message.title ?? promptSlice) || "Web Preview")}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Run preview
+          </button>
+        )}
+        {message.role === "assistant" && message.content && !isGenerating && (
+          <div className="message-actions">
+            <button
+              type="button"
+              title="Copy"
+              className={copiedMessageId === message.id ? "is-copied" : ""}
+              onClick={() => onCopy(message)}
+            >
+              {copiedMessageId === message.id ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              )}
+            </button>
+            <button type="button" title="Regenerate" onClick={() => onRegenerate(msgIndex)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+});
+
 function App() {
   const [user, setUser] = useState<SessionUser | null>(() => {
     const session = getSessionUser();
@@ -559,6 +632,28 @@ function App() {
   // Brand menu dropdown
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [brandHelpOpen, setBrandHelpOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"profile" | "appearance" | "behavior" | "notifications" | "extensions" | "document" | "other">("profile");
+  const [shareLinksEnabled, setShareLinksEnabled] = useState(() => localStorage.getItem("designready.share-links") === "true");
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem("designready.display-name") ?? "");
+  const userDisplayName = displayName || user?.displayEmail?.split("@")[0] || "User";
+
+  // Extensions / Integrations state
+  interface IntegrationItem { id: string; name: string; icon: string; status: "connected" | "disconnected" | "soon"; endpoint?: string; }
+  const [integrations, setIntegrations] = useState<IntegrationItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("designready.integrations");
+      return saved ? JSON.parse(saved) as IntegrationItem[] : [
+        { id: "figma-mcp", name: "Figma MCP", icon: "figma", status: "disconnected" },
+        { id: "github", name: "GitHub", icon: "github", status: "soon" },
+        { id: "vercel", name: "Vercel Deploy", icon: "vercel", status: "soon" },
+        { id: "notion", name: "Notion", icon: "notion", status: "soon" },
+        { id: "linear", name: "Linear", icon: "linear", status: "soon" },
+      ];
+    } catch { return []; }
+  });
+  const saveIntegrations = useCallback((next: IntegrationItem[]) => { setIntegrations(next); localStorage.setItem("designready.integrations", JSON.stringify(next)); }, []);
+  const [figmaMcpEndpoint, setFigmaMcpEndpoint] = useState(() => localStorage.getItem("designready.figma-mcp-endpoint") ?? "");
+  const [chatMappingEnabled, setChatMappingEnabled] = useState(() => localStorage.getItem("designready.chat-mapping") === "true");
 
   // Projects store
   interface ProjectItem { id: string; name: string; createdAt: string; }
@@ -1282,6 +1377,10 @@ function App() {
     }, 50);
   }
 
+  const handleMessagePreview = useCallback((html: string, title: string) => {
+    setHtmlPreview({ html, title });
+  }, []);
+
   function _startNewProject() {
     setRequest(DEFAULT_PROJECT);
     setGeneratedRequest(null);
@@ -1653,37 +1752,7 @@ function App() {
             )}
           </section>
 
-          {settingsOpen && (
-            <section className="settings-panel">
-              <h4>Settings</h4>
-              <label className="settings-row">
-                <span>Theme</span>
-                <select
-                  value={chatTheme}
-                  onChange={(e) => {
-                    const t = e.target.value as "dark" | "light";
-                    setChatTheme(t);
-                    localStorage.setItem("designready.theme", t);
-                  }}
-                >
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                className="settings-danger-btn"
-                onClick={() => {
-                  setMessages([createMessage("assistant", INITIAL_ASSISTANT_MESSAGE, PRODUCT_NAME)]);
-                  setProjectHistory([]);
-                  saveProjectHistory([]);
-                  setActiveHistoryPrompt("");
-                }}
-              >
-                Clear all history
-              </button>
-            </section>
-          )}
+          {/* Settings panel removed — now a full popup modal */}
 
           {/* Brand menu — user profile + dropdown */}
           <div className="brand-block-wrapper">
@@ -1692,9 +1761,9 @@ function App() {
               className="brand-block"
               onClick={() => { setBrandMenuOpen((v) => !v); setBrandHelpOpen(false); }}
             >
-              <span className="brand-mark">{user.displayEmail?.charAt(0)?.toUpperCase() || "U"}</span>
+              <span className="brand-mark">{userDisplayName.charAt(0).toUpperCase()}</span>
               <div className="brand-info">
-                <strong>{user.displayEmail}</strong>
+                <strong>{userDisplayName}</strong>
                 <span className={`plan-badge plan-${user.plan}`}>{user.plan === "pro" ? "Pro" : "Free"}</span>
               </div>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="brand-chevron"><path d="M6 9L12 15L18 9" stroke="currentColor" strokeLinecap="round"/></svg>
@@ -1707,35 +1776,29 @@ function App() {
                     Upgrade plan
                   </button>
                 )}
-                <button type="button" className="brand-menu-item" onClick={() => { showToast("Coming soon", "info"); setBrandMenuOpen(false); }}>
+                <button type="button" className="brand-menu-item" onClick={() => { setSettingsOpen(true); setSettingsTab("extensions"); setBrandMenuOpen(false); }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   Get app & extensions
                 </button>
-                <button type="button" className="brand-menu-item" onClick={() => { showToast("Profile — coming soon", "info"); setBrandMenuOpen(false); }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  Profile
-                </button>
-                <button type="button" className="brand-menu-item" onClick={() => { setSettingsOpen((v) => !v); setBrandMenuOpen(false); }}>
+                <button type="button" className="brand-menu-item" onClick={() => { setSettingsOpen(true); setSettingsTab("profile"); setBrandMenuOpen(false); }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                   Setting
                 </button>
                 <div className="brand-menu-divider" />
-                <div className="brand-menu-submenu-wrapper">
-                  <button type="button" className="brand-menu-item" onClick={() => setBrandHelpOpen((v) => !v)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    Help
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="submenu-arrow"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                  </button>
-                  {brandHelpOpen && (
-                    <div className="brand-submenu">
-                      <a href="https://github.com/minhduchd-mds/Design-md-ai" target="_blank" rel="noopener noreferrer" className="brand-menu-item">Tài liệu hướng dẫn</a>
-                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Keyboard shortcuts — coming soon", "info"); setBrandMenuOpen(false); }}>Lối tắt bàn phím</button>
-                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Terms of service", "info"); setBrandMenuOpen(false); }}>Điều khoản dịch vụ</button>
-                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Privacy policy", "info"); setBrandMenuOpen(false); }}>Chính sách quyền riêng tư</button>
-                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Bug report — coming soon", "info"); setBrandMenuOpen(false); }}>Báo cáo lỗi</button>
-                    </div>
-                  )}
-                </div>
+                <button type="button" className={`brand-menu-item${brandHelpOpen ? " active" : ""}`} onClick={() => setBrandHelpOpen((v) => !v)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Help
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className={`submenu-arrow${brandHelpOpen ? " open" : ""}`}><path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                </button>
+                {brandHelpOpen && (
+                  <div className="brand-help-inline">
+                    <a href="https://github.com/minhduchd-mds/Design-md-ai" target="_blank" rel="noopener noreferrer" className="brand-menu-item">Tài liệu hướng dẫn</a>
+                    <button type="button" className="brand-menu-item" onClick={() => { showToast("Keyboard shortcuts — coming soon", "info"); setBrandMenuOpen(false); }}>Lối tắt bàn phím</button>
+                    <button type="button" className="brand-menu-item" onClick={() => { showToast("Terms of service", "info"); setBrandMenuOpen(false); }}>Điều khoản dịch vụ</button>
+                    <button type="button" className="brand-menu-item" onClick={() => { showToast("Privacy policy", "info"); setBrandMenuOpen(false); }}>Chính sách quyền riêng tư</button>
+                    <button type="button" className="brand-menu-item" onClick={() => { showToast("Bug report — coming soon", "info"); setBrandMenuOpen(false); }}>Báo cáo lỗi</button>
+                  </div>
+                )}
                 <div className="brand-menu-divider" />
                 <button type="button" className="brand-menu-item brand-menu-logout" onClick={() => { setBrandMenuOpen(false); logout(); }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -1745,6 +1808,408 @@ function App() {
             )}
           </div>
         </aside>
+
+        {/* Settings Popup Modal */}
+        {settingsOpen && (
+          <div className="settings-overlay" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setSettingsOpen(false); }}>
+            <div className="settings-modal">
+              <div className="settings-modal-header">
+                <h2>Cài đặt</h2>
+                <button type="button" className="settings-close-btn" onClick={() => setSettingsOpen(false)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div className="settings-modal-body">
+                <nav className="settings-tabs">
+                  {([
+                    { id: "profile" as const, icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2", label: "Profile" },
+                    { id: "appearance" as const, icon: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z", label: "Giao diện" },
+                    { id: "behavior" as const, icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z", label: "Hành vi" },
+                    { id: "notifications" as const, icon: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0", label: "Thông báo" },
+                    { id: "extensions" as const, icon: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z", label: "Extensions" },
+                    { id: "document" as const, icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z", label: "Tài liệu" },
+                    { id: "other" as const, icon: "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4", label: "Cài đặt khác" },
+                  ] as const).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`settings-tab-btn${settingsTab === tab.id ? " active" : ""}`}
+                      onClick={() => setSettingsTab(tab.id)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={tab.icon} />
+                        {tab.id === "profile" && <circle cx="12" cy="7" r="4" />}
+                      </svg>
+                      {tab.label}
+                    </button>
+                  ))}
+                </nav>
+                <div className="settings-content">
+                  {settingsTab === "profile" && (
+                    <div className="settings-section">
+                      <h3>Profile</h3>
+                      <label className="settings-field">
+                        <span>Tên hiển thị</span>
+                        <input
+                          type="text"
+                          value={displayName}
+                          onChange={(e) => { setDisplayName(e.target.value); localStorage.setItem("designready.display-name", e.target.value); }}
+                          placeholder={user?.displayEmail?.split("@")[0] || "User"}
+                        />
+                      </label>
+                      <label className="settings-field">
+                        <span>Email</span>
+                        <input type="text" value={user?.displayEmail ?? ""} disabled />
+                      </label>
+                      <label className="settings-field">
+                        <span>Gói dịch vụ</span>
+                        <div className="settings-plan-row">
+                          <span className={`plan-badge plan-${user?.plan}`}>{user?.plan === "pro" ? "Pro" : "Free"}</span>
+                          {user?.plan !== "pro" && <button type="button" className="settings-upgrade-btn" onClick={upgradeToPro}>Nâng cấp Pro</button>}
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                  {settingsTab === "appearance" && (
+                    <div className="settings-section">
+                      <h3>Giao diện</h3>
+                      <label className="settings-field">
+                        <span>Theme</span>
+                        <select value={chatTheme} onChange={(e) => { const t = e.target.value as "dark" | "light"; setChatTheme(t); localStorage.setItem("designready.theme", t); }}>
+                          <option value="dark">Dark</option>
+                          <option value="light">Light</option>
+                        </select>
+                      </label>
+                      <label className="settings-field">
+                        <span>Ngôn ngữ</span>
+                        <select defaultValue="vi">
+                          <option value="vi">Tiếng Việt</option>
+                          <option value="en">English</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                  {settingsTab === "behavior" && (
+                    <div className="settings-section">
+                      <h3>Hành vi</h3>
+                      <label className="settings-field">
+                        <span>Enter để gửi tin nhắn</span>
+                        <span className="settings-hint">Nhấn Enter gửi, Shift+Enter xuống dòng</span>
+                        <select defaultValue="enter">
+                          <option value="enter">Enter gửi tin</option>
+                          <option value="shift">Shift+Enter gửi tin</option>
+                        </select>
+                      </label>
+                      <label className="settings-field">
+                        <span>AI Model mặc định</span>
+                        <select value={groqModel} onChange={(e) => { setGroqModel(e.target.value); localStorage.setItem("designready.model", e.target.value); }}>
+                          <option value="llama-3.3-70b-versatile">Llama 3.3 70B (default)</option>
+                          <option value="llama-3.1-8b-instant">Llama 3.1 8B (fast)</option>
+                          <option value="mixtral-8x7b-32768">Mixtral 8x7B (32K ctx)</option>
+                          <option value="gemma2-9b-it">Gemma 2 9B</option>
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                  {settingsTab === "notifications" && (
+                    <div className="settings-section">
+                      <h3>Thông báo</h3>
+                      <label className="settings-toggle-row">
+                        <div>
+                          <span>Thông báo hoàn thành</span>
+                          <span className="settings-hint">Nhận thông báo khi AI hoàn thành tạo Design.md</span>
+                        </div>
+                        <input type="checkbox" defaultChecked />
+                      </label>
+                      <label className="settings-toggle-row">
+                        <div>
+                          <span>Âm thanh thông báo</span>
+                          <span className="settings-hint">Phát âm thanh khi có thông báo mới</span>
+                        </div>
+                        <input type="checkbox" />
+                      </label>
+                    </div>
+                  )}
+                  {settingsTab === "extensions" && (
+                    <div className="settings-section">
+                      <h3>Extensions & Integrations</h3>
+                      <p className="settings-section-desc">Kết nối Desygn AI với các công cụ thiết kế và phát triển bên ngoài. Mapping luồng chat qua các kênh tích hợp.</p>
+
+                      <div className="ext-grid">
+                        {/* Figma MCP */}
+                        <div className={`ext-card${integrations.find(i => i.id === "figma-mcp")?.status === "connected" ? " connected" : ""}`}>
+                          <div className="ext-card-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 5.5A3.5 3.5 0 018.5 2H12v7H8.5A3.5 3.5 0 015 5.5z" fill="#F24E1E"/><path d="M12 2h3.5a3.5 3.5 0 010 7H12V2z" fill="#FF7262"/><path d="M12 9.5a3.5 3.5 0 117 0 3.5 3.5 0 01-7 0z" fill="#1ABCFE"/><path d="M5 16.5A3.5 3.5 0 018.5 13H12v3.5a3.5 3.5 0 01-7 0z" fill="#0ACF83"/><path d="M5 9.5A3.5 3.5 0 018.5 6H12v7H8.5A3.5 3.5 0 015 9.5z" fill="#A259FF"/></svg>
+                            <div className="ext-card-info">
+                              <strong>Figma MCP</strong>
+                              <span className="ext-card-desc">Kết nối trực tiếp qua Model Context Protocol — đọc design tokens, components, variables từ Figma</span>
+                            </div>
+                            <span className={`ext-status ext-status-${integrations.find(i => i.id === "figma-mcp")?.status}`}>
+                              {integrations.find(i => i.id === "figma-mcp")?.status === "connected" ? "Đã kết nối" : "Chưa kết nối"}
+                            </span>
+                          </div>
+                          <div className="ext-card-body">
+                            <label className="settings-field">
+                              <span>MCP Endpoint URL</span>
+                              <input
+                                type="text"
+                                value={figmaMcpEndpoint}
+                                onChange={(e) => setFigmaMcpEndpoint(e.target.value)}
+                                placeholder="ws://localhost:3333/figma-mcp"
+                              />
+                            </label>
+                            <div className="ext-card-actions">
+                              <button
+                                type="button"
+                                className="ext-connect-btn"
+                                onClick={() => {
+                                  if (!figmaMcpEndpoint.trim()) { showToast("Nhập MCP endpoint URL", "warn"); return; }
+                                  localStorage.setItem("designready.figma-mcp-endpoint", figmaMcpEndpoint);
+                                  const next = integrations.map(i => i.id === "figma-mcp" ? { ...i, status: "connected" as const, endpoint: figmaMcpEndpoint } : i);
+                                  saveIntegrations(next);
+                                  showToast("Đã kết nối Figma MCP!", "success");
+                                }}
+                              >
+                                {integrations.find(i => i.id === "figma-mcp")?.status === "connected" ? "Kết nối lại" : "Kết nối"}
+                              </button>
+                              {integrations.find(i => i.id === "figma-mcp")?.status === "connected" && (
+                                <button
+                                  type="button"
+                                  className="ext-disconnect-btn"
+                                  onClick={() => {
+                                    const next = integrations.map(i => i.id === "figma-mcp" ? { ...i, status: "disconnected" as const, endpoint: undefined } : i);
+                                    saveIntegrations(next);
+                                    setFigmaMcpEndpoint("");
+                                    localStorage.removeItem("designready.figma-mcp-endpoint");
+                                    showToast("Đã ngắt kết nối Figma MCP", "info");
+                                  }}
+                                >
+                                  Ngắt kết nối
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* GitHub */}
+                        <div className="ext-card ext-card-soon">
+                          <div className="ext-card-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                            <div className="ext-card-info">
+                              <strong>GitHub</strong>
+                              <span className="ext-card-desc">Đồng bộ repo, auto-push Design.md, review PR tự động</span>
+                            </div>
+                            <span className="ext-status ext-status-soon">Sắp ra mắt</span>
+                          </div>
+                        </div>
+
+                        {/* Vercel */}
+                        <div className="ext-card ext-card-soon">
+                          <div className="ext-card-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19.5h20L12 2z"/></svg>
+                            <div className="ext-card-info">
+                              <strong>Vercel Deploy</strong>
+                              <span className="ext-card-desc">Deploy preview trực tiếp từ Design.md output</span>
+                            </div>
+                            <span className="ext-status ext-status-soon">Sắp ra mắt</span>
+                          </div>
+                        </div>
+
+                        {/* Notion */}
+                        <div className="ext-card ext-card-soon">
+                          <div className="ext-card-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L18.19 2.15c-.467-.373-.98-.56-2.055-.466l-12.8.793c-.467.047-.56.28-.373.466l1.497 1.265zm.793 2.89v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.84-.046.933-.56.933-1.166V6.143c0-.606-.233-.933-.746-.886l-15.177.84c-.56.047-.747.327-.747.887zm14.337.466c.094.42 0 .84-.42.886l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.747 0-.933-.234-1.494-.934l-4.577-7.186v6.952l1.448.327s0 .84-1.168.84l-3.222.187c-.094-.187 0-.653.327-.746l.84-.233V8.558l-1.168-.094c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279V8.09l-1.215-.14c-.093-.513.28-.886.747-.933l3.222-.187z"/></svg>
+                            <div className="ext-card-info">
+                              <strong>Notion</strong>
+                              <span className="ext-card-desc">Sync BA documents & project specs sang Notion workspace</span>
+                            </div>
+                            <span className="ext-status ext-status-soon">Sắp ra mắt</span>
+                          </div>
+                        </div>
+
+                        {/* Linear */}
+                        <div className="ext-card ext-card-soon">
+                          <div className="ext-card-header">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3.357 16.643a.75.75 0 01-.066-1.002l7.006-8.674a.75.75 0 011.174.004l3.076 3.873 3.933-4.87a.75.75 0 011.174.003l2.003 2.523a.75.75 0 01-.588.977H3.93z"/></svg>
+                            <div className="ext-card-info">
+                              <strong>Linear</strong>
+                              <span className="ext-card-desc">Tạo issues từ Design.md checklist, track design debt</span>
+                            </div>
+                            <span className="ext-status ext-status-soon">Sắp ra mắt</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="settings-divider" />
+
+                      {/* Chat Mapping */}
+                      <h4 className="settings-subsection-title">Chat Flow Mapping</h4>
+                      <p className="settings-section-desc">Mapping luồng chat AI ra các kênh bên ngoài — gửi output trực tiếp đến Figma, GitHub Issues, hoặc Notion.</p>
+                      <label className="settings-toggle-row">
+                        <div>
+                          <span>Bật Chat Mapping</span>
+                          <span className="settings-hint">Khi bật, kết quả chat có thể được forward sang các kênh tích hợp đã kết nối</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={chatMappingEnabled}
+                          onChange={(e) => { setChatMappingEnabled(e.target.checked); localStorage.setItem("designready.chat-mapping", String(e.target.checked)); }}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {settingsTab === "document" && (
+                    <div className="settings-section">
+                      <h3>Tài liệu phần mềm</h3>
+                      <p className="settings-section-desc">Tài liệu kỹ thuật và hướng dẫn s�� dụng Desygn AI — kiến trúc hệ thống, tính năng, và API.</p>
+
+                      <div className="doc-section">
+                        <h4>Tổng quan</h4>
+                        <p>Desygn AI là công cụ chuyển đổi thiết kế Figma sang Design.md cho các AI coding agents (Codex, Claude Code, Cursor, Windsurf). Hệ thống gồm 3 module chính:</p>
+                        <ul className="doc-list">
+                          <li><strong>Figma Plugin</strong> — Scan components, score AI-readiness, export tokens</li>
+                          <li><strong>Web Workspace</strong> — Chat AI, generate Design.md, template library (73 templates)</li>
+                          <li><strong>API Layer</strong> — Groq AI chat, HTML gen, image analysis, screen generation</li>
+                        </ul>
+                      </div>
+
+                      <div className="doc-section">
+                        <h4>Kiến trúc</h4>
+                        <div className="doc-arch-diagram">
+                          <div className="doc-arch-box">
+                            <span className="doc-arch-label">Plugin Sandbox</span>
+                            <small>Figma API only • No DOM • No fetch</small>
+                          </div>
+                          <span className="doc-arch-arrow">⇄ postMessage</span>
+                          <div className="doc-arch-box">
+                            <span className="doc-arch-label">UI Iframe</span>
+                            <small>React • CSS Modules • No figma.*</small>
+                          </div>
+                          <span className="doc-arch-arrow">→ fetch</span>
+                          <div className="doc-arch-box">
+                            <span className="doc-arch-label">API (Serverless)</span>
+                            <small>Vercel Functions • Groq • Supabase</small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="doc-section">
+                        <h4>Tính năng chính</h4>
+                        <div className="doc-features-grid">
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">🎨</span>
+                            <strong>73 Design Templates</strong>
+                            <small>Lazy-loaded, category filtering, auto-match</small>
+                          </div>
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">🤖</span>
+                            <strong>AI Chat (Groq)</strong>
+                            <small>Llama 3.3 70B, streaming, markdown render</small>
+                          </div>
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">📊</span>
+                            <strong>AI Readiness Score</strong>
+                            <small>7-category evaluation (0-100)</small>
+                          </div>
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">🔍</span>
+                            <strong>Compare Panel</strong>
+                            <small>Design vs Code with bug markers</small>
+                          </div>
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">📱</span>
+                            <strong>Responsive Detection</strong>
+                            <small>Mobile/Tablet/Desktop variants</small>
+                          </div>
+                          <div className="doc-feature-card">
+                            <span className="doc-feature-icon">🔗</span>
+                            <strong>Extensions (MCP)</strong>
+                            <small>Figma, GitHub, Vercel integrations</small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="doc-section">
+                        <h4>API Endpoints</h4>
+                        <table className="doc-api-table">
+                          <thead><tr><th>Route</th><th>Method</th><th>Mô tả</th></tr></thead>
+                          <tbody>
+                            <tr><td><code>/api/chat</code></td><td>POST</td><td>Groq AI chat — streaming response</td></tr>
+                            <tr><td><code>/api/generate-html</code></td><td>POST</td><td>Generate HTML từ text prompt</td></tr>
+                            <tr><td><code>/api/generate-screens</code></td><td>POST</td><td>Generate screen layouts</td></tr>
+                            <tr><td><code>/api/analyze-image</code></td><td>POST</td><td>Phân tích ảnh thiết kế</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="doc-section">
+                        <h4>Hiệu năng & Tối ưu</h4>
+                        <ul className="doc-list">
+                          <li><strong>Code splitting</strong> — SplitView, HtmlPreviewModal lazy-loaded</li>
+                          <li><strong>Template lazy-load</strong> — Chỉ metadata khi khởi động, full content khi chọn</li>
+                          <li><strong>Memoization</strong> — useMemo cho filtered lists, useCallback cho handlers</li>
+                          <li><strong>Virtual scrolling</strong> — Chat messages virtualized ở 100+ messages</li>
+                          <li><strong>Debounced inputs</strong> — Search, resize, scroll handlers debounced</li>
+                          <li><strong>Web Crypto</strong> — Encryption chạy off-main-thread khi có thể</li>
+                        </ul>
+                      </div>
+
+                      <div className="doc-section">
+                        <h4>Keyboard Shortcuts</h4>
+                        <div className="doc-shortcuts">
+                          <div className="doc-shortcut-row"><kbd>Enter</kbd><span>Gửi tin nhắn</span></div>
+                          <div className="doc-shortcut-row"><kbd>Shift + Enter</kbd><span>Xuống dòng</span></div>
+                          <div className="doc-shortcut-row"><kbd>Escape</kbd><span>Đóng modal / popup</span></div>
+                          <div className="doc-shortcut-row"><kbd>Ctrl + K</kbd><span>Tìm kiếm template</span></div>
+                          <div className="doc-shortcut-row"><kbd>Ctrl + Shift + D</kbd><span>Toggle Dark/Light theme</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {settingsTab === "other" && (
+                    <div className="settings-section">
+                      <h3>Cài đặt khác</h3>
+                      <label className="settings-toggle-row">
+                        <div>
+                          <span>Cho phép chia sẻ link cuộc trò chuyện</span>
+                          <span className="settings-hint">Tạo link chia sẻ cuộc trò chuyện với người khác</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={shareLinksEnabled}
+                          onChange={(e) => { setShareLinksEnabled(e.target.checked); localStorage.setItem("designready.share-links", String(e.target.checked)); }}
+                        />
+                      </label>
+                      <div className="settings-divider" />
+                      <div className="settings-field">
+                        <span>Xóa bộ nhớ đệm</span>
+                        <span className="settings-hint">Xóa dữ liệu cache, template đã tải, và các file tạm</span>
+                        <button type="button" className="settings-danger-btn" onClick={() => { showToast("Đã xóa bộ nhớ đệm", "success"); }}>Xóa cache</button>
+                      </div>
+                      <div className="settings-field">
+                        <span>Xóa toàn bộ lịch sử</span>
+                        <span className="settings-hint">Xóa tất cả lịch sử chat và dự án. Không thể hoàn tác.</span>
+                        <button
+                          type="button"
+                          className="settings-danger-btn"
+                          onClick={() => {
+                            setMessages([createMessage("assistant", INITIAL_ASSISTANT_MESSAGE, PRODUCT_NAME)]);
+                            setProjectHistory([]);
+                            saveProjectHistory([]);
+                            setActiveHistoryPrompt("");
+                            showToast("Đã xóa toàn bộ lịch sử", "success");
+                          }}
+                        >
+                          Xóa lịch sử
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {templatePopupOpen && (
           <div className="template-popup-overlay" role="dialog" aria-modal="true" aria-label="Template Library" onClick={(e) => { if (e.target === e.currentTarget) setTemplatePopupOpen(false); }}>
@@ -2549,50 +3014,18 @@ function App() {
               // Hide initial assistant message when welcome hero is visible
               if (messages.length <= 1 && !isGenerating && !hasGenerated && msgIndex === 0 && message.role === "assistant") return null;
               return (
-              <article key={message.id} className={`message ${message.role}${isGenerating && msgIndex === messages.length - 1 && message.role === "assistant" && message.content === "" ? " is-thinking" : ""}`}>
-                <div className="message-body">
-                  {message.role === "assistant" ? (
-                    message.content === "" && isGenerating && msgIndex === messages.length - 1 ? (
-                      <div className="streaming-dots"><span /><span /><span /></div>
-                    ) : (
-                    <div className={`message-markdown${isGenerating && msgIndex === messages.length - 1 ? " is-streaming" : ""}`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chatMarked.parse(message.content, { async: false }) as string) }} />
-                    )
-                  ) : (
-                    <p>{message.content}</p>
-                  )}
-                  {message.htmlCode && (
-                    <button
-                      type="button"
-                      className="html-preview-trigger"
-                      onClick={() => setHtmlPreview({ html: message.htmlCode!, title: (message.title ?? request.prompt.slice(0, 40)) || "Web Preview" })}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                      </svg>
-                      Run preview
-                    </button>
-                  )}
-                  {message.role === "assistant" && message.content && !isGenerating && (
-                    <div className="message-actions">
-                      <button
-                        type="button"
-                        title="Copy"
-                        className={copiedMessageId === message.id ? "is-copied" : ""}
-                        onClick={() => void copyMessageContent(message)}
-                      >
-                        {copiedMessageId === message.id ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        )}
-                      </button>
-                      <button type="button" title="Regenerate" onClick={() => void regenerateMessage(msgIndex)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </article>
+                <ChatMessageItem
+                  key={message.id}
+                  message={message}
+                  msgIndex={msgIndex}
+                  isLast={msgIndex === messages.length - 1}
+                  isGenerating={isGenerating}
+                  copiedMessageId={copiedMessageId}
+                  onCopy={copyMessageContent}
+                  onRegenerate={regenerateMessage}
+                  onPreview={handleMessagePreview}
+                  promptSlice={request.prompt.slice(0, 40)}
+                />
               );
             })}
 

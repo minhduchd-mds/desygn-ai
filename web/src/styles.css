@@ -690,7 +690,7 @@ button {
   border: 1px solid #dce5f2;
   background: #ffffff;
   color: #334155;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .template-priority-tabs button {
@@ -752,7 +752,7 @@ button {
 .template-library-grid article > div:first-child > span {
   color: #0f766e;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -786,7 +786,7 @@ button {
   color: #475569;
   padding: 6px 9px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -811,7 +811,7 @@ button {
   background: #172033;
   color: white;
   padding: 11px 15px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .template-empty {
