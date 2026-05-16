@@ -143,31 +143,43 @@ const OPEN_DESIGN_PRESETS: OpenDesignPreset[] = [
     summary: "Balanced production UI with clear hierarchy, restrained accents, and broad component reuse.",
     tokens: ["semantic color roles", "4/8px spacing scale", "radius <= 8px", "subtle borders before shadows"],
     components: ["Button", "Input", "Select", "Tabs", "Table", "Modal", "Card", "Navigation"],
-    guardrails: ["Keep layouts practical and scannable.", "Do not introduce a brand-specific visual language unless requested."],
+    guardrails: [
+      "Keep layouts practical and scannable.",
+      "Do not introduce a brand-specific visual language unless requested.",
+    ],
   },
   {
     id: "linear-app",
     label: "Linear App",
     category: "Productivity & SaaS",
-    summary: "Precise issue-tracking aesthetic: compact density, crisp borders, quiet surfaces, and fast keyboard-first workflows.",
+    summary:
+      "Precise issue-tracking aesthetic: compact density, crisp borders, quiet surfaces, and fast keyboard-first workflows.",
     tokens: ["neutral surfaces", "low-contrast borders", "single focused accent", "tight spacing"],
     components: ["Command menu", "Issue row", "Status badge", "Sidebar", "Toolbar", "Activity feed"],
-    guardrails: ["Favor density and speed over decorative presentation.", "Keep status, priority, and ownership easy to scan."],
+    guardrails: [
+      "Favor density and speed over decorative presentation.",
+      "Keep status, priority, and ownership easy to scan.",
+    ],
   },
   {
-    id: "openai",
-    label: "OpenAI",
+    id: "desygnAI",
+    label: "desygnAI",
     category: "AI & LLM",
-    summary: "Calm AI workspace with generous readable content, high trust, subtle interactions, and minimal distraction.",
+    summary:
+      "Calm AI workspace with generous readable content, high trust, subtle interactions, and minimal distraction.",
     tokens: ["soft neutrals", "clear text hierarchy", "accessible focus", "subtle panel separation"],
     components: ["Prompt composer", "Conversation list", "Assistant response", "Model picker", "Citation block"],
-    guardrails: ["Make generated or AI-assisted states explicit.", "Prioritize readable long-form content and safe action confirmation."],
+    guardrails: [
+      "Make generated or AI-assisted states explicit.",
+      "Prioritize readable long-form content and safe action confirmation.",
+    ],
   },
   {
     id: "cursor",
     label: "Cursor",
     category: "Developer Tools",
-    summary: "Code-first tool UI with dark-ready surfaces, command palette behavior, split panes, and strong editor ergonomics.",
+    summary:
+      "Code-first tool UI with dark-ready surfaces, command palette behavior, split panes, and strong editor ergonomics.",
     tokens: ["editor background", "syntax-friendly accents", "compact controls", "panel dividers"],
     components: ["Command palette", "File tree", "Diff view", "Terminal panel", "Inline suggestion"],
     guardrails: ["Preserve monospace readability.", "Avoid marketing layouts inside work surfaces."],
@@ -176,16 +188,21 @@ const OPEN_DESIGN_PRESETS: OpenDesignPreset[] = [
     id: "stripe",
     label: "Stripe",
     category: "Fintech & Crypto",
-    summary: "Polished fintech system: exact forms, trustworthy data presentation, strong docs, and confident conversion flows.",
+    summary:
+      "Polished fintech system: exact forms, trustworthy data presentation, strong docs, and confident conversion flows.",
     tokens: ["trustworthy blues", "semantic validation colors", "precise form spacing", "elevated docs surfaces"],
     components: ["Payment form", "Pricing table", "Metric card", "Docs sidebar", "Alert", "Checkout summary"],
-    guardrails: ["Validation, security, and error states must be complete.", "Keep financial data legible and unambiguous."],
+    guardrails: [
+      "Validation, security, and error states must be complete.",
+      "Keep financial data legible and unambiguous.",
+    ],
   },
   {
     id: "figma",
     label: "Figma",
     category: "Design & Creative",
-    summary: "Creative tool language with canvas-first structure, compact toolbars, inspectable properties, and clear selection states.",
+    summary:
+      "Creative tool language with canvas-first structure, compact toolbars, inspectable properties, and clear selection states.",
     tokens: ["canvas surface", "selection blue", "toolbar neutrals", "compact radius"],
     components: ["Toolbar", "Layer row", "Properties panel", "Canvas frame", "Inspector control"],
     guardrails: ["Make object state and selection visible.", "Keep controls compact without losing target clarity."],
@@ -194,7 +211,8 @@ const OPEN_DESIGN_PRESETS: OpenDesignPreset[] = [
     id: "notion",
     label: "Notion",
     category: "Productivity & SaaS",
-    summary: "Document-product hybrid: calm typography, block composition, low chrome, and flexible information hierarchy.",
+    summary:
+      "Document-product hybrid: calm typography, block composition, low chrome, and flexible information hierarchy.",
     tokens: ["paper surface", "muted text roles", "block spacing", "subtle hover states"],
     components: ["Block editor", "Page sidebar", "Database table", "Property pill", "Empty state"],
     guardrails: ["Do not over-frame content with cards.", "Let typography and block grouping carry hierarchy."],
@@ -203,7 +221,8 @@ const OPEN_DESIGN_PRESETS: OpenDesignPreset[] = [
     id: "github",
     label: "GitHub",
     category: "Developer Tools",
-    summary: "Repository operations UI: dense lists, readable diffs, clear status badges, tabs, and durable enterprise patterns.",
+    summary:
+      "Repository operations UI: dense lists, readable diffs, clear status badges, tabs, and durable enterprise patterns.",
     tokens: ["bordered surfaces", "status colors", "monospace code", "compact list spacing"],
     components: ["Repo nav", "Issue list", "Pull request row", "Code block", "Status check", "Diff panel"],
     guardrails: ["Keep code and audit trails readable.", "Represent status with text plus color, not color alone."],
@@ -212,19 +231,27 @@ const OPEN_DESIGN_PRESETS: OpenDesignPreset[] = [
     id: "apple",
     label: "Apple",
     category: "Media & Consumer",
-    summary: "Premium consumer product direction with refined typography, restrained controls, and high-quality imagery.",
+    summary:
+      "Premium consumer product direction with refined typography, restrained controls, and high-quality imagery.",
     tokens: ["premium neutrals", "large type scale", "spacious sections", "minimal chrome"],
     components: ["Product hero", "Feature tile", "Gallery", "Comparison table", "Sticky purchase bar"],
-    guardrails: ["Use real product imagery or clear generated product visuals.", "Do not apply oversized hero treatment to dense admin tools."],
+    guardrails: [
+      "Use real product imagery or clear generated product visuals.",
+      "Do not apply oversized hero treatment to dense admin tools.",
+    ],
   },
   {
     id: "material",
     label: "Material",
     category: "Default",
-    summary: "Systematic cross-platform UI with explicit states, accessible components, elevation rules, and responsive layouts.",
+    summary:
+      "Systematic cross-platform UI with explicit states, accessible components, elevation rules, and responsive layouts.",
     tokens: ["semantic roles", "state layers", "elevation scale", "responsive breakpoints"],
     components: ["Button", "Text field", "Navigation rail", "Top app bar", "Dialog", "Data table"],
-    guardrails: ["Expose hover, focus, pressed, selected, disabled, loading, and error states.", "Use elevation only for hierarchy or interaction."],
+    guardrails: [
+      "Expose hover, focus, pressed, selected, disabled, loading, and error states.",
+      "Use elevation only for hierarchy or interaction.",
+    ],
   },
 ];
 const MODEL_TARGETS = ["Claude Code", "Codex", "Cursor", "Windsurf", "Figma Make"];

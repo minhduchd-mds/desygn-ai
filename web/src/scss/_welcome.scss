@@ -1,0 +1,130 @@
+@use "variables" as *;
+
+// ─── Welcome Hero (Desygn AI) ─────────────────────────
+
+.welcome-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 32px;
+  text-align: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.welcome-brand-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $purple-400;
+  margin-bottom: 8px;
+}
+
+.welcome-title {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, $purple-300, $indigo-400, $indigo-500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.welcome-sparkle {
+  -webkit-text-fill-color: initial;
+  background: none;
+  display: inline;
+}
+
+.welcome-subtitle {
+  font-size: 15px;
+  color: $text-muted-alt;
+  margin: 4px 0 24px;
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+// ─── Welcome Cards ────────────────────────────────────
+
+.welcome-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.welcome-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 16px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 14px;
+  color: $text-light;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.35);
+    transform: translateY(-2px);
+
+    .welcome-card-arrow {
+      opacity: 1;
+    }
+  }
+
+  h3 {
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 650;
+    color: $text-bright;
+  }
+
+  p {
+    margin: 0;
+    font-size: 11px;
+    color: $text-muted-alt;
+    line-height: 1.4;
+  }
+}
+
+.welcome-card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  color: $purple-400;
+}
+
+.welcome-card-arrow {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  font-size: 16px;
+  color: $indigo-500;
+  opacity: 0.5;
+}
+
+@media (max-width: 700px) {
+  .welcome-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .welcome-title {
+    font-size: 28px;
+  }
+}

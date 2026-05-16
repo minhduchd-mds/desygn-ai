@@ -36,7 +36,7 @@ function findSiblingTextContext(node: SceneNode): string | null {
   if (!parent || !("children" in parent)) return null;
 
   const siblings = (parent as FrameNode).children.filter(
-    (c: { id: any; visible: any }) => c.id !== node.id && c.visible,
+    (c: { id: string; visible: boolean }) => c.id !== node.id && c.visible,
   );
 
   // Collect text from sibling text nodes
@@ -143,7 +143,7 @@ async function suggestName(node: SceneNode): Promise<string> {
   }
 
   if ("children" in node) {
-    const children = (node as FrameNode).children.filter((c: { visible: any }) => c.visible);
+    const children = (node as FrameNode).children.filter((c: { visible: boolean }) => c.visible);
     const hasText = children.some((c: { type: string }) => c.type === "TEXT");
     const hasImage = children.some(
       (c: { fills: readonly Paint[] }) =>

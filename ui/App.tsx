@@ -61,6 +61,8 @@ export function App() {
     };
   }, [activeProfile, figmaColorVariables.fileName, figmaColorVariables.tokens]);
 
+  const selectionDisplayName = selectedNode?.componentName || selectedNode?.name || selectionName;
+
   useEffect(() => {
     if (selectedNode?.id && selectedNode.id !== lastNodeIdRef.current) {
       lastNodeIdRef.current = selectedNode.id;
@@ -116,7 +118,6 @@ export function App() {
   }, [refreshSelection]);
 
   const hasResult = !!result;
-  const selectionDisplayName = selectedNode?.componentName || selectedNode?.name || selectionName;
 
   // Resize plugin window: narrow when idle, wide when showing results
   useEffect(() => {

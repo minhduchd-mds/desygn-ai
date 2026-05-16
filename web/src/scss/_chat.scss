@@ -1,0 +1,741 @@
+@use "variables" as *;
+
+// ─── Chat Messages (Claude-style) ─────────────────────
+
+.message {
+  display: flex;
+  gap: 12px;
+  max-width: 768px;
+  width: 100%;
+  animation: msgFadeIn 0.3s ease both;
+
+  &.assistant {
+    align-self: flex-start;
+    max-width: 768px;
+
+    .message-body {
+      padding: 2px 0 0;
+    }
+  }
+
+  &.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+    max-width: min(560px, 75%);
+    width: auto;
+
+    .message-body {
+      display: inline-block;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, $indigo-500 0%, $indigo-600 100%);
+      color: #fff;
+      border-radius: 20px 20px 4px 20px;
+      box-shadow: $shadow-indigo;
+      width: fit-content;
+      max-width: 100%;
+
+      p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.95) !important;
+        line-height: 1.55;
+        font-size: 14px;
+        white-space: pre-wrap;
+      }
+    }
+  }
+
+  strong {
+    font-weight: 620;
+  }
+
+  &:hover .message-actions,
+  .message-actions:focus-within {
+    opacity: 1;
+  }
+}
+
+@keyframes msgFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-avatar {
+  display: none;
+}
+
+.message-body {
+  min-width: 0;
+  flex: 1;
+}
+
+// ─── Markdown Content ─────────────────────────────────
+
+.message-markdown {
+  color: $text-light;
+  font-size: 14px;
+  line-height: 1.7;
+  word-wrap: break-word;
+
+  p {
+    margin: 0 0 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul,
+  ol {
+    margin: 4px 0 12px;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 4px;
+
+    &::marker {
+      color: $indigo-500;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+    color: $text-bright;
+  }
+
+  em {
+    color: $text-muted-alt;
+    font-style: italic;
+  }
+
+  code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(99, 102, 241, 0.12);
+    color: $indigo-300;
+    font-family: $font-mono;
+    font-size: 0.88em;
+  }
+
+  pre {
+    margin: 8px 0 12px;
+    padding: 12px 16px;
+    border-radius: $radius-sm;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    overflow-x: auto;
+
+    code {
+      padding: 0;
+      background: none;
+      font-size: 13px;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 16px 0 8px;
+    color: $text-bright;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: 1.25em;
+  }
+
+  h2 {
+    font-size: 1.1em;
+  }
+
+  h3 {
+    font-size: 1em;
+  }
+
+  blockquote {
+    margin: 8px 0;
+    padding: 8px 16px;
+    border-left: 3px solid $indigo-500;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 0 $radius-xs $radius-xs 0;
+    color: #cbd5e1;
+  }
+
+  a {
+    color: $indigo-400;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  hr {
+    margin: 16px 0;
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.15);
+  }
+
+  // Streaming cursor
+  &.is-streaming::after {
+    content: "\25CD";
+    display: inline-block;
+    color: $indigo-500;
+    animation: streamCursor 0.7s step-end infinite;
+    margin-left: 2px;
+    vertical-align: baseline;
+    font-size: 0.9em;
+  }
+}
+
+// ─── Code Blocks Override ─────────────────────────────
+
+.message-markdown pre {
+  border-radius: $radius-sm;
+  overflow-x: auto;
+
+  code {
+    font-family: $font-mono, "Cascadia Code", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.message-markdown code:not(pre code) {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.12);
+  color: $indigo-200;
+  font-family: $font-mono;
+  font-size: 0.9em;
+}
+
+// ─── Benchmark Panel ──────────────────────────────────
+
+.benchmark-panel span {
+  color: $blue-500;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+// ─── Generated Pulse ──────────────────────────────────
+
+.generated-pulse {
+  animation: generatedIn 0.38s ease both;
+}
+
+@keyframes generatedIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ─── Output Panel Pre ─────────────────────────────────
+
+.output-panel pre {
+  min-height: 100%;
+  overflow: visible;
+  margin: 0;
+  white-space: pre-wrap;
+  color: $blue-200;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+    $dark-700;
+  padding: 18px 20px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+// ─── HTML Preview Trigger ─────────────────────────────
+
+.html-preview-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  border: none;
+  border-radius: $radius-pill;
+  background: linear-gradient(135deg, $indigo-500 0%, $indigo-600 100%);
+  color: $white;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.32);
+  transition: opacity 0.14s, transform 0.12s, box-shadow 0.14s;
+
+  &:hover {
+    opacity: 0.90;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.42);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ─── Message Actions ──────────────────────────────────
+
+.message-actions {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: $radius-xs;
+    background: transparent;
+    color: #8b92a0;
+    cursor: pointer;
+    transition: all 0.12s;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.2);
+      color: $indigo-500;
+    }
+
+    &.is-copied {
+      color: #10b981;
+    }
+  }
+}
+
+// ─── Settings Panel ───────────────────────────────────
+
+.settings-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  margin: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+
+  h4 {
+    margin: 0;
+    color: #c1c8d6;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  span {
+    color: #9aa3b4;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  select {
+    width: auto;
+    min-width: 140px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: $radius-sm;
+    background: rgba(255, 255, 255, 0.06);
+    color: $text-light;
+    font-size: 12px;
+  }
+}
+
+.settings-danger-btn {
+  padding: 8px 14px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: $radius-sm;
+  background: rgba(239, 68, 68, 0.08);
+  color: $error-light;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+}
+
+// ─── New Chat Link ────────────────────────────────────
+
+.new-chat-link {
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15) !important;
+  margin-bottom: 4px !important;
+  padding-bottom: 10px !important;
+}
+
+// ─── Result Message ───────────────────────────────────
+
+.result-message {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+
+  .output-panel {
+    flex: 1;
+    min-height: 0;
+    margin-top: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+}
+
+.builder-result-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  width: 100%;
+  min-height: 0;
+}
+
+.builder-main-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-md;
+  background: $dark-450;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
+}
+
+// ─── Result Toolbar ───────────────────────────────────
+
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+  background: $white;
+  box-shadow: none;
+
+  div {
+    display: flex;
+    min-width: 0;
+    gap: 8px;
+    align-items: center;
+  }
+
+  strong {
+    overflow: hidden;
+    color: $dark-700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    flex: 0 0 auto;
+    color: #8a96a8;
+  }
+
+  .target-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 170px;
+    overflow: hidden;
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    border-radius: $radius-pill;
+    background: rgba(99, 102, 241, 0.06);
+    color: $indigo-500;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid $border-lighter;
+    border-radius: 9px;
+    background: $white;
+    color: #68758b;
+    padding: 7px 11px;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: background 0.14s, color 0.14s, border-color 0.14s, box-shadow 0.14s;
+    box-shadow: 0 1px 4px rgba(25, 40, 72, 0.04);
+
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.30);
+      background: rgba(99, 102, 241, 0.04);
+      color: $indigo-600;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.10);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, $indigo-500 0%, $indigo-600 100%);
+      border-color: transparent;
+      color: $white;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.28);
+    }
+  }
+}
+
+.toolbar-btn-icon {
+  border-color: $border-lighter !important;
+
+  &.is-copied {
+    background: rgba(20, 184, 166, 0.08) !important;
+    border-color: rgba(20, 184, 166, 0.30) !important;
+    color: #0d7a6e !important;
+  }
+}
+
+// ─── Status Badges ────────────────────────────────────
+
+.live-badge {
+  border-radius: $radius-pill;
+  background: #dcfce7;
+  color: $success-dark !important;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.design-status-badge {
+  border-radius: $radius-pill;
+  background: #dcfce7;
+  color: $success-darker !important;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+
+  &.edited {
+    background: #fef3c7;
+    color: $warn-darker !important;
+  }
+}
+
+// ─── Validation Summary ───────────────────────────────
+
+.validation-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+
+  strong {
+    color: $dark-800;
+    font-weight: 700;
+  }
+
+  &.is-good strong {
+    color: $success-darker;
+  }
+
+  &.is-warning strong {
+    color: $warn-dark;
+  }
+
+  &.is-danger strong {
+    color: $error-dark;
+  }
+
+  span,
+  em {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    border: 1px solid #dbe4ef;
+    border-radius: $radius-pill;
+    background: $white;
+    padding: 3px 8px;
+    font-style: normal;
+  }
+
+  em {
+    max-width: 100%;
+    color: $warn-dark;
+  }
+}
+
+.doc-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  background: #fff3ed;
+  color: #e56a3c;
+  font-size: 14px;
+}
+
+// ─── Thinking Row ─────────────────────────────────────
+
+.thinking-row {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  width: fit-content;
+  padding: 10px 16px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: $radius-pill;
+  background: rgba(30, 27, 50, 0.7);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 6px rgba(99, 102, 241, 0.08);
+
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: $indigo-500;
+    animation: thinkingDot 1.1s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.18s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.36s;
+    }
+  }
+
+  p {
+    margin: 0;
+    color: $indigo-500;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+}
+
+@keyframes thinkingDot {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ─── Streaming Dots ───────────────────────────────────
+
+.streaming-dots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 0;
+
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $indigo-500;
+    animation: thinkingDot 1.1s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.18s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.36s;
+    }
+  }
+}
+
+@keyframes streamCursor {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+// ─── Chat Empty State ─────────────────────────────────
+
+.chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.chat-empty-icon {
+  color: $indigo-400;
+  opacity: 0.5;
+}
+
+.chat-empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: $text-light;
+}
+
+.chat-empty-hint {
+  margin: 0;
+  font-size: 13px;
+  color: $text-muted-alt;
+  line-height: 1.55;
+  max-width: 320px;
+
+  strong {
+    color: $indigo-200;
+  }
+}

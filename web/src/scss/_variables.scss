@@ -1,0 +1,114 @@
+// ─── Color Variables ───────────────────────────────────
+
+// Purple theme
+$purple-500: #8b5cf6;
+$purple-400: #a78bfa;
+$purple-300: #c084fc;
+$purple-hover: #8b84ff;
+$indigo-500: #6366f1;
+$indigo-600: #4f46e5;
+$indigo-700: #4338ca;
+$indigo-400: #818cf8;
+$indigo-300: #a5b4fc;
+$indigo-200: #c4b5fd;
+$checklist-purple: #6c63ff;
+
+// Cyan / Teal
+$cyan-400: #06b6d4;
+$teal-700: #0f766e;
+$teal-600: #0d9488;
+$teal-500: #14b8a6;
+$teal-400: #2dd4bf;
+$teal-300: #5eead4;
+$teal-200: #7bdcb5;
+$sky-400: #7dd3fc;
+
+// Dark theme backgrounds
+$dark-900: #0d0f17;
+$dark-850: #0b1120;
+$dark-800: #0f172a;
+$dark-750: #11182a;
+$dark-700: #111827;
+$dark-650: #12141a;
+$dark-600: #13161e;
+$dark-550: #14161e;
+$dark-500: #1a1d23;
+$dark-475: #1a1e28;
+$dark-450: #1e1e22;
+$dark-400: #23263a;
+$dark-350: #252a3a;
+$dark-300: #2a2a2e;
+$dark-250: #2d3139;
+
+// Text colors
+$text-light: #e2e8f0;
+$text-light-alt: #e8eaf0;
+$text-lightest: #f1f3f5;
+$text-bright: #f1f5f9;
+$text-muted: #9aa0b8;
+$text-muted-alt: #94a3b8;
+$text-dim: #5c6378;
+$text-dimmer: #6b7280;
+$text-sidebar: #c6d0df;
+$text-sidebar-light: #c5cbd3;
+$text-secondary: #c4c9d4;
+$text-link: #a6b2c4;
+
+// Landing page colors
+$landing-dark: #172033;
+$landing-bg: #f6f8fc;
+$landing-border: #dce5f2;
+$landing-text-secondary: #5f6676;
+$landing-text-muted: #6b6f7b;
+$landing-text-nav: #555c6d;
+$landing-text-label: #394761;
+$landing-text-body: #4f5565;
+
+// Status colors
+$success: #00c9a7;
+$success-green: #22c55e;
+$success-dark: #16a34a;
+$success-darker: #15803d;
+$error: #ef4444;
+$error-light: #f87171;
+$error-dark: #b91c1c;
+$warn: #f59e0b;
+$warn-dark: #b45309;
+$warn-darker: #92400e;
+
+// Blue
+$blue-500: #0f6fff;
+$blue-400: #93c5fd;
+$blue-300: #a8c7ff;
+$blue-200: #dbeafe;
+$blue-100: #e0f2fe;
+
+// Misc
+$white: #ffffff;
+$brand-dark: #182235;
+$input-border: #d6ddea;
+$border-light: #e0e6f0;
+$border-lighter: #edf0f5;
+
+// ─── Font Stacks ──────────────────────────────────────
+
+$font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+$font-serif: Georgia, "Times New Roman", serif;
+$font-mono: "JetBrains Mono", "Fira Code", monospace;
+$font-mono-system: ui-monospace, SFMono-Regular, Consolas, monospace;
+$font-mono-alt: "SFMono-Regular", Consolas, monospace;
+
+// ─── Shadows ──────────────────────────────────────────
+
+$shadow-card: 0 12px 34px rgba(23, 32, 51, 0.06);
+$shadow-landing-dark: 0 18px 45px rgba(23, 32, 51, 0.25);
+$shadow-indigo: 0 2px 8px rgba(99, 102, 241, 0.22);
+$shadow-purple: 0 1px 4px rgba(139, 92, 246, 0.2);
+
+// ─── Border Radius ────────────────────────────────────
+
+$radius-pill: 999px;
+$radius-lg: 24px;
+$radius-md: 16px;
+$radius-sm: 8px;
+$radius-xs: 6px;

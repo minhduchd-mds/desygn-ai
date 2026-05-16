@@ -1,0 +1,1076 @@
+@use "variables" as *;
+
+// ─── Landing Page & Workspace Shell ─────────────────────
+
+.landing-page,
+.workspace-shell {
+  min-height: 100vh;
+}
+
+.workspace-shell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.landing-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: $landing-bg;
+  color: $landing-dark;
+}
+
+// ─── Orbs ─────────────────────────────────────────────
+
+.landing-orb {
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: $radius-pill;
+  filter: blur(60px);
+  opacity: 0.8;
+  animation: landingBlob 9s ease-in-out infinite;
+}
+
+.landing-orb-left {
+  top: -130px;
+  left: -140px;
+  width: 380px;
+  height: 380px;
+  background: $blue-100;
+}
+
+.landing-orb-right {
+  right: -160px;
+  bottom: -180px;
+  width: 460px;
+  height: 460px;
+  background: #ccfbf1;
+  animation-delay: 1.5s;
+}
+
+@keyframes landingBlob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(18px, -12px) scale(1.05);
+  }
+}
+
+// ─── Nav ──────────────────────────────────────────────
+
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px max(24px, calc((100vw - 1280px) / 2 + 24px));
+  border-bottom: 1px solid rgba(220, 229, 242, 0.9);
+  background: rgba(246, 248, 252, 0.9);
+  backdrop-filter: blur(18px);
+
+  nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  a {
+    color: $landing-text-nav;
+    font-size: 14px;
+    font-weight: 650;
+    text-decoration: none;
+
+    &:hover {
+      color: $landing-dark;
+    }
+  }
+
+  > div {
+    display: flex;
+    gap: 10px;
+  }
+
+  button {
+    border: 0;
+    background: transparent;
+    color: #31405d;
+    font-weight: 600;
+  }
+}
+
+.ghost-button,
+.text-button,
+.back-button {
+  border: 0;
+  background: transparent;
+  color: #31405d;
+  font-weight: 600;
+}
+
+.logout-button {
+  color: #fca5a5;
+}
+
+// ─── Landing Brand ────────────────────────────────────
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+
+  > span {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: $radius-md;
+    background: $landing-dark;
+    color: $white;
+    font-weight: 800;
+    box-shadow: 0 10px 30px rgba(23, 32, 51, 0.25);
+  }
+
+  div {
+    display: grid;
+  }
+
+  small {
+    color: $landing-text-muted;
+    font-size: 12px;
+  }
+}
+
+// ─── Primary Buttons ──────────────────────────────────
+
+.primary-small,
+.primary-action {
+  border: 0;
+  border-radius: $radius-sm;
+  background: $blue-500;
+  color: $white;
+  font-weight: 650;
+  box-shadow: 0 10px 26px rgba(15, 111, 255, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 34px rgba(15, 111, 255, 0.28);
+  }
+}
+
+.primary-action {
+  padding: 12px 18px;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
+
+  &.dark {
+    border-radius: $radius-pill;
+    background: $landing-dark;
+    box-shadow: $shadow-landing-dark;
+  }
+
+  &.warm {
+    background: $teal-700;
+    box-shadow: 0 12px 30px rgba(15, 118, 110, 0.24);
+  }
+}
+
+.primary-small {
+  padding: 9px 14px;
+  background: $teal-700;
+  box-shadow: 0 12px 30px rgba(15, 118, 110, 0.24);
+}
+
+// ─── Hero ─────────────────────────────────────────────
+
+.landing-hero {
+  display: grid;
+  position: relative;
+  z-index: 1;
+  grid-template-columns: minmax(0, 0.94fr) minmax(360px, 1.06fr);
+  gap: 56px;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 76px 24px 72px;
+
+  h1 {
+    max-width: 760px;
+    margin: 26px 0 22px;
+    color: $landing-dark;
+    font-family: $font-serif;
+    font-size: clamp(48px, 5vw, 72px);
+    line-height: 0.98;
+    letter-spacing: 0;
+    font-weight: 700;
+  }
+
+  p {
+    max-width: 600px;
+    color: $landing-text-body;
+    font-size: 19px;
+    line-height: 1.65;
+  }
+}
+
+.eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid $landing-border;
+  border-radius: $radius-pill;
+  background: rgba(255, 253, 252, 0.78);
+  color: $teal-700;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+// ─── Landing Actions ──────────────────────────────────
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 30px;
+
+  a {
+    border: 1px solid $landing-border;
+    border-radius: $radius-pill;
+    background: #fffdfc;
+    color: $landing-dark;
+    padding: 13px 20px;
+    font-size: 14px;
+    font-weight: 750;
+    text-decoration: none;
+  }
+}
+
+// ─── Metrics ──────────────────────────────────────────
+
+.landing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 660px;
+  margin-top: 40px;
+
+  article {
+    min-width: 0;
+    border-radius: $radius-lg;
+    padding: 18px;
+  }
+
+  strong {
+    display: block;
+    overflow: hidden;
+    color: $landing-dark;
+    font-family: $font-serif;
+    font-size: 24px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: $landing-text-muted;
+    font-size: 14px;
+  }
+}
+
+.landing-metrics article,
+.router-stats article,
+.service-grid article,
+.gallery-grid article {
+  border: 1px solid $landing-border;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: $shadow-card;
+}
+
+// ─── Code Mockup ──────────────────────────────────────
+
+.code-mockup {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 32px;
+  background: $dark-750;
+  box-shadow: 0 30px 80px rgba(17, 24, 42, 0.32);
+  animation: floatIn 0.7s ease both;
+}
+
+.mockup-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px;
+
+  i {
+    width: 12px;
+    height: 12px;
+    border-radius: $radius-pill;
+    background: $teal-700;
+
+    &:nth-child(2) {
+      background: #f2c14e;
+    }
+
+    &:nth-child(3) {
+      background: #70c1b3;
+    }
+  }
+
+  span {
+    margin-left: auto;
+    border-radius: $radius-pill;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.mockup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+
+  pre {
+    min-height: 390px;
+    margin: 0;
+    overflow: hidden;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    color: #b9c4db;
+    padding: 22px;
+    font-family: $font-mono-system;
+    font-size: 12px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+  }
+
+  section {
+    padding: 20px;
+  }
+}
+
+// ─── Mini Product ─────────────────────────────────────
+
+.mini-product {
+  border-radius: $radius-lg;
+  background: $landing-bg;
+  color: $landing-dark;
+  padding: 20px;
+
+  nav {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+
+    strong {
+      margin-right: auto;
+    }
+
+    span {
+      color: $landing-text-secondary;
+      font-size: 12px;
+      font-weight: 700;
+    }
+  }
+
+  article {
+    border-radius: 20px;
+    background: $white;
+    padding: 20px;
+
+    div {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+  }
+
+  small {
+    border-radius: $radius-pill;
+    background: $blue-100;
+    color: #0369a1;
+    padding: 5px 10px;
+    font-weight: 800;
+  }
+
+  h3 {
+    margin: 18px 0 10px;
+    font-family: $font-serif;
+    font-size: 28px;
+    line-height: 1.1;
+  }
+
+  p {
+    color: $landing-text-secondary;
+    font-size: 14px;
+  }
+
+  button {
+    border: 1px solid $landing-border;
+    border-radius: $radius-pill;
+    background: $white;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 800;
+
+    &:first-child {
+      border-color: $landing-dark;
+      background: $landing-dark;
+      color: $white;
+    }
+  }
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ─── Output & Plan Cards ──────────────────────────────
+
+.output-panel,
+.plan-card {
+  border: 1px solid $border-light;
+  border-radius: $radius-sm;
+  background: $white;
+}
+
+.plan-card {
+  p {
+    color: #68758b;
+    line-height: 1.55;
+  }
+
+  .p-2 {
+    margin: 8px 0 12px !important;
+  }
+}
+
+// ─── Sections ─────────────────────────────────────────
+
+.landing-section {
+  position: relative;
+  z-index: 1;
+  padding: 84px max(24px, calc((100vw - 1280px) / 2 + 24px));
+}
+
+.feature-section,
+.gallery-section {
+  border-top: 1px solid $landing-border;
+  border-bottom: 1px solid $landing-border;
+  background: #f8fbff;
+}
+
+.section-heading {
+  max-width: 800px;
+}
+
+.section-heading span,
+.router-heading span,
+.dark-demo span,
+.landing-auth-card > div > span {
+  color: $teal-700;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.section-heading h2,
+.router-heading h2,
+.dark-demo h2,
+.landing-auth-card h2 {
+  margin: 14px 0 0;
+  color: $landing-dark;
+  font-family: $font-serif;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+// ─── Feature Grid ─────────────────────────────────────
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 46px;
+
+  article {
+    min-width: 0;
+    border: 1px solid $landing-border;
+    border-radius: 18px;
+    background: $white;
+    color: $landing-dark;
+    padding: 28px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &.featured {
+      border-color: $landing-dark;
+      background: $landing-dark;
+      color: $white;
+      box-shadow: 0 28px 70px rgba(23, 32, 51, 0.24);
+    }
+  }
+
+  b {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    margin-bottom: 28px;
+    border-radius: $radius-pill;
+    background: $blue-100;
+    color: #0369a1;
+    font-size: 14px;
+  }
+
+  .featured b {
+    background: rgba(255, 255, 255, 0.1);
+    color: $white;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: $font-serif;
+    font-size: 28px;
+    line-height: 1.1;
+  }
+
+  p {
+    color: $landing-text-secondary;
+    line-height: 1.7;
+  }
+
+  .featured p {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.feature-grid article:hover,
+.service-grid article:hover,
+.gallery-grid article:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 24px 60px rgba(23, 32, 51, 0.12);
+}
+
+.service-grid b {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  margin-bottom: 28px;
+  border-radius: $radius-pill;
+  background: $blue-100;
+  color: #0369a1;
+  font-size: 14px;
+}
+
+.how-grid h3,
+.service-grid h3,
+.gallery-grid h3,
+.dark-demo h3 {
+  margin: 0;
+  font-family: $font-serif;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.feature-grid p,
+.how-grid p,
+.service-grid p,
+.router-heading p,
+.gallery-grid p,
+.dark-demo p,
+.landing-auth-card p {
+  color: $landing-text-secondary;
+  line-height: 1.7;
+}
+
+// ─── How Section ──────────────────────────────────────
+
+.how-section {
+  background: $white;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 46px;
+
+  article {
+    min-width: 0;
+    border: 1px solid $landing-border;
+    border-radius: 18px;
+    background: linear-gradient(180deg, $white, #f8fbff);
+    padding: 28px;
+  }
+
+  b {
+    display: inline-flex;
+    margin-bottom: 24px;
+    border-radius: $radius-pill;
+    background: $teal-700;
+    color: $white;
+    padding: 7px 11px;
+    font-size: 13px;
+  }
+}
+
+// ─── Template Library Section ─────────────────────────
+
+.template-library-section {
+  border-top: 1px solid $landing-border;
+  border-bottom: 1px solid $landing-border;
+  background: #f8fbff;
+}
+
+.template-library-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 28px;
+  align-items: end;
+}
+
+.template-search,
+.composer-search {
+  display: grid;
+  gap: 8px;
+
+  span {
+    color: $text-muted-alt;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  input {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: $text-light;
+    padding: 13px 14px;
+    font: inherit;
+    outline: none;
+
+    &:focus {
+      border-color: $indigo-500;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+  }
+}
+
+.template-filter-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.template-priority-tabs,
+.template-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+
+  button {
+    border: 1px solid $landing-border;
+    background: $white;
+    color: #334155;
+    font-weight: 800;
+
+    &.active {
+      border-color: $landing-dark;
+      background: $landing-dark;
+      color: $white;
+    }
+  }
+}
+
+.template-priority-tabs {
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: $radius-pill;
+    padding: 10px 14px;
+
+    &.active b {
+      background: rgba(255, 255, 255, 0.14);
+      color: $white;
+    }
+  }
+
+  b {
+    display: grid;
+    min-width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: $radius-pill;
+    background: $blue-100;
+    color: #0369a1;
+    font-size: 12px;
+  }
+}
+
+.template-category-chips button {
+  border-radius: $radius-pill;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+// ─── Template Library Grid ────────────────────────────
+
+.template-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+
+  article {
+    display: grid;
+    min-width: 0;
+    gap: 18px;
+    align-content: space-between;
+    border: 1px solid $landing-border;
+    border-radius: 18px;
+    background: $white;
+    padding: 20px;
+    box-shadow: $shadow-card;
+
+    > div:first-child > span {
+      color: $teal-700;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  }
+
+  h3 {
+    margin: 10px 0 0;
+    color: $landing-dark;
+    font-family: $font-serif;
+    font-size: 26px;
+    line-height: 1.1;
+  }
+
+  p {
+    margin: 12px 0 0;
+    color: $landing-text-secondary;
+    line-height: 1.6;
+  }
+
+  button {
+    width: fit-content;
+    border: 0;
+    border-radius: $radius-pill;
+    background: $landing-dark;
+    color: $white;
+    padding: 11px 15px;
+    font-weight: 800;
+  }
+}
+
+.template-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  span {
+    overflow: hidden;
+    max-width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: $radius-pill;
+    background: #f8fafc;
+    color: #475569;
+    padding: 6px 9px;
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.template-command {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  padding: 10px 12px;
+  font-family: $font-mono-alt;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-empty {
+  grid-column: 1 / -1;
+}
+
+// ─── Router Section ───────────────────────────────────
+
+.router-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+  gap: 40px;
+  align-items: end;
+}
+
+.router-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+
+  article {
+    border-radius: $radius-lg;
+    padding: 18px;
+    text-align: center;
+  }
+
+  strong {
+    display: block;
+    font-family: $font-serif;
+    font-size: 30px;
+  }
+
+  span {
+    color: $landing-text-muted;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+// ─── Service Grid ─────────────────────────────────────
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 46px;
+
+  article {
+    border-radius: 18px;
+    padding: 26px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  b {
+    border-radius: $radius-md;
+    font-size: 18px;
+  }
+}
+
+// ─── Gallery Grid ─────────────────────────────────────
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 46px;
+
+  article {
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 14px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  small {
+    display: block;
+    margin-top: 18px;
+    color: $teal-700;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h3 {
+    margin-top: 8px;
+  }
+
+  p {
+    display: flex;
+    justify-content: space-between;
+    border-radius: $radius-md;
+    background: $landing-bg;
+    padding: 12px 14px;
+  }
+}
+
+.gallery-art {
+  position: relative;
+  display: grid;
+  min-height: 210px;
+  overflow: hidden;
+  place-items: end start;
+  border-radius: $radius-lg;
+  padding: 18px;
+  color: $white;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.42;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  span {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    border-radius: $radius-pill;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  strong {
+    position: relative;
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border-radius: $radius-pill;
+    background: $white;
+    color: $landing-dark;
+    font-weight: 900;
+  }
+}
+
+.art-1 {
+  background: linear-gradient(135deg, $landing-dark, #2b395c, $teal-700);
+}
+
+.art-2 {
+  background: linear-gradient(135deg, $landing-bg, $blue-100, $landing-dark);
+}
+
+.art-3 {
+  background: linear-gradient(135deg, $dark-750, #273657, $teal-200);
+}
+
+.art-4 {
+  background: linear-gradient(135deg, $teal-700, $sky-400, #f8fbff);
+}
+
+// ─── Dark Demo ────────────────────────────────────────
+
+.dark-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(420px, 1.18fr);
+  gap: 44px;
+  align-items: center;
+  background: $landing-dark;
+  color: $white;
+
+  h2,
+  h3 {
+    color: $white;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.68);
+  }
+
+  > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  article {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-lg;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 24px;
+  }
+
+  b {
+    display: inline-flex;
+    margin-bottom: 18px;
+    border-radius: $radius-pill;
+    background: $teal-700;
+    color: $white;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+// ─── Auth Section ─────────────────────────────────────
+
+.landing-auth-section {
+  position: relative;
+  z-index: 1;
+  padding: 84px 24px;
+}
+
+.landing-auth-card {
+  display: grid;
+  max-width: 980px;
+  margin: 0 auto;
+  border: 1px solid $landing-border;
+  border-radius: $radius-lg;
+  background: $white;
+  padding: 42px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(23, 32, 51, 0.1);
+
+  h2 {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  p {
+    max-width: 680px;
+    margin: 18px auto 0;
+  }
+
+  form {
+    display: grid;
+    gap: 14px;
+    width: min(560px, 100%);
+    margin: 30px auto 0;
+    text-align: left;
+  }
+
+  .text-button {
+    width: fit-content;
+    margin: 18px auto 0;
+    color: $teal-700;
+  }
+}

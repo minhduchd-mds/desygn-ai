@@ -1,0 +1,927 @@
+@use "variables" as *;
+
+// ─── Sidebar Projects Section ───────────────────────────
+
+.sidebar-projects-section {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-section-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: $text-dim;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  margin-bottom: 2px;
+}
+
+.sidebar-project-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: $radius-xs;
+  font-size: 13px;
+  color: $text-sidebar-light;
+  text-decoration: none;
+  transition: background 0.12s;
+
+  &:hover { background: rgba(255, 255, 255, 0.05); }
+  &.add-project { color: $checklist-purple; }
+}
+
+// ─── Checklist Content Panel ────────────────────────────
+
+.hidden-panel { display: none !important; }
+
+.checklist-content-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0d0f14;
+  color: $text-light-alt;
+}
+
+.checklist-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: $text-lightest;
+    margin: 0;
+  }
+}
+
+.checklist-subtitle {
+  font-size: 13px;
+  color: $text-muted;
+}
+
+.btn-setup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: $radius-sm;
+  background: $checklist-purple;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: $purple-hover; }
+}
+
+// Score Card
+.checklist-score-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 20px;
+  margin: 0 20px 12px;
+  border-radius: 12px;
+  background: $dark-475;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.score-circle { flex-shrink: 0; }
+
+.score-bars {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+
+.score-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: $text-muted;
+
+  span:first-child { width: 90px; flex-shrink: 0; }
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 6px;
+  background: $dark-350;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.score-bar-val {
+  width: 32px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+// Filter Bar
+.checklist-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 10px;
+  flex-shrink: 0;
+}
+
+.checklist-search-input {
+  flex: 0 0 220px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-sm;
+  background: $dark-475;
+  color: $text-light-alt;
+  font-size: 13px;
+  outline: none;
+
+  &:focus { border-color: $checklist-purple; }
+}
+
+.checklist-filter-tabs {
+  display: flex;
+  gap: 4px;
+
+  button {
+    padding: 5px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: $radius-xs;
+    background: transparent;
+    color: $text-muted;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+
+    &.active {
+      background: $checklist-purple;
+      color: #fff;
+      border-color: $checklist-purple;
+    }
+
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+}
+
+.checklist-cat-dropdown {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-sm;
+  background: $dark-475;
+  color: $text-light-alt;
+  font-size: 13px;
+}
+
+// Table
+.checklist-table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
+}
+
+.checklist-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: $dark-600;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: $text-muted;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    z-index: 1;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.12s;
+    cursor: pointer;
+
+    &:hover { background: $dark-350; }
+  }
+
+  td {
+    padding: 10px 8px;
+    color: $text-sidebar-light;
+    vertical-align: middle;
+  }
+}
+
+.col-stt { color: $text-dim; font-size: 12px; width: 40px; }
+.col-cat {
+  strong { color: $text-light-alt; font-size: 13px; }
+  .section-name { font-size: 11px; color: #6c7293; }
+}
+.col-score { font-weight: 700; font-size: 13px; }
+.col-desc { font-size: 12px; color: $text-muted; max-width: 200px; }
+
+.badge-type {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.badge-ui { background: rgba($checklist-purple, 0.2); color: $purple-hover; }
+.badge-ux { background: rgba($success, 0.2); color: $success; }
+
+.status-pass { color: $success-green; font-weight: 600; font-size: 12px; }
+.status-fail { color: $error; font-weight: 600; font-size: 12px; }
+.status-warn { color: $warn; font-weight: 600; font-size: 12px; }
+.status-untested { color: $text-dim; font-weight: 600; font-size: 12px; }
+
+// Source Bar
+.checklist-source-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px 4px;
+  flex-shrink: 0;
+}
+
+.source-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: transparent;
+  color: $text-muted;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: rgba(255, 255, 255, 0.05); }
+
+  &.active {
+    background: rgba($checklist-purple, 0.15);
+    border-color: $checklist-purple;
+    color: $text-light-alt;
+  }
+}
+
+.source-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.source-count {
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+// Source Badge (in table row)
+.source-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-family: monospace;
+}
+
+// Component Tag
+.comp-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #b0b8cc;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: monospace;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Required / Optional Tags
+.tag-req {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba($error, 0.15);
+  color: $error-light;
+}
+
+.tag-opt {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(100, 116, 139, 0.15);
+  color: $text-muted-alt;
+}
+
+// Criterion / Expected columns
+.col-criterion {
+  max-width: 240px;
+  font-size: 13px;
+  color: #e0e4ec;
+  line-height: 1.4;
+}
+
+.col-expected {
+  max-width: 180px;
+  font-size: 12px;
+  color: $text-muted;
+  line-height: 1.3;
+}
+
+// Row note
+.row-note {
+  display: block;
+  font-size: 11px;
+  color: #6c7293;
+  margin-top: 2px;
+}
+
+// Untested row dim
+.row-untested {
+  td { opacity: 0.65; }
+  &:hover td { opacity: 1; }
+}
+
+// Editable Status Dropdown
+.status-select {
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-xs;
+  background: $dark-650;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus { border-color: $checklist-purple; }
+  &.status-pass { color: $success-green; }
+  &.status-fail { color: $error; }
+  &.status-warn { color: $warn; }
+  &.status-untested { color: $text-dim; }
+}
+
+// Editable Score Input
+.score-input {
+  width: 52px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-xs;
+  background: $dark-650;
+  color: $text-light-alt;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus { border-color: $checklist-purple; }
+  &.status-pass { color: $success-green; }
+  &.status-fail { color: $error; }
+  &.status-warn { color: $warn; }
+  &.status-untested { color: $text-dim; }
+}
+
+// Result Count
+.checklist-result-count {
+  font-size: 12px;
+  color: #6c7293;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+// Score Card per source
+.score-source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.score-source-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: $radius-sm;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  .source-dot { width: 10px; height: 10px; }
+}
+
+.score-source-label {
+  font-size: 12px;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.score-source-value {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: $text-light-alt;
+}
+
+// Preset cards for VTS setup
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.preset-card {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: $dark-650;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: $checklist-purple;
+    background: rgba($checklist-purple, 0.06);
+  }
+
+  &.active {
+    border-color: $checklist-purple;
+    background: rgba($checklist-purple, 0.1);
+  }
+
+  h5 {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-lightest;
+    margin: 0 0 4px;
+  }
+
+  p {
+    font-size: 11px;
+    color: $text-muted;
+    margin: 0;
+    line-height: 1.3;
+  }
+}
+
+.preset-sources {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+
+  .source-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+  }
+}
+
+.checklist-empty { text-align: center; padding: 40px !important; color: $text-dim; }
+
+// Pagination
+.checklist-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  font-size: 12px;
+  color: $text-muted;
+}
+
+.pagination-per-page {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  select {
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-xs;
+    background: $dark-475;
+    color: $text-light-alt;
+    font-size: 12px;
+  }
+}
+
+.pagination-nav {
+  display: flex;
+  gap: 4px;
+
+  button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: $radius-xs;
+    background: transparent;
+    color: $text-muted;
+    font-size: 12px;
+    cursor: pointer;
+
+    &.active {
+      background: $checklist-purple;
+      color: #fff;
+      border-color: $checklist-purple;
+    }
+
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
+}
+
+// ─── Setup Modal ────────────────────────────────────────
+
+.setup-modal {
+  width: min(700px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: $dark-500;
+  border: 1px solid $dark-250;
+  border-radius: $radius-md;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.2s ease;
+}
+
+.setup-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-lightest;
+  }
+}
+
+.setup-modal-tabs {
+  display: flex;
+  gap: 0;
+  padding: 16px 24px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: $text-muted;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+
+    &.active {
+      color: $text-lightest;
+      border-bottom-color: $checklist-purple;
+    }
+  }
+}
+
+// Setup Modal — pill tabs
+.setup-mtabs {
+  display: flex;
+  background: $dark-475;
+  border-radius: $radius-sm;
+  padding: 3px;
+  gap: 2px;
+  margin: 16px 24px 0;
+
+  button {
+    flex: 1;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    border-radius: $radius-xs;
+    border: none;
+    background: transparent;
+    color: $text-muted;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &.active {
+      background: $dark-350;
+      color: $text-lightest;
+      font-weight: 500;
+    }
+
+    &:hover:not(.active) {
+      color: $text-light-alt;
+    }
+  }
+}
+
+// Connection items
+.conn-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px;
+  background: $dark-650;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.conn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ci-figma { background: rgba(162, 89, 255, 0.2); color: #a259ff; }
+.ci-pw { background: rgba($warn, 0.2); color: $warn; }
+.ci-db { background: rgba($success, 0.2); color: $success; }
+
+.conn-body { flex: 1; }
+
+.conn-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-lightest;
+  margin-bottom: 2px;
+}
+
+.conn-desc {
+  font-size: 11px;
+  color: $text-muted;
+  margin-bottom: 8px;
+}
+
+.conn-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-sm;
+  background: $dark-475;
+  color: $text-light-alt;
+  outline: none;
+
+  &:focus { border-color: $checklist-purple; }
+}
+
+.conn-status {
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cs-ok { color: $success-green; }
+.cs-error { color: $error; }
+.cs-pending { color: $warn; }
+.cs-checking { color: $checklist-purple; }
+
+// Drop zone
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.13);
+  border-radius: $radius-sm;
+  padding: 24px;
+  text-align: center;
+  color: $text-dim;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: $checklist-purple;
+    color: $text-muted;
+    background: rgba($checklist-purple, 0.04);
+  }
+}
+
+// Detail button in checklist table
+.btn-detail {
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-xs;
+  background: transparent;
+  color: $text-muted;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+
+  &:hover {
+    background: rgba($checklist-purple, 0.1);
+    color: $text-light-alt;
+    border-color: $checklist-purple;
+  }
+}
+
+.setup-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-muted;
+  }
+
+  input,
+  select {
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-sm;
+    background: $dark-650;
+    color: $text-light-alt;
+    font-size: 13px;
+    outline: none;
+
+    &:focus { border-color: $checklist-purple; }
+  }
+}
+
+.setup-field-row {
+  display: flex;
+  gap: 14px;
+
+  .setup-field { flex: 1; }
+}
+
+.setup-info {
+  font-size: 13px;
+  color: $text-muted;
+  margin-bottom: 16px;
+}
+
+.setup-criteria-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    padding: 8px;
+    font-size: 11px;
+    color: $text-muted;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  td {
+    padding: 8px;
+    color: $text-sidebar-light;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+}
+
+.btn-trash {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+}
+
+.setup-connection-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: $dark-650;
+
+  h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-lightest;
+    margin: 0;
+  }
+
+  p {
+    font-size: 12px;
+    color: $text-muted;
+    margin: 2px 0 0;
+  }
+}
+
+.connection-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+
+  &.figma { background: #1e1e1e; color: #a259ff; }
+  &.playwright { background: #2d4a22; color: #45ba4b; }
+  &.db { background: #1a3a4a; color: #3ecf8e; }
+}
+
+.connection-status {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.connected { color: $success-green; }
+  &.disconnected { color: $text-muted; }
+}
+
+.setup-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.btn-outline {
+  padding: 8px 16px;
+  background: transparent;
+  color: $text-light-alt;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: $radius-sm;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover { background: rgba(255, 255, 255, 0.05); }
+}
+
+.btn-primary {
+  padding: 8px 16px;
+  background: $checklist-purple;
+  color: #fff;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover { background: $purple-hover; }
+}
+
+// ─── Checklist Header Actions ───────────────────────────
+
+.checklist-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

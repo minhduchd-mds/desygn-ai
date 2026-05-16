@@ -1,0 +1,48 @@
+@use "variables" as *;
+
+:root {
+  color: $brand-dark;
+  background: $landing-bg;
+  font-family: $font-sans;
+  font-weight: 400;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: $radius-pill;
+  background: rgba(93, 107, 128, 0.38);
+  background-clip: content-box;
+
+  &:hover {
+    background: rgba(93, 107, 128, 0.58);
+    background-clip: content-box;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}

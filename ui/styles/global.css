@@ -10,7 +10,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--dr-font-base);
+    font-family: var(--dr-font-base), serif;
   font-size: 13px;
   line-height: 1.5;
   overflow: hidden;
@@ -231,7 +231,7 @@ html, body {
   letter-spacing: 0.2px;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: var(--dr-font-base);
+    font-family: var(--dr-font-base), serif;
 }
 
 .tab-item:hover {

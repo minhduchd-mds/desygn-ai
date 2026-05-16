@@ -1,11 +1,11 @@
-﻿import { StrictMode, Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { StrictMode, Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import { createRoot } from "react-dom/client";
 import { createEmptyContext, type DesignContext, type ValidationReport } from "../../shared/designContext";
-import type { AccountPlan, AppView, AuthMode, ChatMessage, OpenDesignDefinition, OpenDesignPreset, ProjectHistoryItem, ProjectRequest, SessionUser } from "./app/types";
+import type { AppView, AuthMode, ChatMessage, OpenDesignDefinition, OpenDesignPreset, ProjectHistoryItem, ProjectRequest, SessionUser } from "./app/types";
 import {
   register, login, updatePlan, getSessionUser, saveSessionUser, clearSessionUser,
   getProjectHistory, saveProjectHistory, getChatHistoryKey, encryptChatMessages,
-  decryptChatMessages, createMessage, CHAT_HISTORY_LIMIT, CHAT_HISTORY_PREFIX, SESSION_TTL_MS,
+  decryptChatMessages, createMessage, SESSION_TTL_MS,
 } from "./app/auth";
 import { buildContext, parseFileSources } from "./design/contextBuilder";
 import { BA_TEMPLATE_CONTENT } from "./design/constants";
@@ -19,7 +19,7 @@ import { buildMarkdownPrompt, readMarkdownFiles } from "./workspace/fileImport";
 import { analyzeImage } from "./workspace/imageAnalyzer";
 import { sendClaudeChat } from "./workspace/claudeChat";
 import { fileToDataUrl, generateCodeFromScreenshot, getScreenshotToCodeWsUrl } from "./workspace/screenshotToCode";
-import { DEFAULT_CHECKLIST_ROWS, DESIGN_SOURCES, CHECKLIST_CATEGORIES, PROJECT_PRESETS, type ChecklistRow, type ChecklistStatus, type DesignSource } from "./workspace/checklistData";
+import { DEFAULT_CHECKLIST_ROWS, DESIGN_SOURCES, CHECKLIST_CATEGORIES, type ChecklistRow, type ChecklistStatus, type DesignSource } from "./workspace/checklistData";
 import { ComparePanel, type BugMarker } from "./workspace/ComparePanel";
 import type { HtmlPreviewState } from "./workspace/HtmlPreviewModal";
 
@@ -39,7 +39,7 @@ import python from "highlight.js/lib/languages/python";
 import markdown from "highlight.js/lib/languages/markdown";
 import DOMPurify from "dompurify";
 import "highlight.js/styles/github-dark.min.css";
-import "./styles.css";
+import "./scss/styles.scss";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("js", javascript);
@@ -96,14 +96,15 @@ const DEFAULT_PROJECT: ProjectRequest = {
   projectName: "Design-md-ai Project",
   category: "SaaS",
   style: "Modern product UI",
-  openDesign: "openai",
+  openDesign: "desygnAI",
   layout: "Design.md handoff workspace",
   target: "Codex + React",
-  prompt: "Create a Design.md handoff for a Figma-backed SaaS dashboard with components, tokens, responsive rules, and implementation guidance.",
+  prompt:
+    "Create a Design.md handoff for a Figma-backed SaaS dashboard with components, tokens, responsive rules, and implementation guidance.",
 };
 
 const BASE_OPEN_DESIGN_PRESETS: Record<OpenDesignPreset, OpenDesignDefinition> = {
-  openai: {
+  desygnAI: {
     label: "Trợ lý ảo workspace",
     direction: "Calm AI workspace, readable long-form answers, low distraction, clear safety and action states.",
     palette: ["#F7F7F4", "#FFFFFF", "#202123", "#10A37F", "#D9EDE7"],
@@ -232,7 +233,10 @@ const BASE_OPEN_DESIGN_PRESETS: Record<OpenDesignPreset, OpenDesignDefinition> =
     layout: ["Responsive grid", "Navigation rail", "Top app bar", "Stateful forms"],
     elevation: "Use state layers and subtle elevation only where interaction needs hierarchy.",
     tokens: ["semantic roles", "state layers", "responsive breakpoints", "accessible focus"],
-    rules: ["Include hover, focus, pressed, selected, disabled, loading, and error states.", "Use semantic roles before raw colors."],
+    rules: [
+      "Include hover, focus, pressed, selected, disabled, loading, and error states.",
+      "Use semantic roles before raw colors.",
+    ],
     donts: ["Do not skip accessibility states.", "Do not use elevation as decoration."],
   },
   shopify: {
@@ -508,7 +512,7 @@ function App() {
   });
   const [checklistSearch, setChecklistSearch] = useState("");
   const [checklistFilter, setChecklistFilter] = useState<"all" | "ui" | "ux" | "pass" | "fail" | "warn" | "untested">("all");
-  const [checklistSourceFilter, setChecklistSourceFilter] = useState<"all" | DesignSource>("all");
+  const [checklistSourceFilter, _setChecklistSourceFilter] = useState<"all" | DesignSource>("all");
   const [checklistCatFilter, setChecklistCatFilter] = useState("All");
   const [checklistPage, setChecklistPage] = useState(1);
   const [checklistPerPage, setChecklistPerPage] = useState(10);
@@ -535,8 +539,8 @@ function App() {
 
   // Compare Panel — Sprint 4
   const [bugMarkers, setBugMarkers] = useState<BugMarker[]>([]);
-  const [compareDesignUrl, setCompareDesignUrl] = useState<string | null>(null);
-  const [compareWebUrl, setCompareWebUrl] = useState<string | null>(null);
+  const [compareDesignUrl, _setCompareDesignUrl] = useState<string | null>(null);
+  const [compareWebUrl, _setCompareWebUrl] = useState<string | null>(null);
 
   // Toast notification system
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: "success" | "error" | "warn" | "info" }>>([]);
@@ -1225,7 +1229,7 @@ function App() {
     }, 50);
   }
 
-  function startNewProject() {
+  function _startNewProject() {
     setRequest(DEFAULT_PROJECT);
     setGeneratedRequest(null);
     setHasGenerated(false);
@@ -1425,35 +1429,7 @@ function App() {
         <aside className="workspace-sidebar">
           <div className="sidebar-brand-header">
             <div className="sidebar-brand-logo">
-              <svg width="30" height="30" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40">
-                    <stop offset="0%" stopColor="#a855f7"/>
-                    <stop offset="50%" stopColor="#6366f1"/>
-                    <stop offset="100%" stopColor="#06b6d4"/>
-                  </linearGradient>
-                  <linearGradient id="cubeGrad" x1="14" y1="12" x2="28" y2="28">
-                    <stop offset="0%" stopColor="#c084fc"/>
-                    <stop offset="100%" stopColor="#818cf8"/>
-                  </linearGradient>
-                </defs>
-                {/* Outer D shape */}
-                <path d="M8 6h16a10 10 0 010 20H8V6z" fill="url(#logoGrad)" opacity="0.85"/>
-                {/* Inner darker D */}
-                <path d="M12 10h10a6 6 0 010 12H12V10z" fill="#1e1145" opacity="0.7"/>
-                {/* 3D cube */}
-                <rect x="16" y="14" width="8" height="8" rx="1.5" fill="url(#cubeGrad)" opacity="0.8"/>
-                <path d="M16 14l2-2h8l-2 2" fill="#c084fc" opacity="0.5"/>
-                <path d="M24 14l2-2v8l-2 2" fill="#818cf8" opacity="0.4"/>
-                {/* Dots pattern */}
-                <circle cx="5" cy="12" r="1" fill="#a855f7" opacity="0.5"/>
-                <circle cx="5" cy="16" r="1" fill="#a855f7" opacity="0.4"/>
-                <circle cx="5" cy="20" r="1" fill="#6366f1" opacity="0.5"/>
-                <circle cx="5" cy="24" r="1" fill="#6366f1" opacity="0.4"/>
-                <circle cx="2" cy="14" r="0.8" fill="#a855f7" opacity="0.3"/>
-                <circle cx="2" cy="18" r="0.8" fill="#818cf8" opacity="0.3"/>
-                <circle cx="2" cy="22" r="0.8" fill="#06b6d4" opacity="0.3"/>
-              </svg>
+              <img src="/web/src/Img/logo.png" alt={`${PRODUCT_NAME} logo`} width="30px" height="30px" className="sidebar-logo-img" />
               <span className="sidebar-brand-name">{PRODUCT_NAME}</span>
             </div>
             <button
@@ -1775,7 +1751,7 @@ function App() {
                 </svg>
               </div>
               <div className="score-bars">
-                {(["Visual Design", "Typography", "Accessibility", "Interaction"] as const).map((label, i) => {
+                {(["Visual Design", "Typography", "Accessibility", "Interaction"] as const).map((label, _i) => {
                   const catMap: Record<string, string[]> = {
                     "Visual Design": ["Color", "Layout", "Spacing", "Foundation_Color", "Foundation_Spacing"],
                     "Typography": ["Typography", "Foundation_Typography"],
@@ -3148,8 +3124,32 @@ function App() {
   );
 }
 
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("[ErrorBoundary]", error.message, info.componentStack);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 32, maxWidth: 600, margin: "80px auto", fontFamily: "system-ui, sans-serif", color: "#e2e8f0", background: "#1a1a2e", borderRadius: 12 }}>
+          <h2 style={{ margin: "0 0 12px", fontSize: 18 }}>Something went wrong</h2>
+          <pre style={{ whiteSpace: "pre-wrap", fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>{this.state.error.message}</pre>
+          <button onClick={() => this.setState({ error: null })} style={{ marginTop: 16, padding: "8px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 }}>
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

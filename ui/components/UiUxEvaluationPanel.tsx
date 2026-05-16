@@ -30,7 +30,7 @@ function evaluate(
 ): EvalCriterion[] {
   const results: EvalCriterion[] = [];
   const compCount = components.length;
-  const varCount = variables.length;
+  const _varCount = variables.length;
   const catScore = (dim: string) => scanResult?.categories.find(c => c.id === dim)?.score ?? 0;
 
   // Documentation

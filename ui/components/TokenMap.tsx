@@ -12,8 +12,6 @@ export function TokenMap({ mappings, profileName }: TokenMapProps) {
   const [expanded, setExpanded] = useState(false);
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
 
-  if (mappings.length === 0) return null;
-
   const mappedCount = mappings.filter((m) => m.tokenName).length;
   const unknownCount = mappings.length - mappedCount;
   const needsExpand = mappings.length > TOKEN_MAP_DISPLAY_LIMIT;
@@ -23,6 +21,8 @@ export function TokenMap({ mappings, profileName }: TokenMapProps) {
     const visible = expanded ? mappings : mappings.slice(0, TOKEN_MAP_DISPLAY_LIMIT);
     return [...visible].sort((a, b) => b.count - a.count);
   }, [mappings, expanded]);
+
+  if (mappings.length === 0) return null;
 
   const copyToClipboard = async (hex: string) => {
     try {

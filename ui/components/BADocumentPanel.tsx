@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useI18n } from "../i18n/I18nContext";
 import styles from "./BADocumentPanel.module.css";
 
@@ -132,23 +132,29 @@ function parseScreensFromContent(content: string): BAScreen[] {
   return screens;
 }
 
-export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPanelProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(initialDoc?.title ?? "");
-  const [content, setContent] = useState(initialDoc?.content ?? "");
-  const [saved, setSaved] = useState(false);
-  const { t } = useI18n();
-
+function useInitialDoc(initialDoc: BADocument | null | undefined, onDocumentChange: (doc: BADocument) => void) {
+  const stored = !initialDoc ? loadFromStorage() : null;
+  const initTitle = initialDoc?.title ?? stored?.title ?? "";
+  const initContent = initialDoc?.content ?? stored?.content ?? "";
+  // Notify parent once on mount if we loaded from storage
+  const notifiedRef = useRef(false);
   useEffect(() => {
-    if (initialDoc) return;
-    const stored = loadFromStorage();
-    if (stored) {
-      setTitle(stored.title);
-      setContent(stored.content);
+    if (stored && !notifiedRef.current) {
+      notifiedRef.current = true;
       onDocumentChange(stored);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return { initTitle, initContent };
+}
+
+export function BADocumentPanel({ onDocumentChange, initialDoc }: BADocumentPanelProps) {
+  const { initTitle, initContent } = useInitialDoc(initialDoc, onDocumentChange);
+  const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(initTitle);
+  const [content, setContent] = useState(initContent);
+  const [saved, setSaved] = useState(false);
+  const { t } = useI18n();
 
   const handleSave = () => {
     const screens = parseScreensFromContent(content);

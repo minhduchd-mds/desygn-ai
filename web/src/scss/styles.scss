@@ -1,0 +1,16 @@
+// ─── Desygn AI — Main Stylesheet ────────────────────────
+// Organized into SCSS partials for maintainability.
+// Variables & tokens are centralized in _variables.scss.
+
+@use "base";
+@use "landing";
+@use "sidebar";
+@use "workspace";
+@use "chat";
+@use "welcome";
+@use "plan";
+@use "templates";
+@use "checklist";
+@use "toast";
+@use "modals";
+@use "compare";
