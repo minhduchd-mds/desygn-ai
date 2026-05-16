@@ -77,6 +77,30 @@ The project follows a strict **sandbox separation** model:
 - Web workspace uses **SCSS modules** with centralized design tokens
 - Prompt text always sanitized via `sanitize.ts` (injection risk prevention)
 
+### AI Intelligence Architecture (Shannon Engine)
+
+```
+Input Layer          Memory Layer         Analysis Layer
+├── Figma            ├── AgentMemory      ├── DesignAnalyzer
+├── Screenshot       ├── Project Memory   ├── Accessibility Audit
+├── Manual Spec      ├── DS Memory        ├── Mobile Analyzer
+├── Git Repo         ├── BM25 Search      ├── Framework Detector
+└── DS Registry      └── IndexedDB        └── Drift Detector
+
+Shannon Engine       Provider Router      Generation Layer
+├── Analyzer Agent   ├── Groq 8B (fast)   ├── Design.md
+├── Generator Agent  ├── GPT (struct)     ├── React TSX
+├── Validator Agent  ├── Claude (reason)  ├── Vue SFC / Svelte 5
+└── Optimizer Agent  └── Local Model      ├── Flutter / RN
+                                          └── GitHub PR
+
+Platform Layer       Enterprise Layer
+├── Marketplace      ├── SSO/SAML + RBAC
+├── Multi-DS Hub     ├── Audit Logs
+├── Plugin SDK       ├── Self-hosted
+└── CRDT Collab      └── License + Backup
+```
+
 ---
 
 ## Project Structure
