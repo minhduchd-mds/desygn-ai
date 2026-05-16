@@ -1,0 +1,91 @@
+// ── Design Tokens — Cyberpunk/AI theme ──
+// Restored from deleted tokens.css → converted to SCSS
+
+:root {
+  // Background layers
+  --bg: #03050a;
+  --bg2: #070c14;
+  --bg3: #0b1220;
+
+  // Glow colors
+  --glow: #00d4ff;
+  --glow2: #7c3aed;
+  --glow3: #06ffa5;
+
+  // Text
+  --text: #e2f0ff;
+  --text2: #6b8aad;
+  --text3: #2e4a6b;
+
+  // Borders
+  --border: rgba(0, 212, 255, 0.12);
+  --border2: rgba(0, 212, 255, 0.25);
+
+  // Figma runtime fallbacks (overridden at runtime by Figma)
+  --figma-color-bg: #03050a;
+  --figma-color-bg-secondary: #070c14;
+  --figma-color-bg-brand: #00d4ff;
+  --figma-color-bg-danger: #f85149;
+  --figma-color-border: rgba(0, 212, 255, 0.18);
+  --figma-color-text: #e2f0ff;
+  --figma-color-text-secondary: #6b8aad;
+  --figma-color-text-tertiary: #2e4a6b;
+  --figma-color-text-brand: #00d4ff;
+  --figma-color-text-inverse: #000000;
+
+  // Brand / status colors
+  --dr-brand: #00d4ff;
+  --dr-success: #06ffa5;
+  --dr-success-hover: #04cc86;
+  --dr-warning: #ffd166;
+  --dr-error: #f85149;
+
+  // Atomic level colors
+  --dr-atom: #00d4ff;
+  --dr-molecule: #7c3aed;
+  --dr-organism: #ffd166;
+
+  // Score colors
+  --dr-score-green: #06ffa5;
+  --dr-score-yellow: #ffd166;
+  --dr-score-red: #f85149;
+
+  // Chart colors
+  --dr-chart-variants: #ff6b9d;
+
+  // Typography
+  --dr-font-base: 'Syne', system-ui, -apple-system, sans-serif;
+  --dr-font-mono: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+
+  // Type sizes
+  --dr-text-xs: 9px;
+  --dr-text-sm: 10px;
+  --dr-text-md: 11px;
+  --dr-text-lg: 12px;
+  --dr-text-xl: 13px;
+  --dr-text-2xl: 18px;
+  --dr-text-score: 36px;
+
+  // Weights
+  --dr-weight-regular: 400;
+  --dr-weight-medium: 500;
+  --dr-weight-semibold: 600;
+  --dr-weight-bold: 700;
+
+  // Spacing
+  --dr-space-xs: 2px;
+  --dr-space-sm: 4px;
+  --dr-space-md: 8px;
+  --dr-space-lg: 12px;
+  --dr-space-xl: 16px;
+
+  // Radius
+  --dr-radius-sm: 4px;
+  --dr-radius-md: 6px;
+  --dr-radius-lg: 8px;
+  --dr-radius-xl: 14px;
+  --dr-radius-pill: 20px;
+
+  // Transitions
+  --dr-transition: 0.18s;
+}

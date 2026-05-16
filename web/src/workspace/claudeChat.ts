@@ -3,7 +3,7 @@
  *
  * Previously called fetch() directly; now delegates to:
  *  • streamClient.postStream  (streaming path — onToken callback)
- *  • apiClient.post           (non-streaming fallback)
+ *  • apiClient. Post           (non-streaming fallback)
  *
  * Benefits: automatic retry, AbortController lifecycle, rate-limit awareness,
  * error normalization, and error bus emission.
@@ -15,16 +15,6 @@ import { postStream } from "../lib/streamClient";
 import { chatRateLimit } from "../lib/rateLimit";
 import { errorBus } from "../lib/errorBus";
 
-interface ChatContext {
-  projectName: string;
-  category: string;
-  selectedTemplate: string;
-  readinessScore: number | null;
-  activeDesignMd: boolean;
-  workspaceTab: "chat" | "code";
-  model?: string;
-}
-
 interface ChatResponse {
   message?: string;
   error?: string;
@@ -32,7 +22,15 @@ interface ChatResponse {
 
 export async function sendClaudeChat(
   messages: ChatMessage[],
-  context: ChatContext,
+  context: {
+    projectName: string;
+    category: string;
+    selectedTemplate: string;
+    readinessScore: number;
+    activeDesignMd: boolean;
+    workspaceTab: "chat" | "code" | "checklist";
+    model: string;
+  },
   onToken?: (token: string) => void,
   signal?: AbortSignal,
 ): Promise<string> {

@@ -41,7 +41,7 @@ async function resizeImage(file: File): Promise<Blob> {
   return await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob ?? file), file.type, 0.85));
 }
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));

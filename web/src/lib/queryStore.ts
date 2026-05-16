@@ -94,22 +94,24 @@ export function useQuery<T>(
 ): QueryResult<T> {
   const { staleMs = 30_000, enabled = true } = opts;
   const [tick, rerender] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
-  const fetchingRef = useRef(false);
+
+  // Update fetcher ref in effect (not during render)
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
 
   const doFetch = useCallback(() => {
-    if (fetchingRef.current) return;
     if (inflight.has(key)) return; // dedup
 
-    fetchingRef.current = true;
-    rerender((n) => n + 1);
+    setIsLoading(true);
 
     const promise = fetcherRef.current().then(
       (data) => {
         cache.set(key, { data, timestamp: Date.now() });
         inflight.delete(key);
-        fetchingRef.current = false;
+        setIsLoading(false);
         notify(key);
       },
       (err: unknown) => {
@@ -117,7 +119,7 @@ export function useQuery<T>(
         const prev = cache.get(key) as CacheEntry<T> | undefined;
         cache.set(key, { data: prev?.data as T, timestamp: Date.now(), error });
         inflight.delete(key);
-        fetchingRef.current = false;
+        setIsLoading(false);
         notify(key);
       },
     );
@@ -133,6 +135,7 @@ export function useQuery<T>(
     if (!enabled) return;
     const entry = cache.get(key);
     const isStale = !entry || Date.now() - entry.timestamp > staleMs;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isStale) doFetch();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, key, staleMs, tick]);
@@ -140,7 +143,7 @@ export function useQuery<T>(
   const entry = cache.get(key) as CacheEntry<T> | undefined;
   return {
     data: entry?.data,
-    loading: fetchingRef.current || inflight.has(key),
+    loading: isLoading || inflight.has(key),
     error: entry?.error,
     refetch: doFetch,
   };

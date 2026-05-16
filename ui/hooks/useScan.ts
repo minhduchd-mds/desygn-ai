@@ -14,6 +14,18 @@ export function useScan() {
   const profileRef      = useRef<PluginProfile | null>(null);
   const scanTimeoutRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const executeScan = useCallback((node: SerializedNode, detectedVariants: ViewportVariant[]) => {
+    try {
+      const data = runScan(node, detectedVariants.length > 1 ? detectedVariants : undefined, profileRef.current);
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scan failed");
+      setResult(null);
+    } finally {
+      setIsScanning(false);
+    }
+  }, []);
+
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       const msg = event.data?.pluginMessage;
@@ -29,19 +41,7 @@ export function useScan() {
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  const executeScan = (node: SerializedNode, detectedVariants: ViewportVariant[]) => {
-    try {
-      const data = runScan(node, detectedVariants.length > 1 ? detectedVariants : undefined, profileRef.current);
-      setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Scan failed");
-      setResult(null);
-    } finally {
-      setIsScanning(false);
-    }
-  };
+  }, [executeScan]);
 
   const scan = useCallback((node: SerializedNode, profile?: PluginProfile | null) => {
     setIsScanning(true);
