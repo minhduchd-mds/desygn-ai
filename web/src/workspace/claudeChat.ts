@@ -1,4 +1,19 @@
+/**
+ * claudeChat — chat API integration layer.
+ *
+ * Previously called fetch() directly; now delegates to:
+ *  • streamClient.postStream  (streaming path — onToken callback)
+ *  • apiClient.post           (non-streaming fallback)
+ *
+ * Benefits: automatic retry, AbortController lifecycle, rate-limit awareness,
+ * error normalization, and error bus emission.
+ */
+
 import type { ChatMessage } from "../app/types";
+import { apiClient } from "../lib/apiClient";
+import { postStream } from "../lib/streamClient";
+import { chatRateLimit } from "../lib/rateLimit";
+import { errorBus } from "../lib/errorBus";
 
 interface ChatContext {
   projectName: string;
@@ -19,75 +34,42 @@ export async function sendClaudeChat(
   messages: ChatMessage[],
   context: ChatContext,
   onToken?: (token: string) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
-  const body = JSON.stringify({
+  // Client-side rate limit guard
+  if (!chatRateLimit.consume()) {
+    const waitSec = chatRateLimit.waitSeconds.toFixed(1);
+    throw new Error(`Gửi quá nhanh — vui lòng đợi ${waitSec}s trước khi thử lại.`);
+  }
+
+  const body = {
     messages: messages.map((m) => ({ role: m.role, title: m.title, content: m.content })),
     context,
-  });
+  };
 
-  // ── Streaming path (plain text stream from toTextStreamResponse) ──
+  // ── Streaming path ────────────────────────────────────────────
   if (onToken) {
-    let response: Response;
     try {
-      response = await fetch("/api/chat-stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-    } catch {
-      throw new Error("Chat API is unavailable. Start the dev server or deploy to Vercel.");
-    }
-
-    if (!response.ok) {
-      let errorMsg = `Chat stream failed (${response.status}).`;
-      try {
-        const errBody = (await response.json()) as { error?: string };
-        if (errBody.error) errorMsg = errBody.error;
-      } catch { /* ignore */ }
-      throw new Error(errorMsg);
-    }
-
-    if (!response.body) {
-      throw new Error("No response stream received.");
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let full = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      if (chunk) {
-        full += chunk;
-        onToken(chunk);
+      return await postStream("/api/chat-stream", body, onToken, { signal });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Chat stream failed";
+      if (message.includes("NETWORK") || message.includes("fetch")) {
+        throw new Error("Chat API không khả dụng. Khởi động dev server hoặc deploy lên Vercel.");
       }
+      errorBus.network(message, true);
+      throw err;
     }
-
-    return full || "No response generated.";
   }
 
-  // ── Non-streaming fallback ──
-  let response: Response;
+  // ── Non-streaming fallback ────────────────────────────────────
   try {
-    response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-  } catch {
-    throw new Error("Chat API is unavailable. Start the dev server or deploy to Vercel.");
-  }
-
-  const payload = (await response.json().catch(() => ({}))) as ChatResponse;
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Chat API route not found. Restart the dev server so /api/chat is registered.");
+    const payload = await apiClient.post<ChatResponse>("/api/chat", body, { signal });
+    return payload.message?.trim() || "No response generated.";
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Chat request failed";
+    if (message.includes("404")) {
+      throw new Error("Chat API route not found. Khởi động lại dev server để /api/chat được đăng ký.");
     }
-    throw new Error(payload.error ?? `Chat request failed with status ${response.status}.`);
+    throw err;
   }
-
-  return payload.message?.trim() || "No response generated.";
 }
