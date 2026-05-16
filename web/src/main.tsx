@@ -475,7 +475,12 @@ function MarkdownSectionContent({ content }: { content: string }) {
 }
 
 function App() {
-  const [user, setUser] = useState<SessionUser | null>(() => getSessionUser());
+  const [user, setUser] = useState<SessionUser | null>(() => {
+    const session = getSessionUser();
+    // Refresh TTL on app load so active users stay logged in
+    if (session) saveSessionUser(session);
+    return session;
+  });
   const [view, setView] = useState<AppView>(() => (getSessionUser() ? "workspace" : "landing"));
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -550,6 +555,45 @@ function App() {
     setToasts(prev => [...prev.slice(-4), { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
+
+  // Brand menu dropdown
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+  const [brandHelpOpen, setBrandHelpOpen] = useState(false);
+
+  // Projects store
+  interface ProjectItem { id: string; name: string; createdAt: string; }
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("designready.projects-v1");
+      return saved ? JSON.parse(saved) as ProjectItem[] : [];
+    } catch { return []; }
+  });
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectName, setEditingProjectName] = useState("");
+
+  function saveProjects(next: ProjectItem[]) {
+    setProjects(next);
+    localStorage.setItem("designready.projects-v1", JSON.stringify(next));
+  }
+
+  function addProject() {
+    const id = `proj-${Date.now()}`;
+    const newProject: ProjectItem = { id, name: `Project ${projects.length + 1}`, createdAt: new Date().toISOString() };
+    saveProjects([newProject, ...projects]);
+    setActiveProjectId(id);
+    startNewChat();
+  }
+
+  function renameProject(id: string, name: string) {
+    saveProjects(projects.map(p => p.id === id ? { ...p, name } : p));
+    setEditingProjectId(null);
+  }
+
+  function deleteProject(id: string) {
+    saveProjects(projects.filter(p => p.id !== id));
+    if (activeProjectId === id) setActiveProjectId(null);
+  }
 
   const [chatTheme, setChatTheme] = useState<"dark" | "light">(() => {
     const saved = localStorage.getItem("designready.theme");
@@ -773,6 +817,8 @@ function App() {
       saveSessionUser(session);
       setUser(session);
       setPassword("");
+      // Start fresh — show welcome screen (new chat) like ChatGPT/Claude
+      startNewChat();
       setView("workspace");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : String(error));
@@ -866,10 +912,17 @@ function App() {
         );
       }
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isApiUnavailable = /unavailable|404|500|fetch|network/i.test(errMsg);
       setMessages((current) =>
         current.map((m) =>
           m.id === streamingId
-            ? { ...m, content: error instanceof Error ? error.message : "Trợ lý ảo đang bận 'tư duy vĩ đại' — thử lại nhé! 🤖" }
+            ? {
+                ...m,
+                content: isApiUnavailable
+                  ? `⚠️ **API không khả dụng**\n\nKhông thể kết nối tới Groq AI. Vui lòng kiểm tra:\n- Biến môi trường \`GROQ_API_KEY\` đã được cấu hình\n- Server đang chạy qua \`vercel dev\` (cho API routes)\n\n_Lỗi: ${errMsg}_`
+                  : errMsg || "Trợ lý ảo đang bận — thử lại nhé!",
+              }
             : m,
         ),
       );
@@ -1135,7 +1188,7 @@ function App() {
     setEditSavedAt(null);
   }
 
-  function showComingSoon(label: string) {
+  function _showComingSoon(label: string) {
     setMessages((current) => [
       ...current,
       createMessage("assistant", `${label} is on the roadmap. The current public demo focuses on Design.md generation, prompt handoff, upload, preview, and history.`, "Coming soon"),
@@ -1466,6 +1519,7 @@ function App() {
               className="new-chat-link"
               onClick={(event) => {
                 event.preventDefault();
+                setActiveProjectId(null);
                 startNewChat();
               }}
             >
@@ -1487,15 +1541,6 @@ function App() {
               <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               <span className="nav-label">Checklist UI/UX</span>
             </a>
-            <a href="#library" role="button" onClick={(event) => { event.preventDefault(); showComingSoon("My Library"); }}>
-              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
-              <span className="nav-label">My Library</span>
-              <span className="nav-status">Soon</span>
-            </a>
-            <a href="#settings" role="button" onClick={(event) => { event.preventDefault(); setSettingsOpen((v) => !v); }}>
-              <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.8"/></svg>
-              <span className="nav-label">Settings</span>
-            </a>
           </nav>
           {sidebarCollapsed && projectHistory.length > 0 && (
             <div className="sidebar-history-collapsed">
@@ -1515,15 +1560,34 @@ function App() {
           {!sidebarCollapsed && (
             <div className="sidebar-projects-section">
               <span className="sidebar-section-label">DỰ ÁN</span>
-              <a href="#" className="sidebar-project-item" onClick={(e) => e.preventDefault()}>
-                <svg className="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
-                <span>TenantX Platform</span>
-              </a>
-              <a href="#" className="sidebar-project-item" onClick={(e) => e.preventDefault()}>
-                <svg className="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
-                <span>Mobile App v2</span>
-              </a>
-              <a href="#" className="sidebar-project-item add-project" onClick={(e) => e.preventDefault()}>
+              {projects.map((proj) => (
+                <div key={proj.id} className={`sidebar-project-item${activeProjectId === proj.id ? " active" : ""}`}>
+                  {editingProjectId === proj.id ? (
+                    <input
+                      className="project-rename-input"
+                      value={editingProjectName}
+                      onChange={(e) => setEditingProjectName(e.target.value)}
+                      onBlur={() => renameProject(proj.id, editingProjectName || proj.name)}
+                      onKeyDown={(e) => { if (e.key === "Enter") renameProject(proj.id, editingProjectName || proj.name); if (e.key === "Escape") setEditingProjectId(null); }}
+                      autoFocus
+                    />
+                  ) : (
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveProjectId(proj.id); startNewChat(); }}>
+                      <svg className="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
+                      <span>{proj.name}</span>
+                    </a>
+                  )}
+                  <div className="project-actions">
+                    <button type="button" title="Rename" onClick={() => { setEditingProjectId(proj.id); setEditingProjectName(proj.name); }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" title="Delete" onClick={() => deleteProject(proj.id)}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <a href="#" className="sidebar-project-item add-project" onClick={(e) => { e.preventDefault(); addProject(); }}>
                 <svg className="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span>Thêm dự án</span>
               </a>
@@ -1593,22 +1657,6 @@ function App() {
             <section className="settings-panel">
               <h4>Settings</h4>
               <label className="settings-row">
-                <span>AI Model</span>
-                <select
-                  value={groqModel}
-                  onChange={(e) => {
-                    const m = e.target.value;
-                    setGroqModel(m);
-                    localStorage.setItem("designready.model", m);
-                  }}
-                >
-                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B (default)</option>
-                  <option value="llama-3.1-8b-instant">Llama 3.1 8B (fast)</option>
-                  <option value="mixtral-8x7b-32768">Mixtral 8x7B (32K ctx)</option>
-                  <option value="gemma2-9b-it">Gemma 2 9B</option>
-                </select>
-              </label>
-              <label className="settings-row">
                 <span>Theme</span>
                 <select
                   value={chatTheme}
@@ -1637,25 +1685,64 @@ function App() {
             </section>
           )}
 
-          {/* Pro badge */}
-          <section className="plan-card">
-            <div className="plan-card-badge">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#8b5cf6"/></svg>
-              <span>{user.plan === "pro" ? "Pro Active" : "Free"}</span>
-            </div>
-            {user.plan !== "pro" && <button onClick={upgradeToPro}>Upgrade Pro</button>}
-          </section>
-
-          {/* Profile */}
-          <div className="brand-block">
-            <span className="brand-mark" title={sidebarCollapsed ? user.displayEmail : undefined}>AI</span>
-            <div>
-              <strong>{PRODUCT_NAME}</strong>
-              <span>{user.displayEmail}</span>
-            </div>
-            <button className="ghost-button logout-button" type="button" onClick={logout}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          {/* Brand menu — user profile + dropdown */}
+          <div className="brand-block-wrapper">
+            <button
+              type="button"
+              className="brand-block"
+              onClick={() => { setBrandMenuOpen((v) => !v); setBrandHelpOpen(false); }}
+            >
+              <span className="brand-mark">{user.displayEmail?.charAt(0)?.toUpperCase() || "U"}</span>
+              <div className="brand-info">
+                <strong>{user.displayEmail}</strong>
+                <span className={`plan-badge plan-${user.plan}`}>{user.plan === "pro" ? "Pro" : "Free"}</span>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="brand-chevron"><path d="M6 9L12 15L18 9" stroke="currentColor" strokeLinecap="round"/></svg>
             </button>
+            {brandMenuOpen && (
+              <div className="brand-menu">
+                {user.plan !== "pro" && (
+                  <button type="button" className="brand-menu-item" onClick={() => { upgradeToPro(); setBrandMenuOpen(false); }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Upgrade plan
+                  </button>
+                )}
+                <button type="button" className="brand-menu-item" onClick={() => { showToast("Coming soon", "info"); setBrandMenuOpen(false); }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Get app & extensions
+                </button>
+                <button type="button" className="brand-menu-item" onClick={() => { showToast("Profile — coming soon", "info"); setBrandMenuOpen(false); }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Profile
+                </button>
+                <button type="button" className="brand-menu-item" onClick={() => { setSettingsOpen((v) => !v); setBrandMenuOpen(false); }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                  Setting
+                </button>
+                <div className="brand-menu-divider" />
+                <div className="brand-menu-submenu-wrapper">
+                  <button type="button" className="brand-menu-item" onClick={() => setBrandHelpOpen((v) => !v)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Help
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="submenu-arrow"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </button>
+                  {brandHelpOpen && (
+                    <div className="brand-submenu">
+                      <a href="https://github.com/minhduchd-mds/Design-md-ai" target="_blank" rel="noopener noreferrer" className="brand-menu-item">Tài liệu hướng dẫn</a>
+                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Keyboard shortcuts — coming soon", "info"); setBrandMenuOpen(false); }}>Lối tắt bàn phím</button>
+                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Terms of service", "info"); setBrandMenuOpen(false); }}>Điều khoản dịch vụ</button>
+                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Privacy policy", "info"); setBrandMenuOpen(false); }}>Chính sách quyền riêng tư</button>
+                      <button type="button" className="brand-menu-item" onClick={() => { showToast("Bug report — coming soon", "info"); setBrandMenuOpen(false); }}>Báo cáo lỗi</button>
+                    </div>
+                  )}
+                </div>
+                <div className="brand-menu-divider" />
+                <button type="button" className="brand-menu-item brand-menu-logout" onClick={() => { setBrandMenuOpen(false); logout(); }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Đăng xuất
+                </button>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -2757,6 +2844,8 @@ function App() {
             selectedPreset={selectedPreset}
             setRequest={setRequest}
             workspaceTab={workspaceTab}
+            groqModel={groqModel}
+            onModelChange={(m) => { setGroqModel(m); localStorage.setItem("designready.model", m); }}
             onSendChat={sendChatMessage}
             onGenerateDesignMd={generateProject}
             onCreateImage={createImageFromPrompt}

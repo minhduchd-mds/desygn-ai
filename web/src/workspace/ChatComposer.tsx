@@ -3,9 +3,16 @@ import { useMemo } from "react";
 import { DESIGN_MD_TEMPLATES } from "../design/templateRegistry";
 import type { OpenDesignDefinition, OpenDesignPreset, ProjectRequest, SetProjectRequest } from "../app/types";
 
-type ComposerDropdown = "tools" | "category" | "design" | null;
+type ComposerDropdown = "tools" | "category" | "design" | "model" | null;
 
 const PROJECT_CATEGORIES = ["SaaS", "AI tool", "E-commerce", "Landing page", "Dashboard"];
+
+const AI_MODELS: { value: string; label: string; desc: string }[] = [
+  { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", desc: "Default" },
+  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B", desc: "Fast" },
+  { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B", desc: "32K context" },
+  { value: "gemma2-9b-it", label: "Gemma 2 9B", desc: "Compact" },
+];
 
 interface ChatComposerProps {
   isGenerating: boolean;
@@ -14,6 +21,8 @@ interface ChatComposerProps {
   selectedPreset: OpenDesignDefinition;
   setRequest: SetProjectRequest;
   workspaceTab: "chat" | "code" | "checklist";
+  groqModel: string;
+  onModelChange: (model: string) => void;
   onSendChat: () => void;
   onGenerateDesignMd: () => void;
   onCreateImage: () => void;
@@ -28,6 +37,8 @@ export function ChatComposer({
   selectedPreset,
   setRequest,
   workspaceTab,
+  groqModel,
+  onModelChange,
   onSendChat,
   onGenerateDesignMd,
   onCreateImage,
@@ -276,6 +287,39 @@ export function ChatComposer({
           </div>
           <div className="composer-actions">
             <span>{isGenerating ? "Thinking" : "Ready"}</span>
+            <div className="composer-dropdown model-dropdown">
+              <button
+                type="button"
+                className="model-selector-btn"
+                aria-haspopup="listbox"
+                aria-expanded={composerDropdown === "model"}
+                onClick={() => setComposerDropdown((c) => (c === "model" ? null : "model"))}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                {AI_MODELS.find((m) => m.value === groqModel)?.label ?? "Llama 3.3 70B"}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" strokeLinecap="square" /></svg>
+              </button>
+              {composerDropdown === "model" && (
+                <div className="composer-menu model-menu" role="listbox">
+                  {AI_MODELS.map((m) => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      className={groqModel === m.value ? "selected" : ""}
+                      role="option"
+                      aria-selected={groqModel === m.value}
+                      onClick={() => {
+                        onModelChange(m.value);
+                        setComposerDropdown(null);
+                      }}
+                    >
+                      <span>{m.label}</span>
+                      <small>{m.desc}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {workspaceTab === "code" && (
               <button
                 className="design-md-send-button"

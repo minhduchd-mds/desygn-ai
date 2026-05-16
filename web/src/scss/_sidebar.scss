@@ -489,28 +489,196 @@ textarea {
 
 // ─── Sidebar Plan Card ────────────────────────────────
 
-.plan-card {
-  flex: 0 0 auto;
-  margin-top: 0;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(99, 102, 241, 0.08));
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 10px;
-  box-shadow: none;
+// ─── Project Item (dynamic) ──────────────────────────
 
-  button {
-    background: rgba(139, 92, 246, 0.2);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+.sidebar-project-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+
+  &.active > a {
+    background: rgba(139, 92, 246, 0.15);
     color: $purple-400;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: $radius-xs;
-    cursor: pointer;
-    margin-top: 6px;
+  }
 
-    &:hover {
-      background: rgba(139, 92, 246, 0.3);
+  .project-actions {
+    display: none;
+    gap: 2px;
+    margin-left: auto;
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: $radius-xs;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+
+      &:hover { background: rgba(148, 163, 184, 0.15); color: #e2e8f0; }
     }
   }
+
+  &:hover .project-actions { display: flex; }
+}
+
+.project-rename-input {
+  width: 100%;
+  border: 1px solid rgba(139, 92, 246, 0.4) !important;
+  border-radius: $radius-xs !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #e2e8f0 !important;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+}
+
+// ─── Brand Block (user menu) ─────────────────────────
+
+.brand-block-wrapper {
+  flex: 0 0 auto;
+  position: relative;
+  margin-top: auto;
+  padding: 0 8px 8px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(30, 41, 59, 0.8); }
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $purple-500, $indigo-500);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  flex: 1;
+
+  strong {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.plan-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: $radius-pill;
+  width: fit-content;
+
+  &.plan-free {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+  }
+
+  &.plan-pro {
+    background: rgba(139, 92, 246, 0.2);
+    color: $purple-400;
+  }
+}
+
+.brand-chevron {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+// ─── Brand Dropdown Menu ─────────────────────────────
+
+.brand-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 8px;
+  right: 8px;
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: brandMenuIn 0.15s ease;
+}
+
+@keyframes brandMenuIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.brand-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: $radius-xs;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s;
+
+  &:hover { background: rgba(148, 163, 184, 0.1); color: #f1f5f9; }
+
+  .submenu-arrow { margin-left: auto; opacity: 0.5; }
+}
+
+.brand-menu-logout {
+  color: #ef4444;
+  &:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+}
+
+.brand-menu-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.brand-menu-submenu-wrapper {
+  position: relative;
+}
+
+.brand-submenu {
+  position: absolute;
+  left: calc(100% + 6px);
+  bottom: 0;
+  min-width: 200px;
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 101;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: brandMenuIn 0.12s ease;
 }
