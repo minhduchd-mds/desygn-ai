@@ -512,7 +512,7 @@ describe("EvidenceMemoryEngine", () => {
       const snapshot = await engine.exportSnapshot();
       const parsed = JSON.parse(snapshot);
 
-      expect(parsed.version).toBe(1);
+      expect(parsed.version).toBe(2);
       expect(parsed.records.length).toBe(2);
       expect(parsed.records[0].content).toContain("evidence to export");
     });

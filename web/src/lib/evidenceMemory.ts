@@ -1,10 +1,23 @@
 /**
- * Evidence-Based Memory Engine
- * Treats all memories as "candidate evidence" with confidence scores
- * Source hierarchy: design-file > user-feedback > ai-inference > pattern-match
- * Validated memories are promoted to "ground truth"
- * Unvalidated memories decay over time
+ * Evidence-Based Memory Engine v3
+ * Self-Learning Agent Core — Production-grade implementation
+ *
+ * Architecture:
+ *   • HNSW vector search for semantic similarity (O(log n) vs O(n))
+ *   • StatsCache for O(1) statistics retrieval
+ *   • Sigmoid decay curve (realistic knowledge half-life)
+ *   • Tag-indexed contradiction detection (O(k) vs O(n²))
+ *   • Atomic store/validate/delete operations
+ *   • Garbage collection for expired records (confidence = 0)
+ *
+ * Philosophy: "Memory is not truth. Memory is candidate evidence.
+ *             Validated source is truth."
  */
+
+import { HNSWIndex, SimpleEmbedding } from "./hnswVectorSearch";
+import { StatsCache } from "./performanceOptimizations";
+
+// ── Types ─────────────────────────────────────────────────────
 
 export type EvidenceSource = "design-file" | "user-feedback" | "ai-inference" | "pattern-match";
 
@@ -12,15 +25,15 @@ export interface EvidenceRecord {
   id: string;
   content: string;
   source: EvidenceSource;
-  confidence: number; // 0.0 - 1.0, decays over time
-  validated: boolean; // promoted to truth?
-  validatedBy?: "design-file" | "user-feedback" | "developer"; // what validated it
-  validatedAt?: number; // timestamp
-  contradictions: string[]; // IDs of conflicting records
+  confidence: number; // 0.0 - 1.0
+  validated: boolean;
+  validatedBy?: "design-file" | "user-feedback" | "developer";
+  validatedAt?: number;
+  contradictions: string[];
   createdAt: number;
   lastAccessedAt: number;
   accessCount: number;
-  tags: string[]; // for categorization
+  tags: string[];
   metadata: Record<string, unknown>;
 }
 
@@ -33,10 +46,13 @@ export interface Contradiction {
 }
 
 export interface EvidenceMemoryConfig {
-  decayRatePerDay?: number; // default 0.05 (5% confidence loss per day)
-  minConfidenceThreshold?: number; // default 0.3
-  maxRecords?: number; // default 10000
-  enableVectorSearch?: boolean; // default true
+  decayRatePerDay?: number;         // default 0.05
+  minConfidenceThreshold?: number;  // default 0.3
+  maxRecords?: number;              // default 10000
+  enableVectorSearch?: boolean;     // default true
+  vectorDimensions?: number;        // default 128
+  decayFunction?: "linear" | "sigmoid"; // default sigmoid
+  gcThreshold?: number;             // default 0.05 — remove records below this
 }
 
 export interface MemoryStats {
@@ -47,13 +63,34 @@ export interface MemoryStats {
   recordsBySource: Record<EvidenceSource, number>;
 }
 
+// ── Constants ─────────────────────────────────────────────────
+
+const SOURCE_HIERARCHY: Record<EvidenceSource, number> = {
+  "design-file": 4,
+  "user-feedback": 3,
+  "ai-inference": 2,
+  "pattern-match": 1,
+};
+
+// ── Engine ────────────────────────────────────────────────────
+
 export class EvidenceMemoryEngine {
   private records: Map<string, EvidenceRecord> = new Map();
   private sourceIndex: Map<EvidenceSource, Set<string>> = new Map();
-  private tagIndex: Map<string, Set<string>> = new Map(); // tag → record IDs (for O(1) contradiction lookup)
+  private tagIndex: Map<string, Set<string>> = new Map();
   private contradictionIndex: Map<string, Contradiction[]> = new Map();
   private config: Required<EvidenceMemoryConfig>;
   private isConfigured = false;
+
+  // Performance: O(1) stats via running counters
+  private statsCache: StatsCache;
+
+  // Performance: O(log n) semantic search via HNSW
+  private vectorIndex: HNSWIndex | null = null;
+  private embedder: SimpleEmbedding | null = null;
+
+  // Monotonic ID counter for uniqueness
+  private idCounter = 0;
 
   constructor() {
     this.config = {
@@ -61,31 +98,50 @@ export class EvidenceMemoryEngine {
       minConfidenceThreshold: 0.3,
       maxRecords: 10000,
       enableVectorSearch: true,
+      vectorDimensions: 128,
+      decayFunction: "sigmoid",
+      gcThreshold: 0.05,
     };
+
+    this.statsCache = new StatsCache();
+
     // Initialize source index
     const sources: EvidenceSource[] = ["design-file", "user-feedback", "ai-inference", "pattern-match"];
     sources.forEach((source) => this.sourceIndex.set(source, new Set()));
   }
 
-  /**
-   * Configure the memory engine
-   */
+  // ── Configuration ───────────────────────────────────────────
+
   configure(config: EvidenceMemoryConfig): void {
     this.config = { ...this.config, ...config };
     this.isConfigured = true;
+
+    // Initialize vector search if enabled
+    if (this.config.enableVectorSearch && !this.vectorIndex) {
+      this.vectorIndex = new HNSWIndex({
+        dimensions: this.config.vectorDimensions,
+        maxElements: this.config.maxRecords,
+        M: 16,
+        efConstruction: 200,
+        efSearch: 50,
+      });
+      this.embedder = new SimpleEmbedding(this.config.vectorDimensions);
+    }
   }
 
-  /**
-   * Store a new evidence record
-   */
+  // ── Store ───────────────────────────────────────────────────
+
   async storeEvidence(record: Omit<EvidenceRecord, "id" | "createdAt" | "lastAccessedAt" | "accessCount">): Promise<string> {
     if (!this.isConfigured) throw new Error("Memory engine not configured");
     if (this.records.size >= this.config.maxRecords) {
-      throw new Error(`Memory limit reached (${this.config.maxRecords} records)`);
+      // Try GC before failing
+      await this.garbageCollect();
+      if (this.records.size >= this.config.maxRecords) {
+        throw new Error(`Memory limit reached (${this.config.maxRecords} records)`);
+      }
     }
 
-    // Use crypto-safe unique ID to prevent collisions in tight loops
-    const id = `ev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${(this.records.size).toString(36)}`;
+    const id = `ev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${(++this.idCounter).toString(36)}`;
     const now = Date.now();
 
     const newRecord: EvidenceRecord = {
@@ -97,10 +153,10 @@ export class EvidenceMemoryEngine {
       contradictions: [],
     };
 
+    // Atomic insert: update all indexes together
     this.records.set(id, newRecord);
     this.sourceIndex.get(record.source)?.add(id);
 
-    // Update tag index for fast contradiction lookup
     for (const tag of record.tags) {
       if (!this.tagIndex.has(tag)) {
         this.tagIndex.set(tag, new Set());
@@ -108,16 +164,27 @@ export class EvidenceMemoryEngine {
       this.tagIndex.get(tag)!.add(id);
     }
 
-    // Check for contradictions (only against records with matching tags)
+    // Update stats cache (O(1))
+    this.statsCache.onRecordAdded(record.source, record.confidence, record.validated);
+
+    // Insert into HNSW vector index for semantic search
+    if (this.vectorIndex && this.embedder && record.content.length > 0) {
+      try {
+        const embedding = this.embedder.embed(record.content);
+        this.vectorIndex.insert(id, embedding);
+      } catch {
+        // Non-critical: vector search degrades gracefully
+      }
+    }
+
+    // Detect contradictions against tag-matching records only
     await this.detectContradictionsForRecord(id);
 
     return id;
   }
 
-  /**
-   * Recall evidence matching a query
-   * Applies confidence decay and filters by source validity
-   */
+  // ── Recall ──────────────────────────────────────────────────
+
   async recallEvidence(
     query: string,
     options?: {
@@ -131,188 +198,177 @@ export class EvidenceMemoryEngine {
     const onlyValidated = options?.onlyValidated ?? false;
     const limit = options?.limit ?? 50;
     const onlySources = options?.onlySources;
-
     const now = Date.now();
-    const results: EvidenceRecord[] = [];
 
-    for (const record of this.records.values()) {
-      // Skip if below minimum confidence
-      if (record.confidence < minConfidence) continue;
+    // Strategy 1: Use HNSW vector search if query is non-empty and vector search is enabled
+    let candidateIds: Set<string> | null = null;
 
-      // Skip if not validated but we only want validated
-      if (onlyValidated && !record.validated) continue;
-
-      // Skip if source filter applied
-      if (onlySources && !onlySources.includes(record.source)) continue;
-
-      // Apply decay to confidence
-      const ageMs = now - record.createdAt;
-      const ageDays = ageMs / (1000 * 60 * 60 * 24);
-      const decayedConfidence = Math.max(0, record.confidence - this.config.decayRatePerDay * ageDays);
-
-      // Check confidence after decay
-      if (decayedConfidence < minConfidence) continue;
-
-      // Simple text matching (in production, would use embeddings/BM25)
-      if (this.contentMatches(record.content, query)) {
-        results.push({ ...record, confidence: decayedConfidence });
-      }
+    if (query && query.trim().length > 0 && this.vectorIndex && this.embedder && this.vectorIndex.size > 0) {
+      const queryEmbedding = this.embedder.embed(query);
+      const searchResults = this.vectorIndex.search(queryEmbedding, Math.min(limit * 3, this.records.size));
+      candidateIds = new Set(searchResults.map((r) => r.id));
     }
 
-    // Sort by source hierarchy + confidence
+    // Strategy 2: Fallback to text matching
+    const results: EvidenceRecord[] = [];
+    const candidates = candidateIds
+      ? Array.from(candidateIds).map((id) => this.records.get(id)).filter(Boolean) as EvidenceRecord[]
+      : Array.from(this.records.values());
+
+    for (const record of candidates) {
+      if (record.confidence < minConfidence) continue;
+      if (onlyValidated && !record.validated) continue;
+      if (onlySources && !onlySources.includes(record.source)) continue;
+
+      // Apply decay calculation (read-only, doesn't mutate)
+      const decayedConfidence = this.calculateDecayedConfidence(record, now);
+      if (decayedConfidence < minConfidence) continue;
+
+      // Text match filter (for non-vector search or as secondary filter)
+      if (!candidateIds && !this.contentMatches(record.content, query)) continue;
+
+      // Update access stats
+      record.lastAccessedAt = now;
+      record.accessCount++;
+
+      results.push({ ...record, confidence: decayedConfidence });
+    }
+
+    // Sort: source hierarchy → confidence (descending)
     results.sort((a, b) => {
-      const sourceScoreA = this.getSourceScore(a.source);
-      const sourceScoreB = this.getSourceScore(b.source);
-      if (sourceScoreA !== sourceScoreB) return sourceScoreB - sourceScoreA;
+      const srcDiff = SOURCE_HIERARCHY[b.source] - SOURCE_HIERARCHY[a.source];
+      if (srcDiff !== 0) return srcDiff;
       return b.confidence - a.confidence;
     });
 
     return results.slice(0, limit);
   }
 
-  /**
-   * Validate evidence against an authoritative source
-   * Promotes confidence and marks as validated
-   */
+  // ── Validate ────────────────────────────────────────────────
+
   async validateEvidence(
     recordId: string,
     source: "design-file" | "user-feedback" | "developer",
-    sourceDetails?: string
+    _sourceDetails?: string
   ): Promise<void> {
     const record = this.records.get(recordId);
     if (!record) throw new Error(`Record ${recordId} not found`);
+
+    const oldConfidence = record.confidence;
 
     // Mark as validated
     record.validated = true;
     record.validatedBy = source;
     record.validatedAt = Date.now();
 
-    // Boost confidence based on source
-    if (source === "design-file") {
-      record.confidence = Math.min(1.0, record.confidence + 0.4);
-    } else if (source === "user-feedback") {
-      record.confidence = Math.min(1.0, record.confidence + 0.25);
-    } else {
-      record.confidence = Math.min(1.0, record.confidence + 0.1);
-    }
+    // Boost confidence based on validation source authority
+    const boost = source === "design-file" ? 0.4 : source === "user-feedback" ? 0.25 : 0.1;
+    record.confidence = Math.min(1.0, record.confidence + boost);
 
-    // Clear contradictions since we're validating
-    const contradictions = this.contradictionIndex.get(recordId) || [];
-    for (const contradiction of contradictions) {
-      const conflictingRecord = this.records.get(contradiction.conflictingId);
-      if (conflictingRecord) {
-        conflictingRecord.contradictions = conflictingRecord.contradictions.filter((id) => id !== recordId);
-      }
-    }
-    this.contradictionIndex.delete(recordId);
-    record.contradictions = [];
+    // Update stats cache
+    this.statsCache.onRecordValidated(oldConfidence, record.confidence);
+
+    // Clear contradictions — validated record is authoritative
+    this.clearContradictionsFor(recordId);
   }
 
-  /**
-   * Detect all contradictions in the memory store
-   */
+  // ── Decay ───────────────────────────────────────────────────
+
+  async decayUnvalidated(): Promise<number> {
+    let decayedCount = 0;
+    const now = Date.now();
+    const toDelete: string[] = [];
+
+    for (const record of this.records.values()) {
+      if (record.validated) continue;
+
+      const timeSinceLastDecay = now - record.lastAccessedAt;
+      const daysSinceLastDecay = timeSinceLastDecay / (1000 * 60 * 60 * 24);
+      if (daysSinceLastDecay <= 0) continue;
+
+      const oldConfidence = record.confidence;
+      const newConfidence = this.applyDecay(record.confidence, daysSinceLastDecay);
+
+      if (newConfidence < oldConfidence) {
+        record.confidence = newConfidence;
+        record.lastAccessedAt = now;
+        decayedCount++;
+
+        // Update stats
+        this.statsCache.onConfidenceChanged(oldConfidence, newConfidence);
+
+        // Tag for review (deduplicated)
+        if (newConfidence < this.config.minConfidenceThreshold && !record.tags.includes("needs-review")) {
+          record.tags.push("needs-review");
+          if (!this.tagIndex.has("needs-review")) this.tagIndex.set("needs-review", new Set());
+          this.tagIndex.get("needs-review")!.add(record.id);
+        }
+
+        // Mark for GC if below threshold
+        if (newConfidence <= this.config.gcThreshold) {
+          toDelete.push(record.id);
+        }
+      }
+    }
+
+    // Garbage collect expired records
+    for (const id of toDelete) {
+      this.deleteRecord(id);
+    }
+
+    return decayedCount;
+  }
+
+  // ── Promote ─────────────────────────────────────────────────
+
+  async promoteToTruth(recordId: string): Promise<void> {
+    const record = this.records.get(recordId);
+    if (!record) throw new Error(`Record ${recordId} not found`);
+
+    const oldConfidence = record.confidence;
+    record.validated = true;
+    record.confidence = 1.0;
+    record.validatedAt = Date.now();
+    record.validatedBy = "developer";
+
+    this.statsCache.onRecordValidated(oldConfidence, 1.0);
+  }
+
+  // ── Contradictions ──────────────────────────────────────────
+
   async detectContradictions(): Promise<Contradiction[]> {
     const contradictions: Contradiction[] = [];
-
     const recordArray = Array.from(this.records.values());
+
     for (let i = 0; i < recordArray.length; i++) {
       for (let j = i + 1; j < recordArray.length; j++) {
-        const record1 = recordArray[i];
-        const record2 = recordArray[j];
+        const r1 = recordArray[i];
+        const r2 = recordArray[j];
+        if (r1.validated || r2.validated) continue;
 
-        // Skip if either is validated
-        if (record1.validated || record2.validated) continue;
-
-        const contradiction = this.detectContradictionBetween(record1, record2);
-        if (contradiction) {
-          contradictions.push(...contradiction);
-        }
+        const result = this.detectContradictionBetween(r1, r2);
+        if (result) contradictions.push(...result);
       }
     }
 
     return contradictions;
   }
 
-  /**
-   * Decay confidence of unvalidated memories
-   * Uses lastAccessedAt as decay anchor (not createdAt) to avoid double-decay
-   * when recallEvidence also applies on-the-fly decay.
-   */
-  async decayUnvalidated(): Promise<number> {
-    let decayedCount = 0;
-    const now = Date.now();
-
-    for (const record of this.records.values()) {
-      if (record.validated) continue; // Don't decay validated records
-
-      // Use time since last decay (lastAccessedAt) not creation time
-      // This prevents double-decay with recallEvidence's on-the-fly calculation
-      const timeSinceLastDecay = now - record.lastAccessedAt;
-      const daysSinceLastDecay = timeSinceLastDecay / (1000 * 60 * 60 * 24);
-
-      if (daysSinceLastDecay <= 0) continue;
-
-      const decay = this.config.decayRatePerDay * daysSinceLastDecay;
-      const newConfidence = Math.max(0, record.confidence - decay);
-
-      if (newConfidence < record.confidence) {
-        record.confidence = newConfidence;
-        record.lastAccessedAt = now; // Reset decay anchor
-        decayedCount++;
-
-        // If confidence falls below threshold, mark for review (deduplicated)
-        if (newConfidence < this.config.minConfidenceThreshold && !record.tags.includes("needs-review")) {
-          record.tags.push("needs-review");
-        }
-      }
-    }
-
-    return decayedCount;
-  }
-
-  /**
-   * Promote evidence to ground truth
-   */
-  async promoteToTruth(recordId: string): Promise<void> {
-    const record = this.records.get(recordId);
-    if (!record) throw new Error(`Record ${recordId} not found`);
-
-    record.validated = true;
-    record.confidence = 1.0;
-    record.validatedAt = Date.now();
-    record.validatedBy = "developer";
-  }
-
-  /**
-   * Get all contradictions for a record
-   */
   getContradictions(recordId: string): Contradiction[] {
     return this.contradictionIndex.get(recordId) || [];
   }
 
-  /**
-   * Resolve contradiction by keeping one record
-   */
-  async resolveContradiction(recordId: string, keepSource: "design-file" | "user-feedback" | "ai-inference" | "pattern-match"): Promise<void> {
+  async resolveContradiction(recordId: string, keepSource: EvidenceSource): Promise<void> {
     const record = this.records.get(recordId);
     if (!record) throw new Error(`Record ${recordId} not found`);
 
     const contradictions = this.contradictionIndex.get(recordId) || [];
-    for (const contradiction of contradictions) {
-      const conflictingRecord = this.records.get(contradiction.conflictingId);
-      if (!conflictingRecord) continue;
+    for (const c of contradictions) {
+      const conflicting = this.records.get(c.conflictingId);
+      if (!conflicting) continue;
 
-      // Keep the one matching the desired source, discard others
-      if (conflictingRecord.source !== keepSource) {
-        // Clean up all indexes for deleted record
-        this.records.delete(contradiction.conflictingId);
-        this.sourceIndex.get(conflictingRecord.source)?.delete(contradiction.conflictingId);
-        this.contradictionIndex.delete(contradiction.conflictingId);
-
-        // Clean up tag index
-        for (const tag of conflictingRecord.tags || []) {
-          this.tagIndex.get(tag)?.delete(contradiction.conflictingId);
-        }
+      if (conflicting.source !== keepSource) {
+        this.deleteRecord(c.conflictingId);
       }
     }
 
@@ -320,149 +376,217 @@ export class EvidenceMemoryEngine {
     record.contradictions = [];
   }
 
-  /**
-   * Get memory statistics
-   */
+  // ── Stats (O(1) via cache) ──────────────────────────────────
+
   getStats(): MemoryStats {
-    const validatedCount = Array.from(this.records.values()).filter((r) => r.validated).length;
-    const allConfidences = Array.from(this.records.values()).map((r) => r.confidence);
-    const avgConfidence = allConfidences.length > 0 ? allConfidences.reduce((a, b) => a + b, 0) / allConfidences.length : 0;
-    const contradictionsCount = Array.from(this.contradictionIndex.values()).reduce((sum, arr) => sum + arr.length, 0);
-
-    const recordsBySource: Record<EvidenceSource, number> = {
-      "design-file": this.sourceIndex.get("design-file")?.size ?? 0,
-      "user-feedback": this.sourceIndex.get("user-feedback")?.size ?? 0,
-      "ai-inference": this.sourceIndex.get("ai-inference")?.size ?? 0,
-      "pattern-match": this.sourceIndex.get("pattern-match")?.size ?? 0,
-    };
-
+    const cached = this.statsCache.getStats();
     return {
-      totalRecords: this.records.size,
-      validatedRecords: validatedCount,
-      contradictions: contradictionsCount,
-      averageConfidence: avgConfidence,
-      recordsBySource,
+      totalRecords: this.records.size, // Source of truth for count
+      validatedRecords: cached.validatedRecords,
+      contradictions: cached.contradictions,
+      averageConfidence: cached.averageConfidence,
+      recordsBySource: {
+        "design-file": this.sourceIndex.get("design-file")?.size ?? 0,
+        "user-feedback": this.sourceIndex.get("user-feedback")?.size ?? 0,
+        "ai-inference": this.sourceIndex.get("ai-inference")?.size ?? 0,
+        "pattern-match": this.sourceIndex.get("pattern-match")?.size ?? 0,
+      },
     };
   }
 
-  /**
-   * Export memory snapshot
-   */
+  // ── Snapshot ────────────────────────────────────────────────
+
   async exportSnapshot(): Promise<string> {
-    const snapshot = {
-      version: 1,
+    return JSON.stringify({
+      version: 2, // v3 engine uses snapshot version 2
       exportedAt: Date.now(),
       config: this.config,
       records: Array.from(this.records.values()),
       contradictions: Array.from(this.contradictionIndex.entries()),
-    };
-    return JSON.stringify(snapshot);
+    });
   }
 
-  /**
-   * Import memory snapshot
-   */
   async importSnapshot(snapshotJson: string): Promise<void> {
     const snapshot = JSON.parse(snapshotJson);
-    if (snapshot.version !== 1) throw new Error(`Unsupported snapshot version: ${snapshot.version}`);
+    if (snapshot.version !== 1 && snapshot.version !== 2) {
+      throw new Error(`Unsupported snapshot version: ${snapshot.version}`);
+    }
 
+    // Clear all state
     this.records.clear();
     this.contradictionIndex.clear();
     this.sourceIndex.forEach((set) => set.clear());
     this.tagIndex.clear();
 
+    if (this.vectorIndex) {
+      // Rebuild vector index
+      this.vectorIndex = new HNSWIndex({
+        dimensions: this.config.vectorDimensions,
+        maxElements: this.config.maxRecords,
+        M: 16,
+        efConstruction: 200,
+        efSearch: 50,
+      });
+    }
+
+    // Rebuild vocabulary from imported records
+    if (this.embedder && snapshot.records.length > 0) {
+      this.embedder.buildVocabulary(snapshot.records.map((r: EvidenceRecord) => r.content));
+    }
+
+    // Restore records and rebuild all indexes
     for (const record of snapshot.records) {
       this.records.set(record.id, record);
       this.sourceIndex.get(record.source)?.add(record.id);
 
-      // Rebuild tag index
       for (const tag of record.tags || []) {
-        if (!this.tagIndex.has(tag)) {
-          this.tagIndex.set(tag, new Set());
-        }
+        if (!this.tagIndex.has(tag)) this.tagIndex.set(tag, new Set());
         this.tagIndex.get(tag)!.add(record.id);
+      }
+
+      // Rebuild vector index
+      if (this.vectorIndex && this.embedder && record.content) {
+        try {
+          this.vectorIndex.insert(record.id, this.embedder.embed(record.content));
+        } catch { /* skip on error */ }
+      }
+
+      // Track max ID counter
+      const idParts = record.id.split("_");
+      const counterPart = idParts[idParts.length - 1];
+      const counter = parseInt(counterPart, 36);
+      if (!isNaN(counter) && counter > this.idCounter) {
+        this.idCounter = counter;
       }
     }
 
     for (const [recordId, contradictions] of snapshot.contradictions) {
       this.contradictionIndex.set(recordId, contradictions);
     }
+
+    // Rebuild stats cache from scratch
+    this.statsCache.recompute(
+      Array.from(this.records.values()).map((r) => ({
+        source: r.source,
+        confidence: r.confidence,
+        validated: r.validated,
+      }))
+    );
   }
 
-  // ========== Private Helpers ==========
+  /**
+   * Train the embedding model on current corpus
+   * Call after bulk import for better vector search accuracy
+   */
+  trainEmbeddings(): void {
+    if (!this.embedder || !this.vectorIndex) return;
+
+    const contents = Array.from(this.records.values()).map((r) => r.content);
+    if (contents.length === 0) return;
+
+    this.embedder.buildVocabulary(contents);
+
+    // Rebuild vector index with new embeddings
+    this.vectorIndex = new HNSWIndex({
+      dimensions: this.config.vectorDimensions,
+      maxElements: this.config.maxRecords,
+      M: 16,
+      efConstruction: 200,
+      efSearch: 50,
+    });
+
+    for (const record of this.records.values()) {
+      if (record.content) {
+        try {
+          this.vectorIndex.insert(record.id, this.embedder.embed(record.content));
+        } catch { /* skip errors */ }
+      }
+    }
+  }
+
+  // ── Private ─────────────────────────────────────────────────
+
+  private calculateDecayedConfidence(record: EvidenceRecord, now: number): number {
+    if (record.validated) return record.confidence; // No decay for validated
+
+    const ageMs = now - record.createdAt;
+    const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+    return this.applyDecay(record.confidence, ageDays);
+  }
+
+  private applyDecay(confidence: number, days: number): number {
+    if (this.config.decayFunction === "sigmoid") {
+      // Sigmoid decay: confidence drops slowly at first, then rapidly around half-life
+      // halfLife = 1 / decayRate (e.g., rate 0.05 → half-life ~20 days)
+      const halfLife = 1 / this.config.decayRatePerDay;
+      const decayFactor = 1 / (1 + Math.exp((days - halfLife) / (halfLife * 0.3)));
+      return confidence * decayFactor;
+    }
+
+    // Linear decay (legacy)
+    return Math.max(0, confidence - this.config.decayRatePerDay * days);
+  }
 
   private contentMatches(content: string, query: string): boolean {
-    // Empty query matches everything (intentional for "get all" scenarios)
     if (!query || query.trim().length === 0) return true;
 
     const contentLower = content.toLowerCase();
-    const queryLower = query.toLowerCase();
-
-    // Tokenized word matching with minimum word length filter
-    const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 0);
+    const queryWords = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
     if (queryWords.length === 0) return true;
 
     return queryWords.some((word) => contentLower.includes(word));
   }
 
-  private getSourceScore(source: EvidenceSource): number {
-    const scores: Record<EvidenceSource, number> = {
-      "design-file": 4,
-      "user-feedback": 3,
-      "ai-inference": 2,
-      "pattern-match": 1,
+  private detectContradictionBetween(r1: EvidenceRecord, r2: EvidenceRecord): Contradiction[] | null {
+    if (!this.isSimilarContent(r1.content, r2.content)) return null;
+    if (!r1.tags.some((tag) => r2.tags.includes(tag))) return null;
+
+    const c1: Contradiction = {
+      recordId: r1.id,
+      conflictingId: r2.id,
+      conflictType: "value-mismatch",
+      severity: this.calculateSeverity(r1, r2),
+      details: `Conflict: ${r1.source} vs ${r2.source}`,
     };
-    return scores[source];
+    const c2: Contradiction = {
+      recordId: r2.id,
+      conflictingId: r1.id,
+      conflictType: "value-mismatch",
+      severity: c1.severity,
+      details: `Conflict: ${r2.source} vs ${r1.source}`,
+    };
+
+    if (!this.contradictionIndex.has(r1.id)) this.contradictionIndex.set(r1.id, []);
+    if (!this.contradictionIndex.has(r2.id)) this.contradictionIndex.set(r2.id, []);
+    this.contradictionIndex.get(r1.id)!.push(c1);
+    this.contradictionIndex.get(r2.id)!.push(c2);
+    r1.contradictions.push(r2.id);
+    r2.contradictions.push(r1.id);
+
+    this.statsCache.onContradictionChanged(2);
+
+    return [c1, c2];
   }
 
-  private detectContradictionBetween(record1: EvidenceRecord, record2: EvidenceRecord): Contradiction[] | null {
-    // Check if content is similar but contradictory
-    if (this.isSimilarContent(record1.content, record2.content)) {
-      // If same tags/metadata but different content, it's a contradiction
-      if (record1.tags.some((tag) => record2.tags.includes(tag))) {
-        const contradiction1: Contradiction = {
-          recordId: record1.id,
-          conflictingId: record2.id,
-          conflictType: "value-mismatch",
-          severity: "medium",
-          details: `Content conflict between ${record1.source} and ${record2.source}`,
-        };
-        const contradiction2: Contradiction = {
-          recordId: record2.id,
-          conflictingId: record1.id,
-          conflictType: "value-mismatch",
-          severity: "medium",
-          details: `Content conflict between ${record2.source} and ${record1.source}`,
-        };
+  private calculateSeverity(r1: EvidenceRecord, r2: EvidenceRecord): "low" | "medium" | "high" {
+    const avgConfidence = (r1.confidence + r2.confidence) / 2;
+    if (avgConfidence > 0.7) return "high";
+    if (avgConfidence > 0.4) return "medium";
+    return "low";
+  }
 
-        // Track contradictions
-        if (!this.contradictionIndex.has(record1.id)) {
-          this.contradictionIndex.set(record1.id, []);
-        }
-        if (!this.contradictionIndex.has(record2.id)) {
-          this.contradictionIndex.set(record2.id, []);
-        }
-        this.contradictionIndex.get(record1.id)?.push(contradiction1);
-        this.contradictionIndex.get(record2.id)?.push(contradiction2);
+  private isSimilarContent(c1: string, c2: string): boolean {
+    const words1 = new Set(c1.toLowerCase().split(/\s+/).filter((w) => w.length > 1));
+    const words2 = new Set(c2.toLowerCase().split(/\s+/).filter((w) => w.length > 1));
 
-        record1.contradictions.push(record2.id);
-        record2.contradictions.push(record1.id);
+    if (words1.size === 0 || words2.size === 0) return false;
 
-        return [contradiction1, contradiction2];
-      }
+    let intersection = 0;
+    for (const w of words1) {
+      if (words2.has(w)) intersection++;
     }
-
-    return null;
-  }
-
-  private isSimilarContent(content1: string, content2: string): boolean {
-    // Check for significant content overlap (Jaccard similarity > 0.4)
-    const words1 = new Set(content1.toLowerCase().split(/\s+/));
-    const words2 = new Set(content2.toLowerCase().split(/\s+/));
-
-    const intersection = Array.from(words1).filter((w) => words2.has(w)).length;
     const union = new Set([...words1, ...words2]).size;
-
     return union > 0 && intersection / union > 0.4;
   }
 
@@ -470,7 +594,7 @@ export class EvidenceMemoryEngine {
     const record = this.records.get(recordId);
     if (!record || record.tags.length === 0) return;
 
-    // Use tag index for O(k) lookup instead of O(n) full scan
+    // O(k) via tag index
     const candidateIds = new Set<string>();
     for (const tag of record.tags) {
       const tagRecords = this.tagIndex.get(tag);
@@ -481,21 +605,77 @@ export class EvidenceMemoryEngine {
       }
     }
 
-    // Only check records sharing tags (much smaller set than all records)
     for (const candidateId of candidateIds) {
-      const existingRecord = this.records.get(candidateId);
-      if (!existingRecord) continue;
-      if (existingRecord.validated) continue; // Skip validated records
-
-      const contradiction = this.detectContradictionBetween(record, existingRecord);
-      if (contradiction) break; // Found contradiction, stop checking
+      const existing = this.records.get(candidateId);
+      if (!existing || existing.validated) continue;
+      if (this.detectContradictionBetween(record, existing)) break;
     }
+  }
+
+  private clearContradictionsFor(recordId: string): void {
+    const contradictions = this.contradictionIndex.get(recordId) || [];
+    for (const c of contradictions) {
+      const conflicting = this.records.get(c.conflictingId);
+      if (conflicting) {
+        conflicting.contradictions = conflicting.contradictions.filter((id) => id !== recordId);
+      }
+      // Remove from conflicting's index too
+      const conflictingContradictions = this.contradictionIndex.get(c.conflictingId);
+      if (conflictingContradictions) {
+        this.contradictionIndex.set(
+          c.conflictingId,
+          conflictingContradictions.filter((cc) => cc.conflictingId !== recordId)
+        );
+      }
+    }
+    this.contradictionIndex.delete(recordId);
+    const record = this.records.get(recordId);
+    if (record) {
+      this.statsCache.onContradictionChanged(-contradictions.length);
+      record.contradictions = [];
+    }
+  }
+
+  private deleteRecord(id: string): void {
+    const record = this.records.get(id);
+    if (!record) return;
+
+    // Clean all indexes
+    this.records.delete(id);
+    this.sourceIndex.get(record.source)?.delete(id);
+    this.contradictionIndex.delete(id);
+
+    for (const tag of record.tags) {
+      this.tagIndex.get(tag)?.delete(id);
+    }
+
+    // Remove from vector index
+    if (this.vectorIndex?.has(id)) {
+      this.vectorIndex.remove(id);
+    }
+
+    // Update stats
+    this.statsCache.onRecordRemoved(record.source, record.confidence, record.validated);
+  }
+
+  private async garbageCollect(): Promise<number> {
+    const toDelete: string[] = [];
+    for (const record of this.records.values()) {
+      if (!record.validated && record.confidence <= this.config.gcThreshold) {
+        toDelete.push(record.id);
+      }
+    }
+
+    for (const id of toDelete) {
+      this.deleteRecord(id);
+    }
+
+    return toDelete.length;
   }
 }
 
-/**
- * Factory function for creating evidence memory engine
- */
+// ── Factory ───────────────────────────────────────────────────
+
 export function createEvidenceMemory(config?: EvidenceMemoryConfig): EvidenceMemoryEngine {
   const engine = new EvidenceMemoryEngine();
   if (config) {
