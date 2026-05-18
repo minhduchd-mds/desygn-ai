@@ -224,38 +224,71 @@ Design-md-ai/
 
 ## Tính năng
 
-### Figma Plugin
-- Quét frame/component → chấm điểm AI-readiness (0-100)
-- 6 chiều đánh giá: Structure, Naming, Completeness, Meta, Color, Typography
-- 7 danh mục UI/UX: Documentation, Guidelines, Testing, Color, Accessibility, States, Icons
+> **Hệ thống phân loại trạng thái:**
+> - 🟢 **Đã triển khai** — Production-ready, có test coverage, đã kiểm chứng trên production
+> - 🟡 **Thử nghiệm** — Code hoàn chỉnh, có unit tests, chưa kiểm chứng trên production
+> - 🔴 **Kế hoạch** — Chưa triển khai, nằm trong roadmap
+
+### 🟢 Đã triển khai (Production-Ready)
+
+**Figma Plugin**
+- Quét frame/component → chấm điểm AI-readiness (0-100) theo 6 chiều: Structure, Naming, Completeness, Meta, Color, Typography
 - Batch scan nhiều selections cùng lúc
 - Auto-layout detection + fix suggestions (60% confidence threshold)
-- Token mapping (Figma Variables → CSS custom properties)
-- Responsive variant detection (mobile/tablet/desktop)
-- Atomic design classification (atom → page)
-- Export compact prompts cho coding agents
-- EN/VI internationalization
+- Quick fixes cho các vấn đề phổ biến
+- Export compact prompts cho coding agents (Figma-to-code)
 
-### Web Workspace
+**Web Workspace**
 - **Chat tab** — Groq AI (Llama 3.3 70B), markdown rendering, syntax highlighting
 - **Code tab** — Design.md generation với full tool suite
 - **SplitView Editor** — Soạn markdown, preview, outline, word count, screen completion
 - **73 Design.md templates** với lazy-loading và category filtering
-- **Checklist panel** — 211 criteria từ 4 nguồn (VTS, Ant Design, Material 3, WCAG)
-- Dark/Light theme toggle
-- Import `.md`, `.markdown`, `.txt`, `.zip`
-- Screenshot-to-code generation
-- Design vs. code comparison panel
-- BA document editor
 
-### AI Intelligence Engine (v3-v5)
-- **Shannon Engine** — 6 specialized agents, PII-aware execution
+**Design System & Detection**
+- Design System Profiles — import từ Figma Variables, Styles, Components
+- Responsive viewport detection (mobile/tablet/desktop)
+- Atomic design classification (atom → page)
+- Token mapping (Figma Variables → CSS custom properties)
+- EN/VI internationalization
+
+**Hạ tầng & Chất lượng**
+- 1192 unit tests / 69 files (Vitest)
+- GitHub Actions CI (lint + test + build + E2E)
+- Vercel deployment với security headers (CSP, HSTS, X-Frame-Options)
+- Local demo auth (localStorage-based)
+
+### 🟡 Thử nghiệm (Implemented — Chưa Production-Validated)
+
+**AI Intelligence Engines**
+- **Shannon Engine v3** — 6 multi-agents, PII-aware execution
+- **Evidence Memory** — HNSW vector search O(log n), sigmoid decay, contradiction detection
 - **GOAP Planner** — A* search, plan caching, dynamic costs, replanning
-- **Evidence Memory** — HNSW O(log n) search, sigmoid decay, contradiction detection
 - **PII Detection** — Luhn credit card, SSN, Vietnamese CCCD/CMND/phone, email
-- **Usage Analytics** — 4 SaaS tiers, feature flags, quota enforcement
-- **Agentic UI/UX Auditor** — 8 agents, self-learning, CI/CD gate, SARIF reports
-- **Cross-Project Learning** — Pattern detection, weight aggregation, knowledge export
+
+**Agentic UI/UX Auditor (v5)**
+- 8 agents tự động audit, scoring, fix planning, tạo GitHub Issues
+- AI checklist scoring (19 criteria)
+- Self-learning loop với Bayesian calibration + user feedback
+- Cross-project learning — pattern detection, weight aggregation, knowledge export
+
+**Collaboration & Analytics**
+- Collaboration CRDT (LWW + OR-Set)
+- Usage Analytics — 4 SaaS tiers, feature flags, quota enforcement
+- CI Gate / Deploy Gate — block deploy nếu audit score < threshold, SARIF v2.1.0
+
+### 🔴 Kế hoạch (Roadmap)
+
+| Tính năng | Mô tả |
+|-----------|-------|
+| Real authentication | Supabase Auth — thay thế localStorage demo hiện tại |
+| Redis/KV rate limiting | Thay thế in-memory rate limiting |
+| GitHub PR automation | Tự động tạo issue + coding agent workflow |
+| Team workspace | Multi-user collaboration workspace |
+| Enterprise RBAC | Phân quyền doanh nghiệp |
+| Template marketplace | Cộng đồng chia sẻ Design.md templates |
+| Self-hosted editions | Triển khai on-premise |
+| Playwright web audit API | Audit UI/UX trực tiếp trên web |
+| Sentry/observability | Error tracking + performance monitoring |
 
 ---
 
