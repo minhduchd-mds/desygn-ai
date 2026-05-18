@@ -5,10 +5,10 @@ test.describe("Chat workspace flow", () => {
     // Register and enter workspace directly
     await page.goto("/");
     await page.getByRole("button", { name: "Get started" }).click();
-    await page.getByPlaceholder(/email/i).fill("chat-test@example.com");
-    await page.getByPlaceholder(/password/i).fill("ChatPass123!");
-    await page.getByRole("button", { name: /register|sign up|get started/i }).click();
-    await expect(page.locator(".chat-workspace, .builder-workspace, .welcome-hero")).toBeVisible({ timeout: 5000 });
+    await page.getByLabel("Email").fill("chat-test@example.com");
+    await page.locator("form input[type='password']").first().fill("ChatPass123!");
+    await page.locator("form button[type='submit']").click();
+    await expect(page.locator(".chat-workspace.builder-workspace")).toBeVisible({ timeout: 5000 });
   });
 
   test("welcome hero shows 4 action cards", async ({ page }) => {
@@ -21,7 +21,7 @@ test.describe("Chat workspace flow", () => {
   });
 
   test("chat input is visible and functional", async ({ page }) => {
-    const composer = page.locator(".chat-composer, .composer-input, textarea[placeholder]");
+    const composer = page.locator(".chat-composer");
     await expect(composer).toBeVisible();
   });
 
