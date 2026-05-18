@@ -25,6 +25,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -n ui,plugin -c blue,yellow \"npm run dev:ui\" \"npm run dev:plugin\"",
+    "dev:web": "vite --config vite.web.config.ts --host 127.0.0.1 --port 5173",
     "web:dev": "vite --config vite.web.config.ts --host 127.0.0.1 --port 5174",
     "web:build": "vite build --config vite.web.config.ts",
     "dev:ui": "vite build --watch",
@@ -51,6 +52,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
     "@figma/plugin-typings": "^1.126.0",
+    "@playwright/test": "^1.60.0",
     "@storybook/addon-a11y": "^10.4.0",
     "@storybook/addon-docs": "^10.4.0",
     "@storybook/addon-onboarding": "^10.4.0",

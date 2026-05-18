@@ -33,6 +33,15 @@
   font-weight: 400;
   cursor: pointer;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.tab small {
+  color: var(--color-text-muted);
+  font-size: 11px;
 }
 
 .tab:hover,
@@ -63,6 +72,71 @@
   gap: 8px;
 }
 
+.toolbarTitle {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.toolbarTitle p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.summaryBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(36, 43, 58, 0.95), rgba(20, 24, 33, 0.95));
+}
+
+.summaryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summaryLabel {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.summaryStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summaryStats span,
+.mobileSwitch button,
+.panelHeader span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.mobileSwitch {
+  display: none;
+  gap: 6px;
+}
+
+.mobileSwitch button {
+  cursor: pointer;
+}
+
+.mobileActive {
+  color: var(--color-text);
+  background: #1f2634;
+}
+
 .button {
   border: 1px solid #303747;
   border-radius: 6px;
@@ -91,6 +165,21 @@
   border-right: 1px solid var(--color-border);
 }
 
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.panelHeader strong {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
 .textarea {
   flex: 1;
   width: 100%;
@@ -116,6 +205,13 @@
 .previewPanel {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.previewContentWrap {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
 }
@@ -212,6 +308,17 @@
 }
 
 @media (max-width: 900px) {
+  .summaryBar,
+  .toolbar,
+  .toolbarTitle {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mobileSwitch {
+    display: inline-flex;
+  }
+
   .panels,
   .previewPanel {
     grid-template-columns: 1fr;
@@ -221,5 +328,13 @@
     border-right: 0;
     border-bottom: 1px solid var(--color-border);
   }
-}
 
+  .previewNav {
+    max-height: 180px;
+  }
+
+  .mobileHidden,
+  .mobilePreviewHidden {
+    display: none;
+  }
+}
