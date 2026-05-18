@@ -52,6 +52,17 @@ jobs:
       - name: Run Vitest
         run: npm test -- --reporter=verbose
 
+      - name: Run coverage with thresholds
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

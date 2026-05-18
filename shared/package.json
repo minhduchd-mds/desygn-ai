@@ -1,0 +1,19 @@
+{
+  "name": "@desygn/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared types, schemas, and utilities for Desygn AI",
+  "main": "index.ts",
+  "types": "index.ts",
+  "files": ["**/*.ts", "!**/__tests__/**"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {},
+  "license": "MIT"
+}

@@ -1,8 +1,8 @@
-> 🌐 [English](README.en.md) | **Tiếng Việt**
+> 🌐 **English** | [Tiếng Việt](README.md)
 
 # Desygn AI
 
-> AI-Powered Design Intelligence Platform — tự động audit UI/UX, sinh code từ design, và học hỏi từ mỗi dự án.
+> AI-Powered Design Intelligence Platform — automated UI/UX auditing, design-to-code generation, and continuous learning across projects.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen.svg)]()
@@ -12,39 +12,39 @@
 
 ---
 
-## Mục lục
+## Table of Contents
 
-- [Tổng quan](#tổng-quan)
-- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
-- [Hệ thống Agent (v5)](#hệ-thống-agent-v5)
-- [Cấu trúc dự án](#cấu-trúc-dự-án)
-- [Tính năng](#tính-năng)
-- [Cài đặt & Vận hành](#cài-đặt--vận-hành)
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [Agent System (v5)](#agent-system-v5)
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Getting Started](#getting-started)
 - [API Endpoints](#api-endpoints)
-- [Thư viện Template](#thư-viện-template)
-- [Kiểm thử & Chất lượng](#kiểm-thử--chất-lượng)
-- [Triển khai](#triển-khai)
-- [Cấu hình](#cấu-hình)
-- [Tài liệu kỹ thuật](#tài-liệu-kỹ-thuật)
-- [Giấy phép](#giấy-phép)
+- [Template Library](#template-library)
+- [Testing & Quality](#testing--quality)
+- [Deployment](#deployment)
+- [Configuration](#configuration)
+- [Technical Docs](#technical-docs)
+- [License](#license)
 
 ---
 
-## Tổng quan
+## Overview
 
-Desygn AI là nền tảng trí tuệ thiết kế kết nối Figma với AI coding agents. Hệ thống gồm 3 surface chính:
+Desygn AI is a design intelligence platform that bridges Figma with AI coding agents. The system is built around three primary surfaces:
 
-| Surface | Mục đích |
-|---------|----------|
-| **Figma Plugin** | Quét component, variables, responsive variants — chấm điểm AI-readiness |
-| **Web Workspace** | Sinh Design.md, chat AI, preview handoff, template library, audit UI/UX |
-| **Agent System** | 6 AI agents tự động audit, scoring, fix planning, tạo GitHub Issues |
+| Surface | Purpose |
+|---------|---------|
+| **Figma Plugin** | Scans components, variables, and responsive variants — scores AI-readiness |
+| **Web Workspace** | Generates Design.md, AI chat, handoff preview, template library, UI/UX audit |
+| **Agent System** | 6 AI agents for automated auditing, scoring, fix planning, and GitHub Issue creation |
 
 ---
 
-## Kiến trúc hệ thống
+## System Architecture
 
-### Tổng quan kiến trúc v5
+### Architecture Overview (v5)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -75,20 +75,20 @@ Desygn AI là nền tảng trí tuệ thiết kế kết nối Figma với AI co
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Nguyên tắc kiến trúc
+### Architectural Principles
 
-- **Plugin sandbox**: Không DOM, không fetch — chỉ Figma API
-- **UI iframe**: Không `figma.*` — chỉ `parent.postMessage`
-- **Giao tiếp**: Typed `PluginMessage` qua postMessage
-- **Scoring**: Pure functions — không side effects, không Figma API
-- **Bảo mật**: Sanitize tất cả prompt text, PII detection tự động
-- **State**: `useSyncExternalStore` với localStorage persistence
+- **Plugin sandbox**: No DOM, no fetch — Figma API only
+- **UI iframe**: No `figma.*` — uses `parent.postMessage` only
+- **Communication**: Typed `PluginMessage` over postMessage
+- **Scoring**: Pure functions — no side effects, no Figma API calls
+- **Security**: All prompt text sanitized, automatic PII detection
+- **State**: `useSyncExternalStore` with localStorage persistence
 
 ---
 
-## Hệ thống Agent (v5)
+## Agent System (v5)
 
-### Pipeline xử lý
+### Processing Pipeline
 
 ```
 Figma Plugin ──scan──▶ DesignAuditAgent ──▶ AccessibilityAgent
@@ -114,38 +114,38 @@ Figma Plugin ──scan──▶ DesignAuditAgent ──▶ AccessibilityAgent
            (Learn + Persist)
 ```
 
-### Danh sách Agents
+### Agent Roster
 
-| Agent | Vai trò | Khả năng |
-|-------|---------|----------|
-| **DesignAuditAgent** | Analyzer | Chấm UI/UX theo 19+ criteria, multi-category |
-| **AccessibilityAgent** | Analyzer | WCAG 2.2: contrast, touch target, ARIA, focus, headings |
-| **DesignSystemAgent** | Analyzer | Token coverage, naming, variant, spacing grid |
-| **ScoreAgent** | Validator | Bayesian calibration với historical evidence |
+| Agent | Role | Capabilities |
+|-------|------|-------------|
+| **DesignAuditAgent** | Analyzer | Scores UI/UX across 19+ criteria, multi-category |
+| **AccessibilityAgent** | Analyzer | WCAG 2.2: contrast, touch targets, ARIA, focus order, headings |
+| **DesignSystemAgent** | Analyzer | Token coverage, naming conventions, variant consistency, spacing grid |
+| **ScoreAgent** | Validator | Bayesian calibration with historical evidence |
 | **RecommendAgent** | Optimizer | GOAP-planned improvement paths |
-| **FixPlannerAgent** | Optimizer | Fix plans với risk assessment, code change suggestions |
-| **IssueWriterAgent** | Generator | GitHub issues với evidence + acceptance criteria |
+| **FixPlannerAgent** | Optimizer | Fix plans with risk assessment and code change suggestions |
+| **IssueWriterAgent** | Generator | GitHub issues with evidence and acceptance criteria |
 | **MemoryAgent** | Orchestrator | Cross-project learning, semantic recall, GDPR forget |
 
 ### Self-Learning Loop
 
-1. Agent đánh giá criterion → `AuditResult`
-2. `ScoreAgent` calibrate bằng Bayesian + historical evidence
-3. `LearningLoop` lưu vào Evidence Memory (HNSW vector search)
-4. User feedback (agree/disagree/irrelevant) → điều chỉnh criterion weights
-5. Sigmoid decay trên evidence chưa validate (knowledge half-life)
-6. Audit tiếp theo sử dụng calibrated weights → scoring chính xác hơn
+1. Agent evaluates a criterion → produces `AuditResult`
+2. `ScoreAgent` calibrates using Bayesian scoring + historical evidence
+3. `LearningLoop` persists findings to Evidence Memory (HNSW vector search)
+4. User feedback (agree / disagree / irrelevant) adjusts criterion weights
+5. Sigmoid decay applied to unvalidated evidence (knowledge half-life)
+6. Subsequent audits use calibrated weights → progressively more accurate scoring
 
 ### CI/CD Integration
 
-- **CIGate**: Block deploy nếu audit score < threshold
-- **SARIF v2.1.0**: Tương thích GitHub Code Scanning
-- **GitHub Actions**: Template workflow tự động
+- **CIGate**: Blocks deployment if audit score falls below threshold
+- **SARIF v2.1.0**: Compatible with GitHub Code Scanning
+- **GitHub Actions**: Ready-to-use automation workflow template
 - **DeployGate**: Vercel/Netlify blocking + Slack notifications
 
 ---
 
-## Cấu trúc dự án
+## Project Structure
 
 ```
 Design-md-ai/
@@ -204,8 +204,8 @@ Design-md-ai/
 │   │   └── design-md-templates/      #     73 stored DESIGN.md templates
 │   └── workspace/                    #   UI components (SplitView, Chat, etc.)
 │
-├── docs/                             #  Tài liệu kỹ thuật
-│   ├── DEV_GUIDE.md                  #     Hướng dẫn phát triển chi tiết
+├── docs/                             #  Technical documentation
+│   ├── DEV_GUIDE.md                  #     Detailed development guide
 │   └── adr/                          #     Architecture Decision Records
 │       ├── 001-dual-mode-auth.md
 │       ├── 002-event-driven-architecture.md
@@ -224,42 +224,42 @@ Design-md-ai/
 
 ---
 
-## Tính năng
+## Features
 
-> **Hệ thống phân loại trạng thái:**
-> - 🟢 **Đã triển khai** — Production-ready, có test coverage, đã kiểm chứng trên production
-> - 🟡 **Thử nghiệm** — Code hoàn chỉnh, có unit tests, chưa kiểm chứng trên production
-> - 🔴 **Kế hoạch** — Chưa triển khai, nằm trong roadmap
+> **Status legend:**
+> - 🟢 **Implemented** — Production-ready, test coverage verified, running in production
+> - 🟡 **Experimental** — Complete code, unit tested, not yet validated in production
+> - 🔴 **Roadmap** — Not yet implemented, planned for a future release
 
-### 🟢 Đã triển khai (Production-Ready)
+### 🟢 Implemented (Production-Ready)
 
 **Figma Plugin**
-- Quét frame/component → chấm điểm AI-readiness (0-100) theo 6 chiều: Structure, Naming, Completeness, Meta, Color, Typography
-- Batch scan nhiều selections cùng lúc
+- Scan frames/components → score AI-readiness (0–100) across 6 dimensions: Structure, Naming, Completeness, Meta, Color, Typography
+- Batch scan multiple selections simultaneously
 - Auto-layout detection + fix suggestions (60% confidence threshold)
-- Quick fixes cho các vấn đề phổ biến
-- Export compact prompts cho coding agents (Figma-to-code)
+- Quick fixes for common layout issues
+- Export compact prompts for coding agents (Figma-to-code)
 
 **Web Workspace**
 - **Chat tab** — Groq AI (Llama 3.3 70B), markdown rendering, syntax highlighting
-- **Code tab** — Design.md generation với full tool suite
-- **SplitView Editor** — Soạn markdown, preview, outline, word count, screen completion
-- **73 Design.md templates** với lazy-loading và category filtering
+- **Code tab** — Design.md generation with full tool suite
+- **SplitView Editor** — Markdown authoring, live preview, outline, word count, screen completion
+- **73 Design.md templates** with lazy-loading and category filtering
 
 **Design System & Detection**
-- Design System Profiles — import từ Figma Variables, Styles, Components
-- Responsive viewport detection (mobile/tablet/desktop)
+- Design System Profiles — import from Figma Variables, Styles, and Components
+- Responsive viewport detection (mobile / tablet / desktop)
 - Atomic design classification (atom → page)
 - Token mapping (Figma Variables → CSS custom properties)
 - EN/VI internationalization
 
-**Hạ tầng & Chất lượng**
-- 1192 unit tests / 69 files (Vitest)
+**Infrastructure & Quality**
+- 1192 unit tests across 69 files (Vitest)
 - GitHub Actions CI (lint + test + build + E2E)
-- Vercel deployment với security headers (CSP, HSTS, X-Frame-Options)
+- Vercel deployment with security headers (CSP, HSTS, X-Frame-Options)
 - Local demo auth (localStorage-based)
 
-### 🟡 Thử nghiệm (Implemented — Chưa Production-Validated)
+### 🟡 Experimental (Implemented — Not Yet Production-Validated)
 
 **AI Intelligence Engines**
 - **Shannon Engine v3** — 6 multi-agents, PII-aware execution
@@ -268,43 +268,43 @@ Design-md-ai/
 - **PII Detection** — Luhn credit card, SSN, Vietnamese CCCD/CMND/phone, email
 
 **Agentic UI/UX Auditor (v5)**
-- 8 agents tự động audit, scoring, fix planning, tạo GitHub Issues
+- 8 agents for automated auditing, scoring, fix planning, and GitHub Issue creation
 - AI checklist scoring (19 criteria)
-- Self-learning loop với Bayesian calibration + user feedback
+- Self-learning loop with Bayesian calibration + user feedback
 - Cross-project learning — pattern detection, weight aggregation, knowledge export
 
 **Collaboration & Analytics**
 - Collaboration CRDT (LWW + OR-Set)
 - Usage Analytics — 4 SaaS tiers, feature flags, quota enforcement
-- CI Gate / Deploy Gate — block deploy nếu audit score < threshold, SARIF v2.1.0
+- CI Gate / Deploy Gate — blocks deployment when audit score falls below threshold, SARIF v2.1.0
 
-### 🔴 Kế hoạch (Roadmap)
+### 🔴 Roadmap
 
-| Tính năng | Mô tả |
-|-----------|-------|
-| Real authentication | Supabase Auth — thay thế localStorage demo hiện tại |
-| Redis/KV rate limiting | Thay thế in-memory rate limiting |
-| GitHub PR automation | Tự động tạo issue + coding agent workflow |
-| Team workspace | Multi-user collaboration workspace |
-| Enterprise RBAC | Phân quyền doanh nghiệp |
-| Template marketplace | Cộng đồng chia sẻ Design.md templates |
-| Self-hosted editions | Triển khai on-premise |
-| Playwright web audit API | Audit UI/UX trực tiếp trên web |
+| Feature | Description |
+|---------|-------------|
+| Real authentication | Supabase Auth — replacing the current localStorage demo |
+| Redis/KV rate limiting | Replace in-memory rate limiting |
+| GitHub PR automation | Automated issue creation + coding agent workflow |
+| Team workspace | Multi-user collaborative workspace |
+| Enterprise RBAC | Role-based access control for enterprise |
+| Template marketplace | Community-driven Design.md template sharing |
+| Self-hosted editions | On-premise deployment support |
+| Playwright web audit API | UI/UX auditing directly on live web pages |
 | Sentry/observability | Error tracking + performance monitoring |
 
 ---
 
-## Cài đặt & Vận hành
+## Getting Started
 
-### Yêu cầu hệ thống
+### Requirements
 
-| Thành phần | Phiên bản |
-|------------|-----------|
+| Dependency | Version |
+|------------|---------|
 | Node.js | 20+ |
 | npm | 10+ |
-| Figma Desktop | Mới nhất (cho plugin dev) |
+| Figma Desktop | Latest (for plugin development) |
 
-### Cài đặt
+### Installation
 
 ```bash
 git clone https://github.com/minhduchd-mds/Design-md-ai.git
@@ -312,7 +312,7 @@ cd Design-md-ai
 npm ci
 ```
 
-### Chạy ứng dụng
+### Running the App
 
 ```bash
 # Web workspace (port 5174)
@@ -325,23 +325,23 @@ npm run dev
 npm run dev:web
 ```
 
-### Build production
+### Production Build
 
 ```bash
 npm run build       # Figma plugin → dist/
 npm run web:build   # Web app → public/
 ```
 
-### Scripts đầy đủ
+### All Scripts
 
-| Script | Mô tả |
-|--------|-------|
+| Script | Description |
+|--------|-------------|
 | `npm run dev` | Watch mode: Figma plugin (UI + controller) |
 | `npm run dev:web` | Web workspace dev server (port 5173) |
 | `npm run web:dev` | Web workspace dev server (port 5174) |
-| `npm run web:build` | Production build cho web app |
-| `npm run build` | Production build cho Figma plugin |
-| `npm test` | Chạy 1192 unit tests (Vitest) |
+| `npm run web:build` | Production build for web app |
+| `npm run build` | Production build for Figma plugin |
+| `npm test` | Run 1192 unit tests (Vitest) |
 | `npm run lint` | ESLint 9 |
 | `npm run format` | Prettier format |
 | `npm run typecheck` | TypeScript type checking (UI + plugin) |
@@ -351,35 +351,37 @@ npm run web:build   # Web app → public/
 
 ## API Endpoints
 
-Vercel serverless functions trong `api/`:
+Vercel serverless functions located in `api/`:
 
-| Route | Method | Mô tả |
-|-------|--------|-------|
-| `/api/chat` | POST | Groq AI chat (cần `GROQ_API_KEY`) |
-| `/api/generate-html` | POST | Sinh HTML từ text prompt |
-| `/api/generate-screens` | POST | Sinh screen layouts |
-| `/api/analyze-image` | POST | Phân tích design image |
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/chat` | POST | Groq AI chat (requires `GROQ_API_KEY`) |
+| `/api/generate-html` | POST | Generate HTML from a text prompt |
+| `/api/generate-screens` | POST | Generate screen layouts |
+| `/api/analyze-image` | POST | Analyze a design image |
 
 ---
 
-## Thư viện Template
+## Template Library
 
-**73 Design.md templates** trong `web/src/design-md-templates/`.
+**73 Design.md templates** located in `web/src/design-md-templates/`.
 
-### Danh mục
+### Categories
+
 AI, Developer, Workspace, Product, Commerce, Finance, Automotive, Media
 
-### Sử dụng
+### Usage
+
 ```bash
 npx getdesign@latest add <template-id>
-# Ví dụ: npx getdesign@latest add airtable
+# Example: npx getdesign@latest add airtable
 ```
 
-Templates lazy-loaded — chỉ tải metadata lúc khởi động, full content khi chọn.
+Templates are lazy-loaded — only metadata is fetched on startup; full content loads on selection.
 
 ---
 
-## Kiểm thử & Chất lượng
+## Testing & Quality
 
 ```bash
 npm test              # 1192 tests / 69 files
@@ -390,10 +392,10 @@ npm run format:check  # Prettier check
 npm run typecheck     # TypeScript (UI + plugin)
 ```
 
-### Phân bố tests
+### Test Distribution
 
-| Module | Số tests | Mô tả |
-|--------|----------|-------|
+| Module | Tests | Description |
+|--------|-------|-------------|
 | Core lib (Shannon, GOAP, Evidence, PII) | ~890 | Intelligence engines |
 | UX Checklist (agents, CI, memory, stream) | ~72 | Agentic auditor v5 |
 | Modular architecture (stores, engines) | ~68 | App modules |
@@ -401,17 +403,17 @@ npm run typecheck     # TypeScript (UI + plugin)
 | Plugin (serializer, handlers, scoring) | ~60 | Figma plugin |
 | Workspace (SplitView, helpers) | ~50 | Web UI |
 
-### Build output
+### Build Output
 
-| Target | Size | Ghi chú |
-|--------|------|---------|
+| Target | Size | Notes |
+|--------|------|-------|
 | Figma Plugin (`dist/code.js`) | 98.6 kB | esbuild, ES6 |
 | Figma UI (`dist/index.html`) | 496 kB | Vite, single-file |
 | Web App (`public/`) | ~2.1 MB | Vite, code-split, 84 chunks |
 
 ---
 
-## Triển khai
+## Deployment
 
 ### Vercel (Production)
 
@@ -425,44 +427,44 @@ npm run typecheck     # TypeScript (UI + plugin)
 
 **Live**: [design-md-ai-yd6r.vercel.app](https://design-md-ai-yd6r.vercel.app/)
 
-Security headers: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy (cấu hình trong `vercel.json`).
+Security headers applied: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy (configured in `vercel.json`).
 
 ### Figma Plugin
 
 1. `npm run build`
 2. Figma Desktop → `Ctrl+Shift+P` → **Import plugin from manifest**
-3. Chọn `manifest.json` trong repo
+3. Select `manifest.json` from the repo root
 
 ---
 
-## Cấu hình
+## Configuration
 
-### Biến môi trường
+### Environment Variables
 
-| Biến | Bắt buộc | Mô tả |
-|------|----------|-------|
-| `GROQ_API_KEY` | Có | Groq API key cho AI chat |
-| `VITE_SCREENSHOT_TO_CODE_WS_URL` | Không | WebSocket URL cho screenshot-to-code |
-| `VITE_SUPABASE_URL` | Không | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Không | Supabase anonymous key |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GROQ_API_KEY` | Yes | Groq API key for AI chat |
+| `VITE_SCREENSHOT_TO_CODE_WS_URL` | No | WebSocket URL for screenshot-to-code |
+| `VITE_SUPABASE_URL` | No | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | No | Supabase anonymous key |
 
 ---
 
-## Tài liệu kỹ thuật
+## Technical Docs
 
-| Tài liệu | Đường dẫn | Nội dung |
-|-----------|-----------|----------|
-| **Hướng dẫn phát triển** | [`docs/DEV_GUIDE.md`](docs/DEV_GUIDE.md) | Kiến trúc chi tiết, module map, agent pipeline, hard rules |
-| **ADR: Dual-Mode Auth** | [`docs/adr/001`](docs/adr/001-dual-mode-auth.md) | Quyết định kiến trúc authentication |
+| Document | Path | Contents |
+|----------|------|----------|
+| **Development Guide** | [`docs/DEV_GUIDE.md`](docs/DEV_GUIDE.md) | Detailed architecture, module map, agent pipeline, hard rules |
+| **ADR: Dual-Mode Auth** | [`docs/adr/001`](docs/adr/001-dual-mode-auth.md) | Authentication architecture decision |
 | **ADR: Event-Driven** | [`docs/adr/002`](docs/adr/002-event-driven-architecture.md) | Event bus architecture |
 | **ADR: API Layer** | [`docs/adr/003`](docs/adr/003-api-layer-architecture.md) | API design decisions |
 | **ADR: Command Pattern** | [`docs/adr/004`](docs/adr/004-command-pattern-undo-redo.md) | Undo/redo implementation |
-| **Bảo mật** | [`SECURITY.md`](SECURITY.md) | Security policy + PII protection |
-| **Changelog** | [`CHANGELOG.md`](CHANGELOG.md) | Lịch sử phiên bản |
-| **Contributing** | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Hướng dẫn đóng góp |
+| **Security** | [`SECURITY.md`](SECURITY.md) | Security policy + PII protection |
+| **Changelog** | [`CHANGELOG.md`](CHANGELOG.md) | Version history |
+| **Contributing** | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution guidelines |
 
 ---
 
-## Giấy phép
+## License
 
 [MIT](LICENSE)

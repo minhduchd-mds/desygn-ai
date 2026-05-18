@@ -345,8 +345,8 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (!parsed.success) {
     res.status(400).json({
       error: "Invalid request body",
-      details: parsed.error.errors.map((e) => ({
-        path: e.path.join("."),
+      details: (parsed.error.issues ?? []).map((e) => ({
+        path: (e.path ?? []).join("."),
         message: e.message,
       })),
     });
