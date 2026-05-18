@@ -1,5 +1,5 @@
 /**
- * ux-checklist/ — Agentic UI/UX Auditor v4
+ * ux-checklist/ — Agentic UI/UX Auditor v5
  *
  * Self-learning checklist system that uses AI agents to:
  * 1. Automatically audit designs against dynamic criteria
@@ -18,7 +18,7 @@
  *   │  GOAP Planner   HNSW Search    Sigmoid Decay             │
  *   └─────────────────────────────────────────────────────────┘
  *
- * Key innovations over v3 (static checklist):
+ * Key innovations over v4 (static checklist):
  *   • Criteria are evidence-weighted, not boolean
  *   • Scores decay if not revalidated (knowledge half-life)
  *   • Contradicting standards auto-detected (VTS vs Material)

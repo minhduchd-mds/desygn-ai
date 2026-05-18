@@ -6,25 +6,43 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { withRateLimit } from "../lib/rate-limit";
+import { getAllowedOrigin, setCorsHeaders } from "../lib/cors";
 
-interface ChecklistIssueInput {
-  repo: string; // "owner/repo"
-  checkId: string;
-  category: string;
-  criterion: string;
-  severity: "critical" | "high" | "medium" | "low";
-  confidence: number;
-  expected: string;
-  observed: string;
-  evidence: {
-    source: string;
-    page?: string;
-    selector?: string;
-    screenshotUrl?: string;
-  };
-  fixSuggestion: string;
-  acceptanceCriteria: string[];
-}
+// ---------------------------------------------------------------------------
+// Zod schema
+// ---------------------------------------------------------------------------
+
+const EvidenceSchema = z.object({
+  source: z.string().min(1, "evidence.source is required"),
+  page: z.string().optional(),
+  selector: z.string().optional(),
+  screenshotUrl: z.string().url("evidence.screenshotUrl must be a valid URL").optional(),
+});
+
+const ChecklistIssueSchema = z.object({
+  repo: z
+    .string()
+    .regex(/^[^/]+\/[^/]+$/, 'repo must be in "owner/repo" format'),
+  checkId: z.string().min(1, "checkId is required"),
+  category: z.string().min(1, "category is required"),
+  criterion: z.string().min(1, "criterion is required"),
+  severity: z.enum(["critical", "high", "medium", "low"]),
+  confidence: z.number().min(0).max(1),
+  expected: z.string().min(1, "expected is required"),
+  observed: z.string().min(1, "observed is required"),
+  evidence: EvidenceSchema,
+  fixSuggestion: z.string().min(1, "fixSuggestion is required"),
+  acceptanceCriteria: z.array(z.string()).min(1, "at least one acceptanceCriteria entry is required"),
+});
+
+const RequestBodySchema = z.union([
+  ChecklistIssueSchema,
+  z.array(ChecklistIssueSchema).min(1, "at least one issue is required"),
+]);
+
+type ChecklistIssueInput = z.infer<typeof ChecklistIssueSchema>;
 
 function formatIssueBody(input: ChecklistIssueInput): string {
   return `## UI/UX Checklist Failure
@@ -74,32 +92,105 @@ function severityToLabels(severity: string): string[] {
   return labels;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// ---------------------------------------------------------------------------
+// Retry helper with exponential backoff
+// ---------------------------------------------------------------------------
+
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  maxRetries = 2,
+  baseDelayMs = 1000
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, init);
+      // Retry on GitHub 5xx transient errors only
+      if (response.status >= 500 && attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
+        continue;
+      }
+      return response;
+    } catch (err) {
+      // Network-level error — retry
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError ?? new Error("GitHub API request failed after retries");
+}
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
+
+async function handler(req: VercelRequest, res: VercelResponse) {
+  // --- CORS headers (always set, including preflight) ---
+  const origin = getAllowedOrigin(req);
+  setCorsHeaders(res, origin);
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
+  res.setHeader("Content-Type", "application/json");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // --- GITHUB_TOKEN env check ---
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
-    return res.status(500).json({ error: "GITHUB_TOKEN not configured" });
+    return res.status(500).json({
+      error: "GITHUB_TOKEN not configured",
+      setup: "Set the GITHUB_TOKEN environment variable to a GitHub personal access token with 'repo' scope.",
+    });
   }
 
-  try {
-    const issues: ChecklistIssueInput[] = Array.isArray(req.body) ? req.body : [req.body];
+  // --- Auth validation (Bearer or X-API-Key) ---
+  const authHeader = req.headers["authorization"];
+  const apiKeyHeader = req.headers["x-api-key"];
+  const hasBearer =
+    typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ");
+  const hasApiKey = typeof apiKeyHeader === "string" && apiKeyHeader.length > 0;
 
+  if (!hasBearer && !hasApiKey) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Provide an Authorization: Bearer <token> header or an X-API-Key header.",
+    });
+  }
+
+  // --- Input validation ---
+  const parsed = RequestBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Invalid request body",
+      details: parsed.error.errors.map((e) => ({
+        path: e.path.join("."),
+        message: e.message,
+      })),
+    });
+  }
+
+  const issues: ChecklistIssueInput[] = Array.isArray(parsed.data)
+    ? parsed.data
+    : [parsed.data];
+
+  try {
     const results = [];
     for (const issue of issues) {
       const [owner, repoName] = issue.repo.split("/");
-      if (!owner || !repoName) {
-        results.push({ checkId: issue.checkId, error: "Invalid repo format. Expected owner/repo" });
-        continue;
-      }
 
       const title = `[${issue.severity.toUpperCase()}] ${issue.category}: ${issue.criterion}`;
       const body = formatIssueBody(issue);
       const labels = severityToLabels(issue.severity);
 
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `https://api.github.com/repos/${owner}/${repoName}/issues`,
         {
           method: "POST",
@@ -115,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        results.push({ checkId: issue.checkId, error: errorText });
+        results.push({ checkId: issue.checkId, error: errorText, status: "failed" });
         continue;
       }
 
@@ -135,3 +226,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+
+// Wrap with Upstash Redis sliding-window rate limit: 10 req / 60 s per IP
+export default withRateLimit(handler, "github-create-issues", 10);

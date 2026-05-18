@@ -87,12 +87,15 @@
   "dependencies": {
     "@ai-sdk/groq": "^3.0.39",
     "@supabase/supabase-js": "^2.105.4",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "ai": "^6.0.184",
     "dompurify": "^3.4.4",
     "highlight.js": "^11.11.1",
     "jszip": "^3.10.1",
     "marked": "^18.0.3",
     "marked-highlight": "^2.2.4",
-    "openai": "^6.38.0"
+    "openai": "^6.38.0",
+    "zod": "^4.4.3"
   }
 }

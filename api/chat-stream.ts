@@ -10,10 +10,11 @@ import {
   resolveModel,
 } from "./lib/chat-shared";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit";
+import { withRateLimitEdge } from "./lib/rate-limit";
 
 export const config = { runtime: "edge", maxDuration: 30 };
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   const preflight = handlePreflight(req);
   if (preflight) return preflight;
 
@@ -60,3 +61,6 @@ export default async function handler(req: Request): Promise<Response> {
     return errorResponse(error instanceof Error ? error.message : "Stream failed.", 500, req);
   }
 }
+
+// Wrap with Upstash Redis sliding-window rate limit: 20 req / 60 s per IP
+export default withRateLimitEdge(handler, "chat-stream", 20);
