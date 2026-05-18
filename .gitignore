@@ -3,7 +3,6 @@ dist/
 dist-web/
 release/
 coverage/
-/docs/
 .DS_Store
 
 *storybook.log

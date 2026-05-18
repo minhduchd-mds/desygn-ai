@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Desygn AI — Web Dev Server",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "vite.web.config.ts",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5174"
+      ],
+      "port": 5174,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Desygn AI — Run Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vitest", "run"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Desygn AI — Plugin Build",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "build", "--config", "vite.plugin.config.ts"],
+      "console": "integratedTerminal"
+    }
+  ]
+}
