@@ -66,6 +66,16 @@ export interface ChatMessage {
   attachments?: ChatAttachment[];
 }
 
+/** A single chat conversation (session). */
+export interface ChatSession {
+  id: string;
+  title: string;
+  tab: "chat" | "code";
+  createdAt: number;
+  updatedAt: number;
+  messageCount: number;
+}
+
 export interface OpenDesignDefinition {
   label: string;
   direction: string;

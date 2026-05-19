@@ -2,7 +2,7 @@
  * Authentication module — extracted from main.tsx for code splitting (Sprint 3).
  * Handles user registration, login, session management, and encrypted chat storage.
  */
-import type { AccountPlan, ChatMessage, SessionUser, UserRecord } from "./types";
+import type { AccountPlan, ChatMessage, ChatSession, SessionUser, UserRecord } from "./types";
 
 const USER_STORE_KEY = "ai-design-agent.users.v1";
 const SESSION_STORE_KEY = "ai-design-agent.session.v1";
@@ -250,6 +250,50 @@ export async function decryptChatMessages(emailHash: string, payload: string): P
   const key = await deriveKey(emailHash, salt, ["decrypt"]);
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: toArrayBuffer(base64ToBytes(ivValue)) }, key, toArrayBuffer(base64ToBytes(cipherValue)));
   return JSON.parse(new TextDecoder().decode(plain)) as ChatMessage[];
+}
+
+// ─── Chat session index helpers ───
+const SESSIONS_INDEX_PREFIX = "ai-design-agent.sessions-index.v1";
+
+function getSessionsIndexKey(emailHash: string): string {
+  return `${SESSIONS_INDEX_PREFIX}.${emailHash}`;
+}
+
+export function loadSessionIndex(emailHash: string): ChatSession[] {
+  try {
+    const raw = localStorage.getItem(getSessionsIndexKey(emailHash));
+    return raw ? (JSON.parse(raw) as ChatSession[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSessionIndex(emailHash: string, sessions: ChatSession[]): void {
+  // Keep at most 50 sessions
+  localStorage.setItem(getSessionsIndexKey(emailHash), JSON.stringify(sessions.slice(0, 50)));
+}
+
+export function getSessionStorageKey(emailHash: string, sessionId: string): string {
+  return `${CHAT_HISTORY_PREFIX}.session.${emailHash}.${sessionId}`;
+}
+
+export async function saveSessionMessages(emailHash: string, sessionId: string, messages: ChatMessage[]): Promise<void> {
+  const payload = await encryptChatMessages(emailHash, messages);
+  localStorage.setItem(getSessionStorageKey(emailHash, sessionId), payload);
+}
+
+export async function loadSessionMessages(emailHash: string, sessionId: string): Promise<ChatMessage[]> {
+  const encrypted = localStorage.getItem(getSessionStorageKey(emailHash, sessionId));
+  if (!encrypted) return [];
+  try {
+    return await decryptChatMessages(emailHash, encrypted);
+  } catch {
+    return [];
+  }
+}
+
+export function deleteSessionStorage(emailHash: string, sessionId: string): void {
+  localStorage.removeItem(getSessionStorageKey(emailHash, sessionId));
 }
 
 export function createMessage(

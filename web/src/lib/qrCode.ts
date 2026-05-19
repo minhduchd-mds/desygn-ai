@@ -230,7 +230,7 @@ export function generateQRCodeSVG(text: string, moduleSize = 4, margin = 2): str
   placeFinderPattern(reserved, size - 7, 0);
   placeTimingPatterns(reserved);
   reserveFormatBits(reserved);
-  if (ver.version >= 2) placeAlignmentPattern(reserved, size - 9, size - 9);
+  if (ver.version >= 2) placeAlignmentPattern(reserved, size - 7, size - 7);
 
   // Build actual matrix
   const matrix = createMatrix(size);
@@ -239,7 +239,7 @@ export function generateQRCodeSVG(text: string, moduleSize = 4, margin = 2): str
   placeFinderPattern(matrix, size - 7, 0);
   placeTimingPatterns(matrix);
   reserveFormatBits(matrix);
-  if (ver.version >= 2) placeAlignmentPattern(matrix, size - 9, size - 9);
+  if (ver.version >= 2) placeAlignmentPattern(matrix, size - 7, size - 7);
 
   const data = encodeData(text, ver);
   const ec = rsEncode(data, ver.ecBytes);

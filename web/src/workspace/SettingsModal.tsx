@@ -346,6 +346,52 @@ export function SettingsModal({
                 </div>
 
                 <div className="settings-divider" />
+
+                {/* Advanced connection — MCP fallback guidance */}
+                <h4 className="settings-subsection-title">Kết nối chuyên sâu</h4>
+                <p className="settings-section-desc">
+                  Cấu hình kết nối nâng cao cho tích hợp code và design pipeline.
+                </p>
+
+                <div className="ext-card" style={{ marginBottom: 16 }}>
+                  <div className="ext-card-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+                    </svg>
+                    <div className="ext-card-info">
+                      <strong>MCP Protocol</strong>
+                      <span className="ext-card-desc">
+                        Model Context Protocol cho phép AI đọc trực tiếp context từ Figma, GitHub, Vercel.
+                        {figmaIntegration?.status !== "connected" && (
+                          <> Chưa có MCP server? Desygn AI vẫn hoạt động đầy đủ — MCP chỉ bổ sung thêm context tự động.</>
+                        )}
+                      </span>
+                    </div>
+                    <span className={`ext-status ${figmaIntegration?.status === "connected" ? "ext-status-connected" : "ext-status-disconnected"}`}>
+                      {figmaIntegration?.status === "connected" ? "Active" : "Offline"}
+                    </span>
+                  </div>
+                  {figmaIntegration?.status !== "connected" && (
+                    <div className="ext-card-body">
+                      <div className="mcp-fallback-guide">
+                        <p className="settings-hint" style={{ marginBottom: 8 }}>
+                          <strong style={{ color: "#e2e8f0" }}>Không có MCP?</strong> Bạn vẫn có thể:
+                        </p>
+                        <ul className="doc-list" style={{ marginBottom: 12 }}>
+                          <li>Upload file Figma (.fig) hoặc ảnh thiết kế trực tiếp vào chat</li>
+                          <li>Dán design tokens (JSON) vào prompt để AI phân tích</li>
+                          <li>Sử dụng Templates (73 mẫu) để tạo Design.md không cần Figma</li>
+                          <li>Export manual từ Figma: Inspect panel &rarr; copy CSS/tokens</li>
+                        </ul>
+                        <p className="settings-hint">
+                          Để bật MCP: cài <code style={{ fontSize: 11, padding: "1px 4px", background: "rgba(139,92,246,0.1)", borderRadius: 4, color: "#a78bfa" }}>@anthropic/figma-mcp</code> và nhập endpoint URL ở mục Figma MCP phía trên.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <h4 className="settings-subsection-title">Chat Flow Mapping</h4>
                 <p className="settings-section-desc">Khi bật, kết quả chat có thể được forward sang các kênh tích hợp đã kết nối.</p>
                 <label className="settings-toggle-row">
@@ -358,6 +404,23 @@ export function SettingsModal({
                     checked={chatMappingEnabled}
                     onChange={(e) => { onChatMappingChange(e.target.checked); localStorage.setItem("designready.chat-mapping", String(e.target.checked)); }}
                   />
+                </label>
+
+                <h4 className="settings-subsection-title">Code Integration</h4>
+                <p className="settings-section-desc">Tích hợp output vào codebase — export Design.md trực tiếp sang project.</p>
+                <label className="settings-toggle-row">
+                  <div>
+                    <span>Auto-export Design.md</span>
+                    <span className="settings-hint">Tự động lưu Design.md vào clipboard hoặc file khi generate xong</span>
+                  </div>
+                  <input type="checkbox" defaultChecked />
+                </label>
+                <label className="settings-toggle-row">
+                  <div>
+                    <span>Include AI context in export</span>
+                    <span className="settings-hint">Đính kèm chat context + design tokens khi export cho AI coding agents</span>
+                  </div>
+                  <input type="checkbox" defaultChecked />
                 </label>
               </div>
             )}

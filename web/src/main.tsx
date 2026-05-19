@@ -600,7 +600,7 @@ function App() {
   const ws = useWorkspace(BASE_OPEN_DESIGN_PRESETS);
   const {
     workspaceTab, setWorkspaceTab, request, setRequest, generatedRequest, setGeneratedRequest,
-    projectHistory, setProjectHistory, activeHistoryPrompt, setActiveHistoryPrompt,
+    projectHistory: _projectHistory, setProjectHistory, activeHistoryPrompt, setActiveHistoryPrompt,
     isHistoryOpen, setIsHistoryOpen, saveGeneratedProject, sidebarCollapsed, setSidebarCollapsed,
     previewMode, setPreviewMode, previewTheme, setPreviewTheme, hasGenerated, setHasGenerated,
     copiedOutput, setCopiedOutput, groqModel, setGroqModel, loadedTemplatePresets,
@@ -624,6 +624,8 @@ function App() {
     isGenerating, copiedMessageId,
     setMessages, setCodeMessages, setIsGenerating, activeMessages, setActiveMessages,
     startNewChat: startNewChatBase, copyMessageContent,
+    chatSessions, codeSessions, activeChatSessionId, activeCodeSessionId,
+    switchSession, deleteSession,
   } = chat;
 
   // Detail Modal
@@ -1190,7 +1192,7 @@ function App() {
     setActiveHistoryPrompt("");
   }
 
-  function openHistoryProject(item: ProjectHistoryItem) {
+  function _openHistoryProject(item: ProjectHistoryItem) {
     const nextRequest = {
       ...request,
       projectName: item.name,
@@ -1215,7 +1217,7 @@ function App() {
     ]);
   }
 
-  function deleteHistoryItem(item: ProjectHistoryItem, event: React.MouseEvent) {
+  function _deleteHistoryItem(item: ProjectHistoryItem, event: React.MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
     setProjectHistory((current) => {
@@ -1516,18 +1518,23 @@ function App() {
               <span className="nav-label">Checklist UI/UX</span>
             </a>
           </nav>
-          {sidebarCollapsed && projectHistory.length > 0 && (
+          {sidebarCollapsed && (workspaceTab === "code" ? codeSessions : chatSessions).length > 0 && (
             <div className="sidebar-history-collapsed">
               <svg className="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 6px", opacity: 0.5 }}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-              {projectHistory.slice(0, 6).map((item, index) => (
-                <button
-                  key={item.prompt}
-                  className={`history-dot${(activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0)) ? " active" : ""}`}
-                  title={item.name}
-                  type="button"
-                  onClick={() => openHistoryProject(item)}
-                />
-              ))}
+              {(workspaceTab === "code" ? codeSessions : chatSessions).slice(0, 6).map((session) => {
+                const isActive = workspaceTab === "code"
+                  ? activeCodeSessionId === session.id
+                  : activeChatSessionId === session.id;
+                return (
+                  <button
+                    key={session.id}
+                    className={`history-dot${isActive ? " active" : ""}`}
+                    title={session.title || "New Chat"}
+                    type="button"
+                    onClick={() => switchSession(session.id, workspaceTab === "code" ? "code" : "chat")}
+                  />
+                );
+              })}
             </div>
           )}
 
@@ -1579,7 +1586,7 @@ function App() {
                 setIsHistoryOpen((current) => !current);
               }}
             >
-              <span>History</span>
+              <span>Chat History</span>
               <svg
                 width="12"
                 height="12"
@@ -1593,36 +1600,44 @@ function App() {
             </span>
             {isHistoryOpen && (
               <div className="sidebar-history-list">
-                {projectHistory.map((item, index) => (
-                  <a
-                    key={item.prompt}
-                    href={`#history-${index}`}
-                    role="button"
-                    className={`history-item${
-                      activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0) ? " active" : ""
-                    }`}
-                    aria-current={
-                      activeHistoryPrompt === item.prompt || (!activeHistoryPrompt && index === 0) ? "true" : undefined
-                    }
-                    onClick={(event) => {
-                      event.preventDefault();
-                      openHistoryProject(item);
-                    }}
-                  >
-                    <span className="truncate">{item.name}</span>
-                    <button
-                      type="button"
-                      className="history-delete-btn"
-                      aria-label={`Delete ${item.name}`}
-                      onClick={(event) => deleteHistoryItem(item, event)}
+                {(workspaceTab === "code" ? codeSessions : chatSessions).map((session) => {
+                  const isActive = workspaceTab === "code"
+                    ? activeCodeSessionId === session.id
+                    : activeChatSessionId === session.id;
+                  return (
+                    <a
+                      key={session.id}
+                      href={`#session-${session.id}`}
+                      role="button"
+                      className={`history-item${isActive ? " active" : ""}`}
+                      aria-current={isActive ? "true" : undefined}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        switchSession(session.id, workspaceTab === "code" ? "code" : "chat");
+                      }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                      </svg>
-                    </button>
-                  </a>
-                ))}
+                      <span className="truncate">{session.title || "New Chat"}</span>
+                      <button
+                        type="button"
+                        className="history-delete-btn"
+                        aria-label={`Delete ${session.title}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          deleteSession(session.id, workspaceTab === "code" ? "code" : "chat");
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                      </button>
+                    </a>
+                  );
+                })}
+                {(workspaceTab === "code" ? codeSessions : chatSessions).length === 0 && (
+                  <span className="history-empty">No conversations yet</span>
+                )}
               </div>
             )}
           </section>
@@ -2538,6 +2553,14 @@ function App() {
                     <span className="welcome-card-arrow">→</span>
                     <h3>Use Template</h3>
                     <p>Start from a template and customize</p>
+                  </button>
+                  <button type="button" className="welcome-card" onClick={() => { setSettingsOpen(true); setSettingsTab("extensions"); }}>
+                    <div className="welcome-card-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                    </div>
+                    <span className="welcome-card-arrow">→</span>
+                    <h3>Connect Sources</h3>
+                    <p>Link Figma, GitHub, or paste tokens</p>
                   </button>
                 </div>
               </div>

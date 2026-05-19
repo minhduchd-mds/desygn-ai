@@ -138,16 +138,51 @@ textarea {
   }
 
   .workspace-sidebar {
-    padding: 16px 10px;
+    padding: 16px 6px;
     align-items: center;
+  }
+
+  // Hide text in workspace tabs — show only icons
+  .workspace-tabs {
+    flex-direction: column;
+    padding: 2px;
+    margin: 0;
+    gap: 1px;
+  }
+
+  .workspace-tab {
+    padding: 6px;
+    font-size: 0; // hide text
+    gap: 0;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
   }
 
   .nav-label,
   .nav-status,
   .sidebar-history,
   .plan-card,
-  .brand-block div,
-  .brand-block .logout-button {
+  .sidebar-projects-section,
+  .sidebar-section-label {
+    display: none;
+  }
+
+  // Brand block — show only avatar, hide info & chevron
+  .brand-block-wrapper {
+    padding: 0 4px 4px;
+  }
+
+  .brand-block {
+    justify-content: center;
+    padding: 6px;
+    gap: 0;
+  }
+
+  .brand-info,
+  .brand-chevron {
     display: none;
   }
 
@@ -158,10 +193,6 @@ textarea {
       justify-content: center;
       padding: 8px;
     }
-  }
-
-  .brand-block {
-    justify-content: center;
   }
 }
 
@@ -436,6 +467,15 @@ textarea {
   color: $blue-400;
   transition: transform 0.15s ease;
   transform: rotate(0deg);
+}
+
+.history-empty {
+  display: block;
+  padding: 12px 10px;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  font-style: italic;
 }
 
 // ─── History Item with Delete ─────────────────────────
