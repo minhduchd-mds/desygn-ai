@@ -876,13 +876,23 @@ function App() {
     let cancelled = false;
     setChatHistoryReady(false);
 
+    // Strip legacy placeholder messages from persisted history
+    const LEGACY_PLACEHOLDERS = [
+      "Paste a product request",
+      "Start a conversation or upload",
+      "Describe a design task, generate Design.md",
+    ];
+    const stripPlaceholders = (msgs: ChatMessage[]) =>
+      msgs.filter((m) => !(m.role === "assistant" && LEGACY_PLACEHOLDERS.some((p) => m.content.startsWith(p))));
+
     // Load Chat tab history
     const chatKey = getChatHistoryKey(user.emailHash);
     const encrypted = localStorage.getItem(chatKey);
     const chatPromise = encrypted
       ? decryptChatMessages(user.emailHash, encrypted)
           .then((storedMessages) => {
-            if (!cancelled && storedMessages.length > 0) setMessages(storedMessages);
+            const cleaned = stripPlaceholders(storedMessages);
+            if (!cancelled && cleaned.length > 0) setMessages(cleaned);
           })
           .catch(() => localStorage.removeItem(chatKey))
       : Promise.resolve();
@@ -893,7 +903,8 @@ function App() {
     const codePromise = codeEncrypted
       ? decryptChatMessages(user.emailHash, codeEncrypted)
           .then((storedMessages) => {
-            if (!cancelled && storedMessages.length > 0) setCodeMessages(storedMessages);
+            const cleaned = stripPlaceholders(storedMessages);
+            if (!cancelled && cleaned.length > 0) setCodeMessages(cleaned);
           })
           .catch(() => localStorage.removeItem(codeKey))
       : Promise.resolve();
