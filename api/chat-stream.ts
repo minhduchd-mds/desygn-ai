@@ -12,7 +12,6 @@ import {
   resolveModelDef,
 } from "./lib/chat-shared";
 import { checkRateLimit, getClientIp } from "./lib/rateLimit";
-import { withRateLimitEdge } from "./lib/rate-limit";
 
 export const config = { runtime: "edge", maxDuration: 30 };
 
@@ -153,5 +152,9 @@ async function handler(req: Request): Promise<Response> {
   }
 }
 
-// Wrap with Upstash Redis sliding-window rate limit: 20 req / 60 s per IP
-export default withRateLimitEdge(handler, "chat-stream", 20);
+// In-memory rate limiting is already applied inside handler().
+// withRateLimitEdge was removed because its Response reconstruction
+// (`new Response(response.body, ...)`) breaks TransformStream on Vercel Edge —
+// the readable side gets disconnected from the async writer, producing
+// Content-Length: 0 responses.
+export default handler;
