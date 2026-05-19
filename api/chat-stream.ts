@@ -1,7 +1,7 @@
 import { createGroq } from "@ai-sdk/groq";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
-import type { LanguageModelV1 } from "ai";
+import type { LanguageModel } from "ai";
 import {
   buildCorsHeaders,
   buildSystemPrompt,
@@ -46,18 +46,22 @@ async function handler(req: Request): Promise<Response> {
 
   // ── Resolve model & provider ──────────────────────────────────
   const modelDef = resolveModelDef(body.context);
-  let model: LanguageModelV1;
+  let model: LanguageModel;
 
-  if (modelDef.provider === "google") {
-    const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!googleKey) return errorResponse("GOOGLE_GENERATIVE_AI_API_KEY not configured.", 500, req);
-    const google = createGoogleGenerativeAI({ apiKey: googleKey });
-    model = google(modelDef.providerModelId);
-  } else {
-    const groqKey = process.env.GROQ_API_KEY;
-    if (!groqKey) return errorResponse("GROQ_API_KEY not configured.", 500, req);
-    const groq = createGroq({ apiKey: groqKey });
-    model = groq(modelDef.providerModelId);
+  try {
+    if (modelDef.provider === "google") {
+      const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      if (!googleKey) return errorResponse("GOOGLE_GENERATIVE_AI_API_KEY not configured.", 500, req);
+      const google = createGoogleGenerativeAI({ apiKey: googleKey });
+      model = google(modelDef.providerModelId);
+    } else {
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey) return errorResponse("GROQ_API_KEY not configured.", 500, req);
+      const groq = createGroq({ apiKey: groqKey });
+      model = groq(modelDef.providerModelId);
+    }
+  } catch (error) {
+    return errorResponse(`Provider init failed: ${error instanceof Error ? error.message : String(error)}`, 500, req);
   }
 
   try {
@@ -69,7 +73,20 @@ async function handler(req: Request): Promise<Response> {
       temperature: 0.7,
     });
 
-    return result.toTextStreamResponse({ headers: cors });
+    // Consume the full stream into a Response, catching async errors
+    const response = result.toTextStreamResponse({ headers: cors });
+
+    // Pipe through an error-catching transform so client gets a clear error
+    // instead of a silently-closed stream if the provider fails mid-stream
+    const originalBody = response.body;
+    if (!originalBody) {
+      return errorResponse("No response body from model.", 500, req);
+    }
+
+    return new Response(originalBody, {
+      status: response.status,
+      headers: response.headers,
+    });
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : "Stream failed.", 500, req);
   }

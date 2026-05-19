@@ -32,7 +32,7 @@ export const MODEL_REGISTRY: ModelDef[] = [
   { id: "gemma2-9b-it",             provider: "groq",   providerModelId: "gemma2-9b-it" },
   // Google Gemini models
   { id: "gemini-2.0-flash",         provider: "google",  providerModelId: "gemini-2.0-flash" },
-  { id: "gemini-2.5-flash",         provider: "google",  providerModelId: "gemini-2.5-flash-preview-05-20" },
+  { id: "gemini-2.5-flash",         provider: "google",  providerModelId: "gemini-2.5-flash" },
   { id: "gemini-2.0-flash-lite",    provider: "google",  providerModelId: "gemini-2.0-flash-lite" },
 ];
 
