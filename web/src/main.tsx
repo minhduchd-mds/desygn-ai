@@ -512,6 +512,36 @@ const ChatMessageItem = React.memo(function ChatMessageItem({
   return (
     <article className={`message ${message.role}${isThinking ? " is-thinking" : ""}`}>
       <div className="message-body">
+        {/* Attachments (images/videos) */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="message-attachments">
+            {message.attachments.map((att) => {
+              if (att.type.startsWith("image/")) {
+                return (
+                  <div key={att.id} className="attachment-image-wrap">
+                    <img src={att.url} alt={att.name} className="attachment-image" loading="lazy" />
+                    <span className="attachment-name">{att.name}</span>
+                  </div>
+                );
+              }
+              if (att.type.startsWith("video/")) {
+                return (
+                  <div key={att.id} className="attachment-video-wrap">
+                    <video src={att.url} controls className="attachment-video" preload="metadata" />
+                    <span className="attachment-name">{att.name}</span>
+                  </div>
+                );
+              }
+              return (
+                <div key={att.id} className="attachment-file-chip">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>{att.name}</span>
+                  {att.size != null && <small>{(att.size / 1024).toFixed(0)} KB</small>}
+                </div>
+              );
+            })}
+          </div>
+        )}
         {message.role === "assistant" ? (
           isThinking ? (
             <div className="streaming-dots"><span /><span /><span /></div>
@@ -519,7 +549,7 @@ const ChatMessageItem = React.memo(function ChatMessageItem({
             <CodeBlockCopyContainer className={`message-markdown${isStreaming ? " is-streaming" : ""}`} html={renderedHtml} />
           )
         ) : (
-          <p>{message.content}</p>
+          message.content && <p>{message.content}</p>
         )}
         {message.htmlCode && (
           <button
@@ -853,9 +883,9 @@ function App() {
   }
 
   // sendChatMessage — delegates to useChatState hook with context
-  async function sendChatMessage() {
+  async function sendChatMessage(attachments?: import("./app/types").ChatAttachment[]) {
     const prompt = request.prompt.trim();
-    if (!prompt) return;
+    if (!prompt && (!attachments || attachments.length === 0)) return;
     setRequest((current) => ({ ...current, prompt: "" }));
     await chat.sendChatMessage(
       prompt,
@@ -874,6 +904,7 @@ function App() {
           saveGeneratedProject({ ...request, projectName: autoTitle, prompt: p });
         },
         generateHtml: generateHtmlFromPrompt,
+        attachments,
       },
     );
   }

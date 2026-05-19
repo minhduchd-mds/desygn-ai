@@ -1,7 +1,7 @@
-﻿import { useRef, useState } from "react";
+﻿import { useCallback, useRef, useState } from "react";
 import { useMemo } from "react";
 import { DESIGN_MD_TEMPLATES } from "../design/templateRegistry";
-import type { OpenDesignDefinition, OpenDesignPreset, ProjectRequest, SetProjectRequest } from "../app/types";
+import type { ChatAttachment, OpenDesignDefinition, OpenDesignPreset, ProjectRequest, SetProjectRequest } from "../app/types";
 
 type ComposerDropdown = "tools" | "category" | "design" | "model" | null;
 
@@ -14,6 +14,27 @@ const AI_MODELS: { value: string; label: string; desc: string }[] = [
   { value: "gemma2-9b-it", label: "Gemma 2 9B", desc: "Compact" },
 ];
 
+/** Convert a File to a ChatAttachment with data URL. */
+function fileToAttachment(file: File): Promise<ChatAttachment> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        id: `att-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        type: file.type,
+        name: file.name,
+        url: reader.result as string,
+        size: file.size,
+      });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+const MAX_ATTACHMENTS = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 interface ChatComposerProps {
   isGenerating: boolean;
   openDesignPresets: Record<OpenDesignPreset, OpenDesignDefinition>;
@@ -23,7 +44,7 @@ interface ChatComposerProps {
   workspaceTab: "chat" | "code" | "checklist";
   groqModel: string;
   onModelChange: (model: string) => void;
-  onSendChat: () => void;
+  onSendChat: (attachments?: ChatAttachment[]) => void;
   onGenerateDesignMd: () => void;
   onCreateImage: () => void;
   onUploadMarkdownFiles: (files: FileList) => void;
@@ -47,8 +68,25 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const [composerDropdown, setComposerDropdown] = useState<ComposerDropdown>(null);
   const [designQuery, setDesignQuery] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<ChatAttachment[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
+  const chatImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Add files as attachments
+  const addAttachments = useCallback(async (files: FileList | File[]) => {
+    const fileArr = Array.from(files).filter((f) => f.size <= MAX_FILE_SIZE);
+    const remaining = MAX_ATTACHMENTS - pendingAttachments.length;
+    if (remaining <= 0) return;
+    const toProcess = fileArr.slice(0, remaining);
+    const newAtts = await Promise.all(toProcess.map(fileToAttachment));
+    setPendingAttachments((prev) => [...prev, ...newAtts]);
+  }, [pendingAttachments.length]);
+
+  const removeAttachment = useCallback((id: string) => {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id));
+  }, []);
   const templateMetaById = useMemo(() => new Map(DESIGN_MD_TEMPLATES.map((template) => [template.id, template])), []);
   const designEntries = useMemo(() => {
     const query = designQuery.trim().toLowerCase();
@@ -61,13 +99,34 @@ export function ChatComposer({
 
   return (
     <form
-      className={`chat-composer ${isGenerating ? "is-generating" : ""}`}
+      className={`chat-composer ${isGenerating ? "is-generating" : ""}${isDragOver ? " drag-over" : ""}`}
       onSubmit={(event) => {
         event.preventDefault();
-        onSendChat();
+        const atts = pendingAttachments.length > 0 ? [...pendingAttachments] : undefined;
+        setPendingAttachments([]);
+        onSendChat(atts);
+      }}
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        if (e.dataTransfer.files.length) void addAttachments(e.dataTransfer.files);
       }}
     >
       <div className="composer-box">
+        {/* Hidden image input for chat attachments */}
+        <input
+          ref={chatImageInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          hidden
+          onChange={(event) => {
+            if (event.currentTarget.files?.length) void addAttachments(event.currentTarget.files);
+            event.currentTarget.value = "";
+          }}
+        />
         <input
           ref={uploadInputRef}
           type="file"
@@ -107,11 +166,28 @@ export function ChatComposer({
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
-                onSendChat();
+                const atts = pendingAttachments.length > 0 ? [...pendingAttachments] : undefined;
+                setPendingAttachments([]);
+                onSendChat(atts);
                 const el = event.target as HTMLTextAreaElement;
                 requestAnimationFrame(() => {
                   el.style.height = "auto";
                 });
+              }
+            }}
+            onPaste={(event) => {
+              const items = event.clipboardData?.items;
+              if (!items) return;
+              const imageFiles: File[] = [];
+              for (const item of items) {
+                if (item.kind === "file" && (item.type.startsWith("image/") || item.type.startsWith("video/"))) {
+                  const file = item.getAsFile();
+                  if (file) imageFiles.push(file);
+                }
+              }
+              if (imageFiles.length > 0) {
+                event.preventDefault();
+                void addAttachments(imageFiles);
               }
             }}
             placeholder={
@@ -123,6 +199,27 @@ export function ChatComposer({
             style={{ overflow: "hidden", resize: "none" }}
           />
         </div>
+        {/* Attachment preview strip */}
+        {pendingAttachments.length > 0 && (
+          <div className="composer-attachments">
+            {pendingAttachments.map((att) => (
+              <div key={att.id} className="composer-attachment-thumb">
+                {att.type.startsWith("image/") ? (
+                  <img src={att.url} alt={att.name} />
+                ) : att.type.startsWith("video/") ? (
+                  <video src={att.url} muted />
+                ) : (
+                  <span className="attachment-file-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </span>
+                )}
+                <button type="button" className="attachment-remove" onClick={() => removeAttachment(att.id)} aria-label="Remove">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="composer-bottom-row">
           <div className="composer-controls">
             <div className="composer-dropdown tool-dropdown">
@@ -147,6 +244,19 @@ export function ChatComposer({
               </button>
               {composerDropdown === "tools" && (
                 <div className="composer-menu tools-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setComposerDropdown(null);
+                      chatImageInputRef.current?.click();
+                    }}
+                  >
+                    <span className="tool-menu-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </span>
+                    Attach image / video
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -334,7 +444,7 @@ export function ChatComposer({
               className="send-button"
               type="submit"
               aria-label="Send chat message"
-              disabled={isGenerating || !request.prompt.trim()}
+              disabled={isGenerating || (!request.prompt.trim() && pendingAttachments.length === 0)}
             >
               <span className="send-bars" aria-hidden="true">
                 <i />

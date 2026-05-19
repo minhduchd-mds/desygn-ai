@@ -43,12 +43,27 @@ export interface ProjectHistoryItem {
   target: string;
 }
 
+export interface ChatAttachment {
+  /** Unique id for keying */
+  id: string;
+  /** MIME type */
+  type: string;
+  /** Display name */
+  name: string;
+  /** Data URL (base64) or blob URL for images/videos */
+  url: string;
+  /** File size in bytes (for display) */
+  size?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   title?: string;
   content: string;
   htmlCode?: string;
+  /** Attached images/files */
+  attachments?: ChatAttachment[];
 }
 
 export interface OpenDesignDefinition {

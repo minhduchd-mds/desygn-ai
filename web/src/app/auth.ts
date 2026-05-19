@@ -252,12 +252,19 @@ export async function decryptChatMessages(emailHash: string, payload: string): P
   return JSON.parse(new TextDecoder().decode(plain)) as ChatMessage[];
 }
 
-export function createMessage(role: ChatMessage["role"], content: string, title?: string, htmlCode?: string): ChatMessage {
+export function createMessage(
+  role: ChatMessage["role"],
+  content: string,
+  title?: string,
+  htmlCode?: string,
+  attachments?: ChatMessage["attachments"],
+): ChatMessage {
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     role,
     title,
     content,
     htmlCode,
+    ...(attachments?.length ? { attachments } : {}),
   };
 }

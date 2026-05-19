@@ -775,3 +775,183 @@
     color: $indigo-200;
   }
 }
+
+// ─── Message Attachments (images/videos/files) ───────
+
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.attachment-image-wrap,
+.attachment-video-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.attachment-image {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: $radius-sm $radius-sm 0 0;
+  cursor: pointer;
+  transition: filter 0.15s;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+}
+
+.attachment-video {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  border-radius: $radius-sm $radius-sm 0 0;
+  background: #000;
+}
+
+.attachment-name {
+  display: block;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: $text-muted-alt;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-pill;
+  background: rgba(255, 255, 255, 0.05);
+  color: $text-light;
+  font-size: 12px;
+  font-weight: 500;
+
+  svg {
+    flex-shrink: 0;
+    color: $indigo-400;
+  }
+
+  small {
+    color: $text-muted-alt;
+    font-size: 11px;
+    font-weight: 400;
+  }
+}
+
+// ── User message attachment overrides ────────────────
+.message.user {
+  .message-attachments {
+    justify-content: flex-end;
+  }
+
+  .attachment-image-wrap,
+  .attachment-video-wrap {
+    border-color: rgba(99, 102, 241, 0.2);
+    background: rgba(99, 102, 241, 0.08);
+  }
+
+  .attachment-name {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .attachment-file-chip {
+    border-color: rgba(99, 102, 241, 0.25);
+    background: rgba(99, 102, 241, 0.12);
+    color: #fff;
+
+    svg {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    small {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+}
+
+// ─── Composer Attachment Preview Strip ────────────────
+
+.composer-attachments {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.composer-attachment-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .attachment-file-icon {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: $indigo-400;
+  }
+}
+
+.attachment-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+  backdrop-filter: blur(4px);
+
+  .composer-attachment-thumb:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.8);
+  }
+}
+
+// ─── Drag-over State ─────────────────────────────────
+
+.chat-composer.drag-over .composer-box {
+  border-color: $indigo-500;
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 18px 54px rgba(0, 0, 0, 0.35);
+}

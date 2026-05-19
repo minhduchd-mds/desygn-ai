@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import type { ChatMessage, SessionUser } from "../app/types";
+import type { ChatAttachment, ChatMessage, SessionUser } from "../app/types";
 import {
   getChatHistoryKey,
   encryptChatMessages,
@@ -69,6 +69,7 @@ export interface UseChatStateReturn {
     opts?: {
       onFirstUserMessage?: (prompt: string) => void;
       generateHtml?: (prompt: string) => Promise<string | null>;
+      attachments?: ChatAttachment[];
     },
   ) => Promise<void>;
   startNewChat: (workspaceTab: "chat" | "code" | "checklist") => void;
@@ -171,15 +172,16 @@ export function useChatState(
       opts?: {
         onFirstUserMessage?: (prompt: string) => void;
         generateHtml?: (prompt: string) => Promise<string | null>;
+        attachments?: ChatAttachment[];
       },
     ) => {
-      if (!prompt.trim()) return;
+      if (!prompt.trim() && (!opts?.attachments || opts.attachments.length === 0)) return;
 
       const isCodeTab = context.workspaceTab === "code";
       const currentMessages = isCodeTab ? codeMessages : messages;
       const updateMessages = isCodeTab ? setCodeMessages : setMessages;
 
-      const userMessage = createMessage("user", prompt);
+      const userMessage = createMessage("user", prompt, undefined, undefined, opts?.attachments);
       const chatMessages = [...currentMessages, userMessage];
       const streamingMsg = createMessage("assistant", "", "Trợ lý ảo");
       const streamingId = streamingMsg.id;
