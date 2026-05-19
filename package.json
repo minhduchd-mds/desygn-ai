@@ -65,7 +65,7 @@
     "package": "npm run build && rm -rf release && mkdir release && cp manifest.json release/ && cp -r dist release/",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "prepare": "lefthook install",
+    "prepare": "lefthook install || true",
     "turbo:build": "turbo run build",
     "turbo:lint": "turbo run lint",
     "turbo:test": "turbo run test",
