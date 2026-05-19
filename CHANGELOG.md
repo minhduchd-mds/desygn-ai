@@ -6,6 +6,24 @@ Tất cả thay đổi quan trọng của Desygn AI được ghi nhận tại đ
 
 ## [Unreleased]
 
+## [5.0.1] — 2026-05-19
+
+### Thay doi
+
+- Bump version 1.1.6 -> 5.0.0 (align voi CHANGELOG)
+- Them README badges: CI status, npm version, Discussions link
+- Cap nhat test count 1192 -> 1313
+- Them `.devcontainer` cho GitHub Codespaces
+- Hoan thanh Open Source Checklist 33/33
+
+### Tai lieu
+
+- `docs/API.md` — Plugin SDK API reference (8 sections)
+- `docs/SELF_HOSTING.md` — Self-hosting guide (Docker, Nginx, Supabase)
+- `docs/MAINTAINER_SLA.md` — Maintainer response SLA
+- `CLA.md` — Contributor License Agreement
+- `TRADEMARK.md` — Brand & trademark guidelines
+
 ## [5.0.0] — 2026-05-18
 
 Kiến trúc v5: Agentic UI/UX Auditor — hệ thống đa agent tự học với 8 agent chuyên biệt, tích hợp GitHub/CI, và streaming real-time.
