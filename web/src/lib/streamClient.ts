@@ -45,12 +45,15 @@ export async function postStream(
     const controller = new AbortController();
     const timerId = setTimeout(() => controller.abort("timeout"), timeout);
 
+    // Track external abort listener so we can remove it after stream completes
+    let externalAbortHandler: (() => void) | undefined;
     if (opts.signal) {
       if (opts.signal.aborted) {
         clearTimeout(timerId);
         throw new ApiError("ABORTED", "Stream aborted before start", 0, false);
       }
-      opts.signal.addEventListener("abort", () => controller.abort(opts.signal!.reason));
+      externalAbortHandler = () => controller.abort(opts.signal!.reason);
+      opts.signal.addEventListener("abort", externalAbortHandler);
     }
 
     try {
@@ -74,6 +77,9 @@ export async function postStream(
 
         const retryable = res.status >= 500 && attempt < maxRetries;
         if (retryable) {
+          if (externalAbortHandler && opts.signal) {
+            opts.signal.removeEventListener("abort", externalAbortHandler);
+          }
           await sleep(baseDelay * 2 ** attempt);
           continue;
         }
@@ -85,7 +91,8 @@ export async function postStream(
         throw new ApiError("NO_BODY", "Server returned no response stream", 0, false);
       }
 
-      return await readStream(res.body, onToken, controller.signal);
+      const result = await readStream(res.body, onToken, controller.signal);
+      return result;
 
     } catch (err) {
       clearTimeout(timerId);
@@ -98,6 +105,9 @@ export async function postStream(
       }
 
       if (attempt < maxRetries) {
+        if (externalAbortHandler && opts.signal) {
+          opts.signal.removeEventListener("abort", externalAbortHandler);
+        }
         await sleep(baseDelay * 2 ** attempt);
         continue;
       }
@@ -105,6 +115,11 @@ export async function postStream(
       const message = err instanceof Error ? err.message : "Stream network error";
       errorBus.network(message, true);
       throw new ApiError("STREAM_ERROR", message, 0, true);
+    } finally {
+      // Always clean up the external abort listener to prevent memory leaks
+      if (externalAbortHandler && opts.signal) {
+        opts.signal.removeEventListener("abort", externalAbortHandler);
+      }
     }
   }
 

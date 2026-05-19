@@ -626,7 +626,7 @@ function App() {
     setMessages, setCodeMessages, setIsGenerating, activeMessages, setActiveMessages,
     startNewChat: startNewChatBase, copyMessageContent,
     chatSessions, codeSessions, activeChatSessionId, activeCodeSessionId,
-    switchSession, deleteSession, getSessionsForProject,
+    switchSession, deleteSession, getSessionsForProject, unlinkProjectSessions,
   } = chat;
 
   // Detail Modal
@@ -743,10 +743,13 @@ function App() {
 
   function deleteProject(id: string) {
     saveProjects(projects.filter((p) => p.id !== id));
+    unlinkProjectSessions(id); // Clean up orphaned session references
     if (activeProjectId === id) setActiveProjectId(null);
   }
 
   async function handleExportProject(proj: Project) {
+    if (!user) return;
+
     // Collect all sessions for this project
     const projChatSessions = getSessionsForProject(proj.id, "chat");
     const projCodeSessions = getSessionsForProject(proj.id, "code");
@@ -756,7 +759,7 @@ function App() {
     const sessionsWithMessages = await Promise.all(
       allProjSessions.map(async (s) => {
         const msgs = await import("./app/auth").then((auth) =>
-          auth.loadSessionMessages(user!.emailHash, s.id),
+          auth.loadSessionMessages(user.emailHash, s.id),
         );
         return { title: s.title, tab: s.tab, messages: msgs };
       }),
@@ -1539,7 +1542,7 @@ function App() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
           <span className="sidebar-brand-name" style={{ fontSize: 14 }}>{PRODUCT_NAME}</span>
-          <button type="button" className="mobile-menu-btn" style={{ display: "flex" }} onClick={() => startNewChat()} aria-label="New chat">
+          <button type="button" className="mobile-menu-btn" style={{ display: "flex" }} onClick={() => { setSidebarView("chats"); setActiveProjectId(null); startNewChat(); }} aria-label="New chat">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
@@ -1586,6 +1589,7 @@ function App() {
               onClick={(event) => {
                 event.preventDefault();
                 setActiveProjectId(null);
+                setSidebarView("chats");
                 startNewChat();
               }}
             >
@@ -1748,7 +1752,7 @@ function App() {
                         {projChatSessions.length > 0 && <span className="session-group-label">Chat</span>}
                         {projChatSessions.map((s) => (
                           <a key={s.id} href="#" className={`history-item${activeChatSessionId === s.id ? " active" : ""}`}
-                            onClick={(e) => { e.preventDefault(); setSidebarView("chats"); switchSession(s.id, "chat"); }}>
+                            onClick={(e) => { e.preventDefault(); setSidebarView("chats"); setWorkspaceTab("chat"); switchSession(s.id, "chat"); }}>
                             <span className="truncate">{s.title || "New Chat"}</span>
                           </a>
                         ))}

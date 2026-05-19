@@ -100,6 +100,7 @@ export interface UseChatStateReturn {
   switchSession: (sessionId: string, tab: "chat" | "code") => void;
   deleteSession: (sessionId: string, tab: "chat" | "code") => void;
   getSessionsForProject: (projectId: string, tab: "chat" | "code") => ChatSession[];
+  unlinkProjectSessions: (projectId: string) => void;
   copyMessageContent: (msg: ChatMessage) => Promise<void>;
 }
 
@@ -461,17 +462,23 @@ export function useChatState(
       }
 
       // Load target session
-      void loadSessionMessages(user.emailHash, sessionId).then((msgs) => {
-        const cleaned = stripPlaceholders(msgs);
-        if (isCode) {
-          setCodeMessages(cleaned);
-          setActiveCodeSessionId(sessionId);
-        } else {
-          setMessages(cleaned);
-          setActiveChatSessionId(sessionId);
-        }
-        switchingRef.current = false;
-      });
+      void loadSessionMessages(user.emailHash, sessionId)
+        .then((msgs) => {
+          const cleaned = stripPlaceholders(msgs);
+          if (isCode) {
+            setCodeMessages(cleaned);
+            setActiveCodeSessionId(sessionId);
+          } else {
+            setMessages(cleaned);
+            setActiveChatSessionId(sessionId);
+          }
+        })
+        .catch(() => {
+          // Load failed — stay on current session but don't block auto-save
+        })
+        .finally(() => {
+          switchingRef.current = false;
+        });
     },
     [user, messages, codeMessages, activeChatSessionId, activeCodeSessionId],
   );
@@ -526,6 +533,17 @@ export function useChatState(
     [user, activeChatSessionId, activeCodeSessionId],
   );
 
+  // ── Unlink all sessions from a deleted project ──────────────
+  const unlinkProjectSessions = useCallback(
+    (projectId: string) => {
+      const strip = (s: ChatSession) =>
+        s.projectId === projectId ? { ...s, projectId: null } : s;
+      setChatSessions((prev) => prev.map(strip));
+      setCodeSessions((prev) => prev.map(strip));
+    },
+    [],
+  );
+
   // ── Copy message content ────────────────────────────────────
   const copyMessageContent = useCallback(async (msg: ChatMessage) => {
     await navigator.clipboard.writeText(msg.content);
@@ -553,6 +571,7 @@ export function useChatState(
     switchSession,
     deleteSession,
     getSessionsForProject,
+    unlinkProjectSessions,
     copyMessageContent,
   };
 }
