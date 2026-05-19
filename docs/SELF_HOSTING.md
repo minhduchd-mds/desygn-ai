@@ -235,55 +235,64 @@ When not configured, project versions are stored in the browser's `localStorage`
 
 ## Supabase Setup
 
-Supabase is used to persist project design versions across browsers and devices. Without it, versions are stored in `localStorage` only.
+Supabase provides persistence for projects, audit runs, evidence, and RBAC. Without it, the app falls back to `localStorage`.
 
-### 1. Create a Supabase project
-
-Go to [app.supabase.com](https://app.supabase.com), create a new project, and note the **Project URL** and **Anon (public) key** from `Settings → API`.
-
-### 2. Create the `project_versions` table
-
-Run this SQL in the Supabase SQL editor (`SQL Editor → New query`):
-
-```sql
-CREATE TABLE project_versions (
-  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID        NOT NULL,
-  design_md  TEXT        NOT NULL,
-  screens    JSONB       NOT NULL DEFAULT '[]',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Index for fast project lookups
-CREATE INDEX idx_project_versions_project_id
-  ON project_versions (project_id, created_at DESC);
-```
-
-### 3. Configure Row Level Security (optional but recommended)
-
-```sql
-ALTER TABLE project_versions ENABLE ROW LEVEL SECURITY;
-
--- Allow authenticated users to read/write their own project versions
--- Adjust this policy to match your authentication setup
-CREATE POLICY "Users can manage their project versions"
-  ON project_versions
-  FOR ALL
-  USING (true)  -- Replace with your auth condition, e.g.: auth.uid() = user_id
-  WITH CHECK (true);
-```
-
-### 4. Add environment variables
+### Option A: Local development (recommended for contributors)
 
 ```bash
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
+# Prerequisites: Docker Desktop + Supabase CLI
+npm install -g supabase
+
+# One-command setup — starts Supabase, applies all migrations, seeds demo data
+chmod +x scripts/setup-local-db.sh
+./scripts/setup-local-db.sh
+```
+
+This runs 3 migrations automatically:
+- `001_project_versions.sql` — Projects + design versions
+- `002_audit_evidence.sql` — Audit runs, checklist results, evidence, GitHub links, agent logs
+- `003_user_profiles_rbac.sql` — User profiles, project members, API keys, RLS
+
+Plus `seed.sql` with demo project data for development.
+
+### Option B: Hosted Supabase
+
+1. Create a project at [app.supabase.com](https://app.supabase.com)
+2. Note the **Project URL** and **Anon key** from `Settings > API`
+3. Apply migrations in order via `SQL Editor > New query`:
+   - `supabase/migrations/001_project_versions.sql`
+   - `supabase/migrations/002_audit_evidence.sql`
+   - `supabase/migrations/003_user_profiles_rbac.sql`
+4. Optionally run `supabase/seed.sql` for demo data
+
+### Environment variables
+
+```bash
+VITE_SUPABASE_URL=https://your-project-id.supabase.co  # or http://127.0.0.1:54321 for local
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+### Database schema overview
+
+| Table | Purpose |
+|---|---|
+| `projects` | User projects |
+| `project_versions` | Design.md version history |
+| `design_context_versions` | Figma/screenshot/URL design context snapshots |
+| `audit_runs` | Audit execution records |
+| `checklist_results` | Per-criterion results per audit |
+| `evidence_artifacts` | Screenshots, node refs, observed vs expected |
+| `github_issues` / `github_pull_requests` | Linked GitHub items |
+| `agent_runs` | AI agent execution log (cost, latency) |
+| `user_profiles` | Display name, avatar, global role |
+| `project_members` | Project-level RBAC |
+| `api_keys` | CI/CD integration keys |
+
 ### Notes
 
-- The client falls back to `localStorage` automatically if Supabase is unavailable or returns an error — no data loss occurs.
-- The `audit_memory` table (for cross-project learning sync) is an optional extension. Implement `MemoryPersistence.syncToRemote()` in `web/src/ux-checklist/memory.ts` with your Supabase client to enable it.
+- All tables use Row Level Security (RLS) — users only see their own data
+- The client falls back to `localStorage` if Supabase is unavailable
+- The `user_profiles` trigger auto-creates a profile on signup
 
 ---
 
