@@ -3,7 +3,7 @@
  *
  * Competitive Advantage vs Figma:
  *   Figma has plugins but NO design system sharing marketplace.
- *   Design-md-ai enables community-driven design system templates:
+ *   Desygn AI enables community-driven design system templates:
  *
  *   • Browse, search, and install pre-built design system templates
  *   • Export and publish your own design systems

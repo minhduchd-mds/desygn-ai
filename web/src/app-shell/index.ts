@@ -38,7 +38,7 @@ export interface AppShellConfig {
 
 export const APP_SHELL_CONFIG: AppShellConfig = {
   productName: "Desygn AI",
-  repositoryUrl: "https://github.com/minhduchd-mds/Design-md-ai",
+  repositoryUrl: "https://github.com/minhduchd-mds/desygn-ai",
   maxToasts: 5,
   toastDurationMs: 3500,
 };

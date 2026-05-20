@@ -53,8 +53,8 @@ Figma Plugin ──scan──▶ DesignAuditAgent ──▶ ScoreAgent ──▶
 ## Bắt đầu
 
 ```bash
-git clone https://github.com/minhduchd-mds/Design-md-ai.git
-cd Design-md-ai
+git clone https://github.com/minhduchd-mds/desygn-ai.git
+cd desygn-ai
 npm install
 npm run dev        # Plugin + UI dev mode
 npm run dev:web    # Web workspace

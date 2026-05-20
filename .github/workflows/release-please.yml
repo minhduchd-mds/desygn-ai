@@ -19,7 +19,7 @@ jobs:
         id: release
         with:
           release-type: node
-          package-name: design-md-ai
+          package-name: desygn-ai
           changelog-types: >
             [
               {"type":"feat","section":"Features","hidden":false},

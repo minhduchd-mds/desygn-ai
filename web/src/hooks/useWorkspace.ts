@@ -151,7 +151,7 @@ export function useWorkspace(
 
   // ── Project request / history ───────────────────────────────
   const defaultProject: ProjectRequest = {
-    projectName: "Design-md-ai Project",
+    projectName: "Desygn AI Project",
     category: "SaaS",
     style: "Modern product UI",
     openDesign: "desygnAI",

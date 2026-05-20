@@ -16,8 +16,8 @@ Click **"Code" > "Codespaces" > "Create codespace"** trên GitHub — tự cài 
 ### Option B: Local setup
 
 ```bash
-git clone https://github.com/minhduchd-mds/Design-md-ai.git
-cd Design-md-ai
+git clone https://github.com/minhduchd-mds/desygn-ai.git
+cd desygn-ai
 npm install
 npm run dev        # Watch mode (UI + plugin)
 npm run dev:web    # Web workspace dev server
@@ -26,8 +26,8 @@ npm run dev:web    # Web workspace dev server
 ### Option C: Full stack (with Supabase)
 
 ```bash
-git clone https://github.com/minhduchd-mds/Design-md-ai.git
-cd Design-md-ai
+git clone https://github.com/minhduchd-mds/desygn-ai.git
+cd desygn-ai
 npm install
 chmod +x scripts/setup-local-db.sh
 ./scripts/setup-local-db.sh    # Docker + Supabase + migrations + seed data
@@ -35,7 +35,7 @@ npm run dev:web
 ```
 
 ### First contribution?
-Browse issues tagged [`good-first-issue`](https://github.com/minhduchd-mds/Design-md-ai/labels/good-first-issue) or check `docs/good-first-issues/` for detailed specs.
+Browse issues tagged [`good-first-issue`](https://github.com/minhduchd-mds/desygn-ai/labels/good-first-issue) or check `docs/good-first-issues/` for detailed specs.
 
 ## Cấu trúc dự án
 

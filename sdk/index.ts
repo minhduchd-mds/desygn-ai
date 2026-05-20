@@ -28,8 +28,8 @@
  * });
  * ```
  *
- * @see {@link https://github.com/minhduchd-mds/Design-md-ai/blob/main/docs/API.md|API Reference}
- * @see {@link https://github.com/minhduchd-mds/Design-md-ai/blob/main/sdk/examples|Examples}
+ * @see {@link https://github.com/minhduchd-mds/desygn-ai/blob/main/docs/API.md|API Reference}
+ * @see {@link https://github.com/minhduchd-mds/desygn-ai/blob/main/sdk/examples|Examples}
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════

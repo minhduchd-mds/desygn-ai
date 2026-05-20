@@ -293,7 +293,7 @@ async function fetchWithTimeout(
       signal: controller.signal,
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; DesygnAI-Auditor/1.0; +https://github.com/minhduchd-mds/Design-md-ai)",
+          "Mozilla/5.0 (compatible; DesygnAI-Auditor/1.0; +https://github.com/minhduchd-mds/desygn-ai)",
         Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
       },

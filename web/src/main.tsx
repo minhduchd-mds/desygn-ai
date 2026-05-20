@@ -90,7 +90,7 @@ type TemplateCategoryFilter = "All" | DesignMdTemplateCategory;
 
 const DESIGN_MD_EDIT_PREFIX = "design-md-ai.design-md-edit.v1";
 const PRODUCT_NAME = "Desygn AI";
-const REPOSITORY_URL = "https://github.com/minhduchd-mds/Design-md-ai";
+const REPOSITORY_URL = "https://github.com/minhduchd-mds/desygn-ai";
 const CUSTOM_USAGE_TEXT = "Download DESIGN.md, then place it at ./DESIGN.md";
 const TEMPLATE_PRIORITY_FILTERS: TemplatePriorityFilter[] = ["All", "Product", "Technical"];
 const TEMPLATE_CATEGORY_FILTERS: TemplateCategoryFilter[] = [
@@ -106,7 +106,7 @@ const TEMPLATE_CATEGORY_FILTERS: TemplateCategoryFilter[] = [
 ];
 // Initial messages removed — chat starts empty like ChatGPT/Claude (welcome hero shown instead)
 const DEFAULT_PROJECT: ProjectRequest = {
-  projectName: "Design-md-ai Project",
+  projectName: "Desygn AI Project",
   category: "SaaS",
   style: "Modern product UI",
   openDesign: "desygnAI",
@@ -322,7 +322,7 @@ const HOW_IT_WORKS = [
 ];
 
 const CODE_LINES = [
-  "# Design-md-ai",
+  "# Desygn AI",
   "## Handoff Overview",
   "- Source: Figma components + tokens",
   "- Target: Codex / Claude Code / Cursor",
@@ -1921,7 +1921,7 @@ function App() {
                 </button>
                 {brandHelpOpen && (
                   <div className="brand-help-inline">
-                    <a href="https://github.com/minhduchd-mds/Design-md-ai" target="_blank" rel="noopener noreferrer" className="brand-menu-item">Tài liệu hướng dẫn</a>
+                    <a href="https://github.com/minhduchd-mds/desygn-ai" target="_blank" rel="noopener noreferrer" className="brand-menu-item">Tài liệu hướng dẫn</a>
                     <button type="button" className="brand-menu-item" onClick={() => { showToast("Keyboard shortcuts — coming soon", "info"); setBrandMenuOpen(false); }}>Lối tắt bàn phím</button>
                     <button type="button" className="brand-menu-item" onClick={() => { showToast("Terms of service", "info"); setBrandMenuOpen(false); }}>Điều khoản dịch vụ</button>
                     <button type="button" className="brand-menu-item" onClick={() => { showToast("Privacy policy", "info"); setBrandMenuOpen(false); }}>Chính sách quyền riêng tư</button>
@@ -2962,7 +2962,7 @@ function App() {
       <section id="top" className="landing-hero">
         <div className="landing-hero-copy">
           <span className="eyebrow">Figma to Design.md for AI agents</span>
-          <h1>Design-md-ai turns design systems into coding-agent context.</h1>
+          <h1>Desygn AI turns design systems into coding-agent context.</h1>
           <p>
             Generate Design.md files, token maps, component guidance, and implementation prompts from Figma or uploaded markdown before asking Codex, Claude Code, Cursor, Windsurf, or Figma Make to build.
           </p>
@@ -3175,7 +3175,7 @@ function App() {
           <div>
             <span>Design.md handoff router</span>
             <h2>One workspace for prompts, previews, tokens, and export-ready context.</h2>
-            <p>Design-md-ai keeps design-system information close to the prompt, so implementation agents receive grounded instructions instead of generic UI requests.</p>
+            <p>Desygn AI keeps design-system information close to the prompt, so implementation agents receive grounded instructions instead of generic UI requests.</p>
           </div>
           <div className="router-stats">
             {[

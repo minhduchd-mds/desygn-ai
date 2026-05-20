@@ -155,7 +155,7 @@ const { __mockRun: mockRun } = await import("../WorktreeRunner") as unknown as {
 - User must approve every patch via `FixApprovalUI` before merge
 
 ## Repository
-- **Origin:** github.com/minhduchd-mds/Design-md-ai
+- **Origin:** github.com/minhduchd-mds/desygn-ai
 
 ## IDE Configuration
 See `.vscode/launch.json` for development server configuration.

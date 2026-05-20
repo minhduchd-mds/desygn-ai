@@ -231,7 +231,7 @@ export function WorkspaceResult(props: WorkspaceResultProps) {
                     <code>{usageCommand}</code>
                   </div>
                   <a className="repository-link" href={repositoryUrl} target="_blank" rel="noreferrer">
-                    GitHub: minhduchd-mds/Design-md-ai
+                    GitHub: minhduchd-mds/desygn-ai
                   </a>
                   <p className="preview-disclaimer">
                     This preview is generated from Design.md context and is not affiliated with the referenced brand.

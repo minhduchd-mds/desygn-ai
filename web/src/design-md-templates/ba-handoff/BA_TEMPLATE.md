@@ -1,4 +1,4 @@
-# BA Handoff Guide - Design-md-ai Output
+# BA Handoff Guide - Desygn AI Output
 
 ## What is DESIGN.md?
 

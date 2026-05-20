@@ -67,7 +67,7 @@ describe("APP_SHELL_CONFIG", () => {
   });
 
   it("has correct repository URL", () => {
-    expect(APP_SHELL_CONFIG.repositoryUrl).toContain("Design-md-ai");
+    expect(APP_SHELL_CONFIG.repositoryUrl).toContain("desygn-ai");
   });
 
   it("has reasonable toast duration", () => {

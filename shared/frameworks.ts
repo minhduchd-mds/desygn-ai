@@ -3,7 +3,7 @@
  *
  * Competitive Advantage vs Figma:
  *   Figma will likely ship React-first code gen.
- *   Design-md-ai supports ALL major frameworks from Day 1:
+ *   Desygn AI supports ALL major frameworks from Day 1:
  *   React, Vue, Svelte, Web Components, Flutter, React Native.
  *
  * Architecture:

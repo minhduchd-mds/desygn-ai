@@ -1,6 +1,6 @@
 # Third-Party Licenses (SBOM)
 
-This document lists the production dependencies of **design-md-ai** and their respective licenses.
+This document lists the production dependencies of **Desygn AI** and their respective licenses.
 
 Generated from `package.json` `dependencies` (12 packages).  
 To regenerate: `sh scripts/generate-sbom.sh`

@@ -20,4 +20,4 @@ npm run lint      # ESLint 9
 - New serializer field: types.ts → serializer.ts → prompt-compact.ts.
 
 ## Repo
-- **Origin:** github.com/minhduchd-mds/Design-md-ai
+- **Origin:** github.com/minhduchd-mds/desygn-ai

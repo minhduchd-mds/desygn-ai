@@ -4,15 +4,15 @@
 
 > AI-Powered Design Intelligence Platform — tự động audit UI/UX, sinh code từ design, và học hỏi từ mỗi dự án.
 
-[![CI](https://github.com/minhduchd-mds/Design-md-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/minhduchd-mds/Design-md-ai/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/design-md-ai.svg)](https://www.npmjs.com/package/design-md-ai)
+[![CI](https://github.com/minhduchd-mds/desygn-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/minhduchd-mds/desygn-ai/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/desygn-ai.svg)](https://www.npmjs.com/package/desygn-ai)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-1529%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1653%20passed-brightgreen.svg)]()
 [![Vercel](https://img.shields.io/badge/deploy-Vercel-black.svg)](https://design-md-ai-yd6r.vercel.app/)
 [![v6 Agent Fleet](https://img.shields.io/badge/architecture-v6%20Agent%20Fleet-blueviolet.svg)]()
-[![Discussions](https://img.shields.io/github/discussions/minhduchd-mds/Design-md-ai)](https://github.com/minhduchd-mds/Design-md-ai/discussions)
-[![Storybook](https://img.shields.io/badge/Storybook-View-FF4785?logo=storybook&logoColor=white)](https://minhduchd-mds.github.io/Design-md-ai/)
+[![Discussions](https://img.shields.io/github/discussions/minhduchd-mds/desygn-ai)](https://github.com/minhduchd-mds/desygn-ai/discussions)
+[![Storybook](https://img.shields.io/badge/Storybook-View-FF4785?logo=storybook&logoColor=white)](https://minhduchd-mds.github.io/desygn-ai/)
 
 ---
 
@@ -200,7 +200,7 @@ User/Cron → HumanCommandAgent → SelfDiagnosticAgent → OrchestratorAgent
 ## Cấu trúc dự án
 
 ```
-Design-md-ai/
+desygn-ai/
 ├── api/                              # Vercel serverless functions
 │   ├── chat.ts                       #   Groq AI chat endpoint
 │   ├── generate-html.ts              #   HTML generation
@@ -371,8 +371,8 @@ Design-md-ai/
 ### Cài đặt
 
 ```bash
-git clone https://github.com/minhduchd-mds/Design-md-ai.git
-cd Design-md-ai
+git clone https://github.com/minhduchd-mds/desygn-ai.git
+cd desygn-ai
 npm ci
 ```
 

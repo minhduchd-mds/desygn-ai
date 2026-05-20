@@ -3,7 +3,7 @@
 ## Overview
 BA Agent Workflow is a business-analysis automation workspace that turns scattered product context into structured requirements, workflow scenarios, acceptance criteria, and UI screen plans. The agent does not wait for a complete manual prompt. It collects sources, builds project memory, proposes requirement gaps, and generates reviewed Markdown artifacts for implementation agents.
 
-The product direction combines Arkon-style scoped knowledge management, Archon-style deterministic workflow execution, and Design-md-ai style Figma/design handoff. The BA skill focuses on producing clear `.md` documents that replace ad hoc BA descriptions with reusable, inspectable, versioned requirement files.
+The product direction combines Arkon-style scoped knowledge management, Archon-style deterministic workflow execution, and Desygn AI style Figma/design handoff. The BA skill focuses on producing clear `.md` documents that replace ad hoc BA descriptions with reusable, inspectable, versioned requirement files.
 
 ## Key Characteristics
 - Agent-first BA workflow: discover, classify, ask missing questions, draft, review, revise, and export.
@@ -120,7 +120,7 @@ The product direction combines Arkon-style scoped knowledge management, Archon-s
 - Markdown diff preview uses collapsible sections.
 
 ## Component Usage Map
-### Existing Design-md-ai Components
+### Existing Desygn AI Components
 - `ScoreOverview`: show BA readiness, requirement coverage, acceptance coverage, source confidence, review completion, and export readiness.
 - `PromptExport`: export compact BA handoff prompt for Codex, Claude Code, Cursor, Windsurf, and Figma Make.
 - `BatchPanel`: represent multi-screen or multi-requirement scan results and let users jump to a generated screen.

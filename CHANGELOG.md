@@ -237,15 +237,15 @@ Phiên bản công khai đầu tiên.
 - Responsive viewport detection từ sibling frames
 - Prompt injection protection qua sanitisation
 
-[Unreleased]: https://github.com/minhduchd-mds/Design-md-ai/compare/v5.1.0...HEAD
-[5.1.0]: https://github.com/minhduchd-mds/Design-md-ai/compare/v5.0.1...v5.1.0
-[5.0.1]: https://github.com/minhduchd-mds/Design-md-ai/compare/v5.0.0...v5.0.1
-[5.0.0]: https://github.com/minhduchd-mds/Design-md-ai/compare/v2.0.0...v5.0.0
-[2.0.0]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.5...v2.0.0
-[1.1.5]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.4...v1.1.5
-[1.1.4]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.3...v1.1.4
-[1.1.3]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.2...v1.1.3
-[1.1.2]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.1...v1.1.2
-[1.1.1]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/minhduchd-mds/Design-md-ai/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/minhduchd-mds/Design-md-ai/releases/tag/v1.0.0
+[Unreleased]: https://github.com/minhduchd-mds/desygn-ai/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/minhduchd-mds/desygn-ai/compare/v5.0.1...v5.1.0
+[5.0.1]: https://github.com/minhduchd-mds/desygn-ai/compare/v5.0.0...v5.0.1
+[5.0.0]: https://github.com/minhduchd-mds/desygn-ai/compare/v2.0.0...v5.0.0
+[2.0.0]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.5...v2.0.0
+[1.1.5]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.2...v1.1.3
+[1.1.2]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/minhduchd-mds/desygn-ai/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/minhduchd-mds/desygn-ai/releases/tag/v1.0.0

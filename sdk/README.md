@@ -1,6 +1,6 @@
 # @desygn/sdk
 
-Public SDK for building plugins and integrations on top of [Desygn AI](https://github.com/minhduchd-mds/Design-md-ai).
+Public SDK for building plugins and integrations on top of [Desygn AI](https://github.com/minhduchd-mds/desygn-ai).
 
 > Status: **Experimental (v0.1.0)** — API is not yet stable. Pin exact versions.
 

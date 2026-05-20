@@ -3,7 +3,7 @@
  *
  * Competitive Advantage vs Figma:
  *   Figma: Design → Export → Manual copy → Create PR manually
- *   Design-md-ai: Design → Auto-sync → Auto-PR → CI passes → Merge
+ *   Desygn AI: Design → Auto-sync → Auto-PR → CI passes → Merge
  *
  * Features:
  *   • .desygnrc.yml configuration format
@@ -185,7 +185,7 @@ const DESIGN_PR_BODY_TEMPLATE = `## Design Sync
 - [ ] Accessibility requirements met
 
 ---
-Synced by [Desygn AI](https://github.com/minhduchd-mds/Design-md-ai) | \${timestamp}`;
+Synced by [Desygn AI](https://github.com/minhduchd-mds/desygn-ai) | \${timestamp}`;
 
 // ── Default Configuration ─────────────────────────────────────
 
@@ -292,7 +292,7 @@ export function generateCommitMessage(
 export function serializeConfig(config: GitSyncConfig): string {
   return [
     `# Desygn AI Git Sync Configuration`,
-    `# Docs: https://github.com/minhduchd-mds/Design-md-ai/blob/main/docs/DEV_GUIDE.md`,
+    `# Docs: https://github.com/minhduchd-mds/desygn-ai/blob/main/docs/DEV_GUIDE.md`,
     ``,
     `version: ${config.version}`,
     ``,

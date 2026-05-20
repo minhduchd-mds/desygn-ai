@@ -1,16 +1,16 @@
 {
-  "name": "design-md-ai",
+  "name": "desygn-ai",
   "version": "5.1.1",
-  "description": "Figma to Design.md handoff workspace for AI coding agents.",
+  "description": "Desygn AI — Figma to Design.md handoff workspace for AI coding agents.",
   "author": "Minh Đức <ducdmd00410@fpt.edu.vn>",
   "license": "MIT",
-  "homepage": "https://github.com/minhduchd-mds/Design-md-ai",
+  "homepage": "https://github.com/minhduchd-mds/desygn-ai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/minhduchd-mds/Design-md-ai.git"
+    "url": "https://github.com/minhduchd-mds/desygn-ai.git"
   },
   "bugs": {
-    "url": "https://github.com/minhduchd-mds/Design-md-ai/issues"
+    "url": "https://github.com/minhduchd-mds/desygn-ai/issues"
   },
   "keywords": [
     "figma",

@@ -523,7 +523,7 @@ jobs:
             driver: {
               name: "Agentic UX Auditor",
               version: "4.0.0",
-              informationUri: "https://github.com/minhduchd-mds/Design-md-ai",
+              informationUri: "https://github.com/minhduchd-mds/desygn-ai",
               rules: [
                 {
                   id: "ux-gate/critical",
@@ -812,7 +812,7 @@ export function generateSARIF(
           driver: {
             name: "Agentic UX Auditor",
             version: "4.0.0",
-            informationUri: "https://github.com/minhduchd-mds/Design-md-ai",
+            informationUri: "https://github.com/minhduchd-mds/desygn-ai",
             rules,
           },
         },

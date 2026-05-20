@@ -56,8 +56,8 @@ This guide covers running Desygn AI on your own infrastructure.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/minhduchd-mds/Design-md-ai.git
-cd Design-md-ai
+git clone https://github.com/minhduchd-mds/desygn-ai.git
+cd desygn-ai
 ```
 
 ### 2. Create environment file
@@ -419,7 +419,7 @@ server {
 
     # Static files — serve from build output
     location / {
-        root  /path/to/Design-md-ai/public;
+        root  /path/to/desygn-ai/public;
         index index.html;
         try_files $uri $uri/ /index.html;  # SPA fallback
 
