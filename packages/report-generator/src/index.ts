@@ -7,11 +7,12 @@
  *   - CSV (spreadsheet export)
  *   - PDF (Pro+ only, HMAC-signed for compliance verification)
  *
- * Note: PDF generation is stubbed in this scaffold and will use
- * `@react-pdf/renderer` once the package is wired in Week 8.
+ * PDF generation uses `@react-pdf/renderer` and supports HMAC-signed
+ * output for compliance verification.
  */
 
 export { generateMarkdown } from "./markdown.js";
 export { generateSarif } from "./sarif.js";
 export { generateCsv } from "./csv.js";
 export { signReport, verifyReport, type ReportSignature } from "./signer.js";
+export { generatePdfReport, generateSignedPdfReport, type PdfOptions } from "./pdf.js";

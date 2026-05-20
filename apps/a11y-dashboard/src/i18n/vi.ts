@@ -66,4 +66,45 @@ export const vi: Dictionary = {
   "settings.title": "Cài đặt",
   "settings.body": "Quản lý tùy chọn không gian làm việc của bạn.",
   "settings.languageHeading": "Ngôn ngữ",
+
+  // Tính năng kiểm tra — đồng hồ điểm
+  "audit.gauge.label": "Điểm khả năng truy cập: {score} trên 100",
+
+  // Tính năng kiểm tra — mức độ nghiêm trọng
+  "audit.severity.critical": "Nghiêm trọng",
+  "audit.severity.serious": "Nặng",
+  "audit.severity.moderate": "Trung bình",
+  "audit.severity.minor": "Nhẹ",
+
+  // Tính năng kiểm tra — danh sách vấn đề
+  "audit.issues.heading": "Vấn đề",
+  "audit.issues.empty": "Không tìm thấy vấn đề nào. Tuyệt vời!",
+  "audit.issues.wcag": "Tiêu chí WCAG",
+  "audit.issues.node": "Đối tượng",
+
+  // Tính năng kiểm tra — biểu mẫu bắt đầu
+  "audit.form.title": "Kiểm tra mới",
+  "audit.form.urlLabel": "Liên kết tệp Figma",
+  "audit.form.urlPlaceholder": "https://www.figma.com/design/…",
+  "audit.form.tokenLabel": "Mã truy cập Figma",
+  "audit.form.tokenPlaceholder": "figd_…",
+  "audit.form.versionLabel": "Phiên bản WCAG",
+  "audit.form.levelLabel": "Mức WCAG",
+  "audit.form.submit": "Bắt đầu kiểm tra",
+  "audit.form.submitting": "Đang kiểm tra…",
+  "audit.form.invalidUrl": "Hãy nhập một liên kết tệp Figma hợp lệ.",
+  "audit.form.requestFailed":
+    "Không thể bắt đầu kiểm tra. Vui lòng kiểm tra kết nối rồi thử lại.",
+  "audit.form.successHeading": "Hoàn tất kiểm tra",
+  "audit.form.scoreLabel": "Điểm",
+  "audit.form.issuesLabel": "Tổng số vấn đề",
+
+  // Tính năng kiểm tra — danh sách/bảng
+  "audit.list.heading": "Các lần kiểm tra gần đây",
+  "audit.list.colScore": "Điểm",
+  "audit.list.colSource": "Nguồn",
+  "audit.list.colIssues": "Vấn đề",
+  "audit.list.colDate": "Ngày",
+  "audit.list.empty": "Chưa có lần kiểm tra nào.",
+  "audit.list.emptyHint": "Bắt đầu lần kiểm tra đầu tiên để thấy kết quả ở đây.",
 };

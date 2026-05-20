@@ -64,4 +64,45 @@ export const en: Dictionary = {
   "settings.title": "Settings",
   "settings.body": "Manage your workspace preferences.",
   "settings.languageHeading": "Language",
+
+  // Audit feature — score gauge
+  "audit.gauge.label": "Accessibility score: {score} out of 100",
+
+  // Audit feature — severity labels
+  "audit.severity.critical": "Critical",
+  "audit.severity.serious": "Serious",
+  "audit.severity.moderate": "Moderate",
+  "audit.severity.minor": "Minor",
+
+  // Audit feature — issue list
+  "audit.issues.heading": "Issues",
+  "audit.issues.empty": "No issues found. Nice work!",
+  "audit.issues.wcag": "WCAG criterion",
+  "audit.issues.node": "Node",
+
+  // Audit feature — start form
+  "audit.form.title": "New audit",
+  "audit.form.urlLabel": "Figma file URL",
+  "audit.form.urlPlaceholder": "https://www.figma.com/design/…",
+  "audit.form.tokenLabel": "Figma access token",
+  "audit.form.tokenPlaceholder": "figd_…",
+  "audit.form.versionLabel": "WCAG version",
+  "audit.form.levelLabel": "WCAG level",
+  "audit.form.submit": "Start audit",
+  "audit.form.submitting": "Auditing…",
+  "audit.form.invalidUrl": "Please enter a valid Figma file URL.",
+  "audit.form.requestFailed":
+    "Could not start the audit. Check your connection and try again.",
+  "audit.form.successHeading": "Audit complete",
+  "audit.form.scoreLabel": "Score",
+  "audit.form.issuesLabel": "Total issues",
+
+  // Audit feature — list/table
+  "audit.list.heading": "Recent audits",
+  "audit.list.colScore": "Score",
+  "audit.list.colSource": "Source",
+  "audit.list.colIssues": "Issues",
+  "audit.list.colDate": "Date",
+  "audit.list.empty": "No audits yet.",
+  "audit.list.emptyHint": "Start your first audit to see results here.",
 };

@@ -1,0 +1,51 @@
+/* AuditScoreGauge — circular SVG score dial. */
+
+.gauge {
+  display: inline-grid;
+  place-items: center;
+  position: relative;
+}
+
+.svg {
+  /* Start the arc at 12 o'clock and sweep clockwise. */
+  transform: rotate(-90deg);
+}
+
+.track {
+  stroke: var(--color-slate-200, #e2e8f0);
+}
+
+.value {
+  transition: stroke-dashoffset 600ms ease;
+}
+
+.value--good {
+  stroke: var(--color-success);
+}
+
+.value--warn {
+  stroke: var(--color-warning);
+}
+
+.value--bad {
+  stroke: var(--color-error);
+}
+
+.label {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.score {
+  font-size: var(--font-size-xl, 1.5rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-slate-900, #0f172a);
+}
+
+.unit {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-slate-500, #64748b);
+}

@@ -19,6 +19,7 @@ import { getComponentsInput, handleGetComponents } from "./tools/getComponents.j
 import { handleGetDesignSummary } from "./tools/getDesignSummary.js";
 import { matchComponentInput, handleMatchComponent } from "./tools/matchComponent.js";
 import { loadSnapshotInput, handleLoadSnapshot } from "./tools/loadSnapshot.js";
+import { auditFigmaInput, handleAuditFigmaForA11y } from "./tools/auditFigmaForA11y.js";
 
 import {
   GET_DESIGN_TOKENS_SCHEMA,
@@ -35,6 +36,9 @@ import {
 import {
   LOAD_SNAPSHOT_SCHEMA,
 } from "./tools/loadSnapshot.js";
+import {
+  AUDIT_FIGMA_SCHEMA,
+} from "./tools/auditFigmaForA11y.js";
 
 // ─── Parse CLI args ──────────────────────────────────────────────────
 function parseArgs(argv: string[]): { snapshotPath?: string } {
@@ -104,6 +108,13 @@ async function main() {
     LOAD_SNAPSHOT_SCHEMA.description,
     loadSnapshotInput.shape,
     async (args) => handleLoadSnapshot(args),
+  );
+
+  server.tool(
+    AUDIT_FIGMA_SCHEMA.name,
+    AUDIT_FIGMA_SCHEMA.description,
+    auditFigmaInput.shape,
+    async (args) => handleAuditFigmaForA11y(args),
   );
 
   // ─── Start stdio transport ───────────────────────────────────────

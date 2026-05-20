@@ -1,0 +1,48 @@
+/* IssueList — vertical list of audit issues. */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-slate-200, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.message {
+  margin: 0;
+  color: var(--color-slate-900, #0f172a);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-slate-600, #475569);
+}
+
+.metaTerm {
+  font-weight: 600;
+  color: var(--color-slate-500, #64748b);
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-slate-600, #475569);
+}

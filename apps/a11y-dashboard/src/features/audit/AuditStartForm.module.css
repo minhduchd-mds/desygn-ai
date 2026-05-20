@@ -1,0 +1,60 @@
+/* AuditStartForm — stacked form fields + result panel. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.row > .field {
+  flex: 1 1 12rem;
+}
+
+.label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-slate-700, #334155);
+}
+
+.pending {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-slate-600, #475569);
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.resultMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.resultHeading {
+  margin: 0;
+  font-size: var(--font-size-md, 1rem);
+}
+
+.resultStat {
+  margin: 0;
+  color: var(--color-slate-600, #475569);
+  font-size: var(--font-size-sm, 0.875rem);
+}

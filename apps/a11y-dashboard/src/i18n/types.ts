@@ -65,7 +65,42 @@ export type TranslationKey =
   // Settings page (placeholder)
   | "settings.title"
   | "settings.body"
-  | "settings.languageHeading";
+  | "settings.languageHeading"
+  // Audit feature — score gauge
+  | "audit.gauge.label"
+  // Audit feature — severity labels
+  | "audit.severity.critical"
+  | "audit.severity.serious"
+  | "audit.severity.moderate"
+  | "audit.severity.minor"
+  // Audit feature — issue list
+  | "audit.issues.heading"
+  | "audit.issues.empty"
+  | "audit.issues.wcag"
+  | "audit.issues.node"
+  // Audit feature — start form
+  | "audit.form.title"
+  | "audit.form.urlLabel"
+  | "audit.form.urlPlaceholder"
+  | "audit.form.tokenLabel"
+  | "audit.form.tokenPlaceholder"
+  | "audit.form.versionLabel"
+  | "audit.form.levelLabel"
+  | "audit.form.submit"
+  | "audit.form.submitting"
+  | "audit.form.invalidUrl"
+  | "audit.form.requestFailed"
+  | "audit.form.successHeading"
+  | "audit.form.scoreLabel"
+  | "audit.form.issuesLabel"
+  // Audit feature — list/table
+  | "audit.list.heading"
+  | "audit.list.colScore"
+  | "audit.list.colSource"
+  | "audit.list.colIssues"
+  | "audit.list.colDate"
+  | "audit.list.empty"
+  | "audit.list.emptyHint";
 
 /** A complete dictionary: one string per translation key. */
 export type Dictionary = Record<TranslationKey, string>;
