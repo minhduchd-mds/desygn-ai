@@ -152,13 +152,121 @@
 }
 
 /* ─── Reduced motion ──────────────────────────────────────────── */
+/* ─── Checkbox ────────────────────────────────────────────────── */
+.dsg-checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dsg-checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-primary-600);
+  cursor: pointer;
+}
+
+.dsg-checkbox:focus-visible {
+  outline: 2px solid var(--surface-ring);
+  outline-offset: 2px;
+}
+
+.dsg-checkbox__label {
+  font-size: 1rem;
+  color: var(--surface-fg);
+  cursor: pointer;
+}
+
+/* ─── Switch ──────────────────────────────────────────────────── */
+.dsg-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  position: relative;
+}
+
+/* The native checkbox sits on top of the track, invisible but focusable. */
+.dsg-switch__input {
+  position: absolute;
+  inset: 0;
+  width: 2.5rem;
+  height: 1.5rem;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dsg-switch__track {
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-slate-300);
+  transition: background-color var(--motion-base) var(--easing-default);
+}
+
+.dsg-switch__thumb {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.1875rem;
+  border-radius: var(--radius-full);
+  background: #fff;
+  transition: transform var(--motion-base) var(--easing-default);
+}
+
+.dsg-switch--on .dsg-switch__track {
+  background: var(--color-primary-600);
+}
+
+.dsg-switch--on .dsg-switch__thumb {
+  transform: translateX(1rem);
+}
+
+.dsg-switch__input:focus-visible + .dsg-switch__track {
+  outline: 2px solid var(--surface-ring);
+  outline-offset: 2px;
+}
+
+.dsg-switch__label {
+  font-size: 1rem;
+  color: var(--surface-fg);
+  cursor: pointer;
+}
+
+/* ─── Avatar ──────────────────────────────────────────────────── */
+.dsg-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-600);
+  color: #fff;
+  font-weight: 600;
+  overflow: hidden;
+  user-select: none;
+}
+
+.dsg-avatar--sm { width: 2rem; height: 2rem; font-size: 0.75rem; }
+.dsg-avatar--md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+.dsg-avatar--lg { width: 3.5rem; height: 3.5rem; font-size: 1.25rem; }
+
+.dsg-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .dsg-btn__spinner,
   .dsg-spinner {
     animation-duration: 1.5s;
   }
   .dsg-btn,
-  .dsg-input {
+  .dsg-input,
+  .dsg-switch__track,
+  .dsg-switch__thumb {
     transition: none;
   }
 }

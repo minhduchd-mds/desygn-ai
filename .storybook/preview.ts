@@ -1,5 +1,7 @@
 import type { Preview } from '@storybook/react-vite';
 import '../ui/styles/global.scss';
+import '../packages/ui/src/tokens/tokens.css';
+import '../packages/ui/src/primitives/primitives.css';
 
 const preview: Preview = {
   parameters: {

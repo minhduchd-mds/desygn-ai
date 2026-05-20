@@ -12,6 +12,10 @@ import {
   cardClass,
   badgeClass,
   spinnerClass,
+  checkboxClass,
+  switchClass,
+  avatarClass,
+  initials,
   severityToTone,
 } from "../primitives/variants.js";
 
@@ -66,6 +70,49 @@ describe("badgeClass", () => {
 describe("spinnerClass", () => {
   it("defaults to md", () => {
     expect(spinnerClass()).toBe("dsg-spinner dsg-spinner--md");
+  });
+});
+
+describe("checkboxClass", () => {
+  it("returns base class", () => {
+    expect(checkboxClass()).toBe("dsg-checkbox");
+  });
+  it("appends extra", () => {
+    expect(checkboxClass("mt-2")).toBe("dsg-checkbox mt-2");
+  });
+});
+
+describe("switchClass", () => {
+  it("is off by default", () => {
+    expect(switchClass()).toBe("dsg-switch");
+  });
+  it("adds --on modifier when checked", () => {
+    expect(switchClass(true)).toBe("dsg-switch dsg-switch--on");
+  });
+});
+
+describe("avatarClass", () => {
+  it("defaults to md", () => {
+    expect(avatarClass()).toBe("dsg-avatar dsg-avatar--md");
+  });
+  it("applies size", () => {
+    expect(avatarClass("lg")).toBe("dsg-avatar dsg-avatar--lg");
+  });
+});
+
+describe("initials", () => {
+  it("takes first + last initial for multi-word names", () => {
+    expect(initials("Minh Duc")).toBe("MD");
+    expect(initials("Ada Lovelace Byron")).toBe("AB");
+  });
+  it("takes first two letters of a single word", () => {
+    expect(initials("Sarah")).toBe("SA");
+  });
+  it("handles extra whitespace", () => {
+    expect(initials("  Alex   Kim  ")).toBe("AK");
+  });
+  it("falls back to ? for empty input", () => {
+    expect(initials("   ")).toBe("?");
   });
 });
 

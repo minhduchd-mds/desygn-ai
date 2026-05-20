@@ -1,5 +1,6 @@
-/* Import design tokens from @desygn/ui */
+/* Import design tokens + primitive styles from @desygn/ui */
 @import "@desygn/ui/tokens.css";
+@import "@desygn/ui/primitives.css";
 
 * {
   box-sizing: border-box;
