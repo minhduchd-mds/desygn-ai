@@ -1,0 +1,29 @@
+{
+  "name": "@desygn/marketing",
+  "version": "0.1.0",
+  "description": "Desygn A11y marketing landing page (desygn.ai or a11y.desygn.ai/).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 5181",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 5181",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@desygn/ui": "0.1.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.8.3",
+    "vite": "8.0.13"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

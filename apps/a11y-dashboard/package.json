@@ -1,0 +1,30 @@
+{
+  "name": "@desygn/a11y-dashboard",
+  "version": "0.1.0",
+  "description": "Desygn A11y dashboard SaaS (mounts at a11y.desygn.ai).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 5180",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 5180",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@desygn/audit-engine": "0.1.0",
+    "@desygn/ui": "0.1.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.8.3",
+    "vite": "8.0.13"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

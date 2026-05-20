@@ -1,0 +1,92 @@
+/**
+ * tokens.css — Design tokens as CSS custom properties.
+ *
+ * Light theme is default. Dark theme via [data-theme="dark"] selector.
+ * All color values use OKLCH for perceptual uniformity.
+ *
+ * Per 05-web-template-redesign.md Section 2.
+ */
+
+:root {
+  /* ─── Color: Primary (violet) ─────────────────────────────────── */
+  --color-primary-50: oklch(0.97 0.02 295);
+  --color-primary-100: oklch(0.94 0.04 295);
+  --color-primary-200: oklch(0.87 0.08 295);
+  --color-primary-300: oklch(0.78 0.13 295);
+  --color-primary-400: oklch(0.68 0.18 295);
+  --color-primary-500: oklch(0.58 0.22 295);
+  --color-primary-600: oklch(0.49 0.22 295);
+  --color-primary-700: oklch(0.41 0.20 295);
+  --color-primary-800: oklch(0.34 0.17 295);
+  --color-primary-900: oklch(0.28 0.13 295);
+
+  /* ─── Color: Slate (neutral) ──────────────────────────────────── */
+  --color-slate-50: oklch(0.98 0.005 250);
+  --color-slate-100: oklch(0.95 0.008 250);
+  --color-slate-200: oklch(0.90 0.012 250);
+  --color-slate-300: oklch(0.82 0.018 250);
+  --color-slate-400: oklch(0.71 0.025 250);
+  --color-slate-500: oklch(0.59 0.030 250);
+  --color-slate-600: oklch(0.48 0.030 250);
+  --color-slate-700: oklch(0.39 0.028 250);
+  --color-slate-800: oklch(0.30 0.025 250);
+  --color-slate-900: oklch(0.22 0.020 250);
+  --color-slate-950: oklch(0.16 0.015 250);
+
+  /* ─── Color: Semantic ─────────────────────────────────────────── */
+  --color-success: oklch(0.65 0.18 145);
+  --color-warning: oklch(0.75 0.16 80);
+  --color-error: oklch(0.62 0.22 28);
+  --color-info: oklch(0.65 0.16 230);
+
+  /* ─── Surface (theme-aware aliases) ───────────────────────────── */
+  --surface-bg: var(--color-slate-50);
+  --surface-fg: var(--color-slate-900);
+  --surface-muted: var(--color-slate-100);
+  --surface-border: var(--color-slate-200);
+  --surface-ring: var(--color-primary-500);
+
+  /* ─── Radius ──────────────────────────────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ─── Spacing scale (4px base) ────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ─── Motion ──────────────────────────────────────────────────── */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 300ms;
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ─── Dark theme override ─────────────────────────────────────── */
+[data-theme="dark"] {
+  --surface-bg: var(--color-slate-950);
+  --surface-fg: var(--color-slate-50);
+  --surface-muted: var(--color-slate-900);
+  --surface-border: var(--color-slate-800);
+  --surface-ring: var(--color-primary-400);
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}

@@ -37,7 +37,13 @@
   "workspaces": [
     "shared",
     "sdk",
-    "packages/mcp-server"
+    "packages/mcp-server",
+    "packages/audit-engine",
+    "packages/report-generator",
+    "packages/figma-rest-adapter",
+    "packages/ui",
+    "apps/a11y-dashboard",
+    "apps/marketing"
   ],
   "scripts": {
     "dev": "concurrently -n ui,plugin -c blue,yellow \"npm run dev:ui\" \"npm run dev:plugin\"",
