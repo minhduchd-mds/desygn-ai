@@ -121,17 +121,17 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.75",
+    "@ai-sdk/google": "^3.0.77",
     "@ai-sdk/groq": "^3.0.39",
     "@supabase/supabase-js": "^2.105.4",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
-    "ai": "^6.0.184",
-    "dompurify": "^3.4.4",
+    "ai": "^6.0.187",
+    "dompurify": "^3.4.5",
     "highlight.js": "^11.11.1",
     "jose": "^5.10.0",
     "jszip": "^3.10.1",
-    "marked": "^18.0.3",
+    "marked": "^18.0.4",
     "marked-highlight": "^2.2.4",
     "openai": "^6.38.0",
     "zod": "^4.4.3"
