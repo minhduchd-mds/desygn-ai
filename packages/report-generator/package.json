@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@desygn/figma-rest-adapter": "0.1.0",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.15",
     "typescript": "^5.8.3"
   },
   "engines": {
