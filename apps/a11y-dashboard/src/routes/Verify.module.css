@@ -1,0 +1,95 @@
+/* Verify — public report-verification page.
+ *
+ * Centred single-column layout matching the auth screens (Auth.module.css)
+ * so the public-facing pages share a visual rhythm.
+ */
+
+.wrap {
+  display: flex;
+  min-height: 100vh;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.panel {
+  width: 100%;
+  max-width: 640px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.heading {
+  margin: 0;
+}
+
+.intro {
+  margin: 0 0 var(--space-6);
+  color: var(--color-slate-600, #475569);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-weight: 600;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-slate-500, #64748b);
+}
+
+.textarea {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: var(--font-size-sm, 0.875rem);
+  min-height: 6rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid var(--color-slate-300, #cbd5e1);
+  background: var(--surface-bg, #fff);
+  color: var(--surface-fg, #0f172a);
+  resize: vertical;
+}
+
+.textarea:focus-visible {
+  outline: 2px solid var(--color-indigo-500, #6366f1);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-red-600, #dc2626);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.result {
+  margin-top: var(--space-6);
+}
+
+.resultHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md, 1rem);
+}
+
+.resultBody {
+  margin: 0;
+  color: var(--color-slate-700, #334155);
+}

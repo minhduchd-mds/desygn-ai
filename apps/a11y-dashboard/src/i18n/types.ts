@@ -100,7 +100,36 @@ export type TranslationKey =
   | "audit.list.colIssues"
   | "audit.list.colDate"
   | "audit.list.empty"
-  | "audit.list.emptyHint";
+  | "audit.list.emptyHint"
+  // Report export menu
+  | "report.export.label"
+  | "report.export.formatLabel"
+  | "report.export.download"
+  | "report.export.downloading"
+  | "report.export.pdf"
+  | "report.export.sarif"
+  | "report.export.csv"
+  | "report.export.markdown"
+  | "report.export.failed"
+  // Verify page
+  | "verify.title"
+  | "verify.intro"
+  | "verify.fileLabel"
+  | "verify.fileHint"
+  | "verify.signatureLabel"
+  | "verify.signaturePlaceholder"
+  | "verify.metadataLabel"
+  | "verify.metadataPlaceholder"
+  | "verify.submit"
+  | "verify.submitting"
+  | "verify.invalidMetadata"
+  | "verify.missingFile"
+  | "verify.missingSignature"
+  | "verify.requestFailed"
+  | "verify.resultValidTitle"
+  | "verify.resultValidBody"
+  | "verify.resultInvalidTitle"
+  | "verify.resultInvalidBody";
 
 /** A complete dictionary: one string per translation key. */
 export type Dictionary = Record<TranslationKey, string>;

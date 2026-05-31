@@ -13,6 +13,7 @@ export default defineConfig({
       "sdk/**/__tests__/**/*.test.ts",
       "packages/**/__tests__/**/*.test.ts",
       "apps/**/__tests__/**/*.test.ts",
+      "inngest/**/__tests__/**/*.test.ts",
     ],
     // Playwright e2e specs (*.spec.ts under e2e/) are NOT run by vitest.
     exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],

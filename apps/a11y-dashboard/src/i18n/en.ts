@@ -105,4 +105,38 @@ export const en: Dictionary = {
   "audit.list.colDate": "Date",
   "audit.list.empty": "No audits yet.",
   "audit.list.emptyHint": "Start your first audit to see results here.",
+
+  // Report export menu
+  "report.export.label": "Export report",
+  "report.export.formatLabel": "Format",
+  "report.export.download": "Download",
+  "report.export.downloading": "Downloading…",
+  "report.export.pdf": "PDF",
+  "report.export.sarif": "SARIF",
+  "report.export.csv": "CSV",
+  "report.export.markdown": "Markdown",
+  "report.export.failed": "Could not download the report. Please try again.",
+
+  // Verify PDF page
+  "verify.title": "Verify PDF report",
+  "verify.intro":
+    "Upload your report PDF along with its signature and metadata to check integrity.",
+  "verify.fileLabel": "Report PDF",
+  "verify.fileHint": "Only .pdf files signed by Desygn A11y are accepted.",
+  "verify.signatureLabel": "Signature (base64)",
+  "verify.signaturePlaceholder": "Paste the HMAC-SHA256 signature string…",
+  "verify.metadataLabel": "Metadata (JSON)",
+  "verify.metadataPlaceholder": "{\"auditId\":\"abc\",\"score\":87}",
+  "verify.submit": "Verify",
+  "verify.submitting": "Verifying…",
+  "verify.invalidMetadata": "Metadata must be valid JSON (an object).",
+  "verify.missingFile": "Please choose a PDF file.",
+  "verify.missingSignature": "Please enter a signature.",
+  "verify.requestFailed": "Could not verify. Check your connection and try again.",
+  "verify.resultValidTitle": "Valid report",
+  "verify.resultValidBody":
+    "Signature matches — the report has not been modified since it was signed.",
+  "verify.resultInvalidTitle": "Invalid report",
+  "verify.resultInvalidBody":
+    "Signature does not match. The PDF, metadata, or signature has been altered.",
 };

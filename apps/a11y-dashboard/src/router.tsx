@@ -38,6 +38,7 @@ import { Audits } from "./routes/Audits.js";
 import { Settings } from "./routes/Settings.js";
 import { Login } from "./routes/Login.js";
 import { Signup } from "./routes/Signup.js";
+import { VerifyPage } from "./routes/Verify.js";
 
 /**
  * IndexPending — shown at `/` only while a CONFIGURED backend resolves the
@@ -97,6 +98,18 @@ const signupRoute = createRoute({
 });
 
 /**
+ * `/verify` — PUBLIC PDF verification page. Sibling of /login + /signup
+ * (NOT under the AppShell): no auth guard, no app chrome, owns its own
+ * <main>. Lets external auditors validate a signed report without an
+ * account.
+ */
+const verifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify",
+  component: VerifyPage,
+});
+
+/**
  * Pathless layout route that renders the authenticated shell. Children mount
  * inside <AppShell>'s <Outlet />. The guard protects all of them at once.
  */
@@ -137,6 +150,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   signupRoute,
+  verifyRoute,
   shellRoute.addChildren([dashboardRoute, auditsRoute, settingsRoute]),
 ]);
 

@@ -1,0 +1,37 @@
+/* ReportExportMenu — format picker + download trigger.
+ *
+ * Single horizontal row on desktop, wraps on narrow screens. Inline error
+ * sits below the controls so it never pushes neighbouring layout when empty.
+ */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 10rem;
+}
+
+.label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-slate-700, #334155);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-red-600, #dc2626);
+  font-size: var(--font-size-sm, 0.875rem);
+}

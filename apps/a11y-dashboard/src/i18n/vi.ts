@@ -107,4 +107,38 @@ export const vi: Dictionary = {
   "audit.list.colDate": "Ngày",
   "audit.list.empty": "Chưa có lần kiểm tra nào.",
   "audit.list.emptyHint": "Bắt đầu lần kiểm tra đầu tiên để thấy kết quả ở đây.",
+
+  // Trình xuất báo cáo
+  "report.export.label": "Xuất báo cáo",
+  "report.export.formatLabel": "Định dạng",
+  "report.export.download": "Tải xuống",
+  "report.export.downloading": "Đang tải xuống…",
+  "report.export.pdf": "PDF",
+  "report.export.sarif": "SARIF",
+  "report.export.csv": "CSV",
+  "report.export.markdown": "Markdown",
+  "report.export.failed": "Không thể tải báo cáo. Vui lòng thử lại.",
+
+  // Trang xác minh PDF
+  "verify.title": "Xác minh báo cáo PDF",
+  "verify.intro":
+    "Tải lên tệp PDF báo cáo của bạn cùng với chữ ký và siêu dữ liệu để kiểm tra tính toàn vẹn.",
+  "verify.fileLabel": "Tệp PDF báo cáo",
+  "verify.fileHint": "Chỉ chấp nhận tệp .pdf đã ký bởi Desygn A11y.",
+  "verify.signatureLabel": "Chữ ký (base64)",
+  "verify.signaturePlaceholder": "Dán chuỗi chữ ký HMAC-SHA256…",
+  "verify.metadataLabel": "Siêu dữ liệu (JSON)",
+  "verify.metadataPlaceholder": "{\"auditId\":\"abc\",\"score\":87}",
+  "verify.submit": "Xác minh",
+  "verify.submitting": "Đang xác minh…",
+  "verify.invalidMetadata": "Siêu dữ liệu phải là JSON hợp lệ (đối tượng).",
+  "verify.missingFile": "Hãy chọn một tệp PDF.",
+  "verify.missingSignature": "Hãy nhập chữ ký.",
+  "verify.requestFailed": "Không thể xác minh. Hãy kiểm tra kết nối rồi thử lại.",
+  "verify.resultValidTitle": "Báo cáo hợp lệ",
+  "verify.resultValidBody":
+    "Chữ ký khớp — nội dung báo cáo chưa bị thay đổi kể từ khi được ký.",
+  "verify.resultInvalidTitle": "Báo cáo không hợp lệ",
+  "verify.resultInvalidBody":
+    "Chữ ký không khớp. Tệp PDF, siêu dữ liệu hoặc chữ ký đã bị thay đổi.",
 };
