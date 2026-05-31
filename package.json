@@ -123,7 +123,7 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.75",
     "@ai-sdk/groq": "^3.0.39",
-    "@supabase/supabase-js": "^2.105.4",
+    "@supabase/supabase-js": "^2.106.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "ai": "^6.0.184",
