@@ -20,3 +20,11 @@ test-results/
 
 # Turborepo
 .turbo/
+
+# Local code review graph indexes
+.codegraph/
+.code-review-graph/
+
+# Local exports + dev logs (build/run output, never committed)
+exports/
+logs/
