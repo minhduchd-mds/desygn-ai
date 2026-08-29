@@ -19,9 +19,14 @@ const verifyPdfSchema = z.object({
 });
 
 const NO_STORE: Record<string, string> = { "Cache-Control": "no-store" };
+const CANONICAL_BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 function decodeBase64(input: string): Uint8Array {
-  return new Uint8Array(Buffer.from(input, "base64"));
+  const encoded = input.trim();
+  if (!CANONICAL_BASE64.test(encoded)) {
+    throw new Error("Invalid base64 payload");
+  }
+  return new Uint8Array(Buffer.from(encoded, "base64"));
 }
 
 async function handler(req: Request): Promise<Response> {
