@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run web:build",
+  "buildCommand": "npm run build --workspace=@desygn/audit-engine && npm run build --workspace=@desygn/figma-rest-adapter && npm run build --workspace=@desygn/report-generator && npm run web:build",
   "outputDirectory": "public",
   "installCommand": "npm ci",
   "headers": [
@@ -40,4 +40,3 @@
     }
   ]
 }
-
