@@ -47,6 +47,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build workspace packages used by integration tests
+        run: |
+          npm run build --workspace=@desygn/audit-engine
+          npm run build --workspace=@desygn/figma-rest-adapter
+          npm run build --workspace=@desygn/report-generator
+
+      - name: Configure deterministic Git identity for repository-fixture tests
+        run: |
+          git config --global user.name "Desygn CI"
+          git config --global user.email "ci@desygn.invalid"
+
       - name: Run Vitest
         shell: bash
         run: |
@@ -89,6 +100,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build shared workspace packages
+        run: |
+          npm run build --workspace=@desygn/audit-engine
+          npm run build --workspace=@desygn/figma-rest-adapter
+          npm run build --workspace=@desygn/report-generator
 
       - name: Build web
         run: npm run web:build
