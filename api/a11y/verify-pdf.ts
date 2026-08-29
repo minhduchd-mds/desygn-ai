@@ -29,7 +29,7 @@ export const config = { runtime: "edge" };
 const verifyPdfSchema = z.object({
   pdfBase64: z.string().min(1, "pdfBase64 is required"),
   signature: z.string().min(1, "signature is required"),
-  metadata: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
 });
 
 const NO_STORE: Record<string, string> = { "Cache-Control": "no-store" };
