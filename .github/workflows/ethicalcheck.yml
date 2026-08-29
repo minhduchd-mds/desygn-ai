@@ -39,9 +39,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tracked_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v -E '\.env\.example$' || true)"
+          # Example templates such as `.env.example` and `.env.local.example`
+          # are documentation, not secret-bearing runtime files.
+          tracked_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v -E '\.example$' || true)"
           if [ -n "$tracked_env" ]; then
-            echo 'Tracked environment files are not allowed:' >&2
+            echo 'Tracked runtime environment files are not allowed:' >&2
             echo "$tracked_env" >&2
             exit 1
           fi
@@ -50,4 +52,4 @@ jobs:
         run: |
           echo 'Source provenance present.'
           echo 'No unresolved conflict markers found.'
-          echo 'No tracked environment secret files found.'
+          echo 'No tracked runtime environment secret files found.'
