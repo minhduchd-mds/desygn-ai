@@ -21,7 +21,8 @@ import type {
 } from "./types.js";
 
 export * from "./types.js";
-export { calculateScore, summarize } from "./scoring.js";
+export { calculateScore, calculateScoreBreakdown, summarize } from "./scoring.js";
+export type { ScoreBreakdown, ScoreContext } from "./scoring.js";
 export * from "./color.js";
 export { DEFAULT_RULES } from "./rules/index.js";
 
@@ -60,7 +61,10 @@ export class AuditEngine {
     );
 
     const issues = results.flatMap((r) => r.issues);
-    const score = calculateScore(issues);
+    const score = calculateScore(issues, {
+      nodeCount: input.nodes.length,
+      evaluatedRules: selected.length,
+    });
     const summary = summarize(issues);
     const durationMs = Date.now() - startTime;
 
