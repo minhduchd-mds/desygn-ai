@@ -18,6 +18,7 @@ Desygn AI uses external material to understand standards and APIs, but core prod
 | React 19.2 release notes — https://react.dev/blog/2025/10/01/react-19-2 | Current React capabilities and lifecycle guidance | No |
 | Vite 8 announcement — https://vite.dev/blog/announcing-vite8 | Build/runtime architecture awareness | No |
 | OpenTelemetry JS — https://opentelemetry.io/docs/languages/js/ | Observability interface concepts | No |
+| `davila7/claude-code-templates` — https://github.com/davila7/claude-code-templates, reviewed at upstream main commit `618365a60f59db76dd91693996dc6d5f5b1cd86d` | Structural inspiration for repo-local specialist agents, bounded custom commands, and component validation/security discipline | No; MIT source used as concept/format reference only |
 
 ## Repository-owned algorithm
 
@@ -32,3 +33,5 @@ The score uses the following repository-defined model:
 5. explicit score ceilings when critical/systemic serious defects exist.
 
 The algorithm is deterministic and its invariants are covered by `scoring.test.ts`.
+
+The repo-local agent files under `.claude/` are written specifically for Desygn AI's package/runtime/product constraints. No upstream template prompt body or implementation code was copied.
