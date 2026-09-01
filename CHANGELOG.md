@@ -4,6 +4,62 @@ Tất cả thay đổi quan trọng của Desygn AI được ghi nhận tại đ
 
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Phiên bản theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0](https://github.com/minhduchd-mds/desygn-ai/compare/v5.0.0...v5.1.0) (2026-09-01)
+
+
+### Features
+
+* add Google Gemini as parallel AI provider alongside Groq ([62a0675](https://github.com/minhduchd-mds/desygn-ai/commit/62a0675e7393dde53706fa2d0f65248a755f9b1c))
+* Agent Fleet v6 — autonomous self-improving agent system ([1d1d0c8](https://github.com/minhduchd-mds/desygn-ai/commit/1d1d0c88385fad54193a73401f663b20413e85f4))
+* **api:** Week 1 — auth (JWT + API key) + tier quota foundation ([7340db4](https://github.com/minhduchd-mds/desygn-ai/commit/7340db49f2d270af937c74f22e42aa3bd103f738))
+* **audit-engine:** real WCAG color math + correct contrast thresholds ([ef8280a](https://github.com/minhduchd-mds/desygn-ai/commit/ef8280ade58f18f3f4a13ca5825ea101cb4a897e))
+* **chat:** add image/video/file attachment support in messages ([6bd3b07](https://github.com/minhduchd-mds/desygn-ai/commit/6bd3b07f2b4dac4b29158c6606cf1bdd5d3c8bc5))
+* **chat:** enable image rendering in AI responses ([aaa3abe](https://github.com/minhduchd-mds/desygn-ai/commit/aaa3abe6fef59098ca8b21a67b620b38509679aa))
+* chạy song song — api/a11y endpoints + dashboard shell + marketing site ([7ae809e](https://github.com/minhduchd-mds/desygn-ai/commit/7ae809eb9c6454e5c7664df4001f3b1e8d36bc3b))
+* chạy song song — audit UI + MCP a11y tool + PDF reports ([6ffa26b](https://github.com/minhduchd-mds/desygn-ai/commit/6ffa26b556aa8dfd2b42df92eabfef61e9a9c8b7))
+* chạy song song — verify page + audit-list/status + Inngest runner ([7ce7bd0](https://github.com/minhduchd-mds/desygn-ai/commit/7ce7bd0a4c4e3616170cba3e6deb8ba32c785e5e))
+* **dashboard:** i18n (Tiếng Việt mặc định) + Playwright e2e — chạy song song ([d97d345](https://github.com/minhduchd-mds/desygn-ai/commit/d97d34539e62e57449dab133b9f4f6b803cd10ce))
+* extract hooks from main.tsx + wire Groq LLM into agents ([e797166](https://github.com/minhduchd-mds/desygn-ai/commit/e797166490f05fbd107001c71a8dbbf468e0d727))
+* **figma-adapter:** detect interactivity + motion from prototype reactions ([7e630e6](https://github.com/minhduchd-mds/desygn-ai/commit/7e630e67487c1975f1341535383c4dd37a756f90))
+* FixApprovalUI component + E2E self-improvement loop test ([0956225](https://github.com/minhduchd-mds/desygn-ai/commit/095622507f70ba458d75eb352eb17f6174570c5c))
+* P4 add MCP server for AI coding agents ([22bdbb4](https://github.com/minhduchd-mds/desygn-ai/commit/22bdbb431565c458267a8905f580b814749e0500))
+* Plugin SDK, i18n framework, npm workspaces monorepo ([57bac1f](https://github.com/minhduchd-mds/desygn-ai/commit/57bac1fa5dcbd8aa915951742d26a7d726a0333e))
+* **project:** link sessions to projects, scoped context, and ZIP export ([c60abd9](https://github.com/minhduchd-mds/desygn-ai/commit/c60abd9cb8ba10570007ba2c379a45d7fccd0625))
+* release-please automation, Dependabot, contributor onboarding ([21e6eba](https://github.com/minhduchd-mds/desygn-ai/commit/21e6ebafa5acfa9745497dc5ffe5f72b462912bb))
+* Sprint A+B+C — 9 new agents across command, map, safety fleets ([a221a1a](https://github.com/minhduchd-mds/desygn-ai/commit/a221a1aa19829c7a17f44e07f2c62da414dafb13))
+* Sprint D — ConflictResolverAgent + ArchitectureDriftAgent ([5d95b98](https://github.com/minhduchd-mds/desygn-ai/commit/5d95b98fd6e6c264b99f2c92852847ada47f53ba))
+* Storybook GitHub Pages deploy + a11y addon config ([d48bb3e](https://github.com/minhduchd-mds/desygn-ai/commit/d48bb3eafbd21da4c3a558eaf125776cbea6efaa))
+* Supabase RBAC migration, seed data, local setup script, good-first-issues ([7f19b1d](https://github.com/minhduchd-mds/desygn-ai/commit/7f19b1db5f0cc043fc1e5a20dc9323c41cc2210c))
+* Tier 2-3 LLM integration + security patches (v5.1.1) ([dfe3b2e](https://github.com/minhduchd-mds/desygn-ai/commit/dfe3b2e2cfd11d4b95062f039234496992663079))
+* **ui:** A/B/C/D — stories, 3 more primitives, dashboard dogfood, READMEs ([d2ee102](https://github.com/minhduchd-mds/desygn-ai/commit/d2ee102aec29e3ca47aae716713dd716e63c5ede))
+* **ui:** Dialog + Select primitives — Week 2 design system complete (10/10) ([672ed23](https://github.com/minhduchd-mds/desygn-ai/commit/672ed23284df19e3441b0aa34e7db6418a395244))
+* **ui:** PWA install, QR code, responsive breakpoints, animations ([f205cca](https://github.com/minhduchd-mds/desygn-ai/commit/f205cca35aa669e5316df94ab5d74bbbeeca9479))
+* **ui:** Week 2 dependency-free accessible primitives ([e4222ff](https://github.com/minhduchd-mds/desygn-ai/commit/e4222ff6db6978e5c991090a839a5a1cc05459c5))
+* **usage:** add token metering, hourly burn rate, and cost tracking ([a0d7f75](https://github.com/minhduchd-mds/desygn-ai/commit/a0d7f75c99483921f6c5d6f9011cb1a36406c906))
+* Week 0 scaffolding for Desygn A11y Move 1 ([f1df1cf](https://github.com/minhduchd-mds/desygn-ai/commit/f1df1cfdef3bf2898aff2517ddba2ac2d39f4b68))
+
+
+### Bug Fixes
+
+* **api:** resolve Gemini models returning no response ([aa95ef3](https://github.com/minhduchd-mds/desygn-ai/commit/aa95ef3e4599a15b7c1291770d4c3133a4fb3183))
+* **chat-stream:** detect silent AI SDK stream closure on provider error ([2825c48](https://github.com/minhduchd-mds/desygn-ai/commit/2825c48aa65260a3399a04ccd86b3e0883814538))
+* **chat-stream:** remove withRateLimitEdge wrapper that breaks streaming ([92d9875](https://github.com/minhduchd-mds/desygn-ai/commit/92d987503617b16a1d4a91d70837d09003e57a0f))
+* **chat-stream:** use AI SDK v6 usage property names ([8674387](https://github.com/minhduchd-mds/desygn-ai/commit/86743879b167620ae908d2295b42011e2bf2e42c))
+* **chat-stream:** use TransformStream for edge-compatible error streaming ([fac5bf3](https://github.com/minhduchd-mds/desygn-ai/commit/fac5bf337d9a013f5c5e09a1f179cf434c316f5a))
+* **chat:** enable image display in AI responses and multimodal input ([bf3b246](https://github.com/minhduchd-mds/desygn-ai/commit/bf3b246fc9105db0d5389b831aa7b2f27a447f1a))
+* **chat:** surface AI provider errors instead of showing empty bubbles ([a58ad72](https://github.com/minhduchd-mds/desygn-ai/commit/a58ad72253c12355a04d4370652d213849624b82))
+* make prepare script CI-safe for Vercel builds ([de71167](https://github.com/minhduchd-mds/desygn-ai/commit/de71167fe2f1111d3fe752558b0f70e09985eb01))
+* P0-P1 code review fixes — MCP protocol, sanitize, naming ([9711a92](https://github.com/minhduchd-mds/desygn-ai/commit/9711a92a5156eaf98df987a05a372769624b1b3d))
+* P2 security hardening — Upstash rate limit, EXIF stripping, PBKDF2 600k ([2162a64](https://github.com/minhduchd-mds/desygn-ai/commit/2162a64f98d724e794339f7bf7f75364b81022d4))
+* resolve 4 bugs from full project audit ([b60c10d](https://github.com/minhduchd-mds/desygn-ai/commit/b60c10d24c73fd088a91d23aee1bf45d66c46ba0))
+* **security:** patch all 9 vulnerabilities via npm overrides ([506d345](https://github.com/minhduchd-mds/desygn-ai/commit/506d345276d419c6d526cc748c39ad9346280337))
+* separate Chat/Code messages, fix ChatEngine signature, add Agent API ([f3b87d8](https://github.com/minhduchd-mds/desygn-ai/commit/f3b87d82feb530567a4911231722d9e950969ed4))
+* **types:** widen CORS types + scope npm overrides to avoid ESLint breakage ([353e1b1](https://github.com/minhduchd-mds/desygn-ai/commit/353e1b13fc304446f8597e916006cb93600a1d8c))
+* **ui:** 6 bugs — session persist, empty chat, history, username align ([5e980c3](https://github.com/minhduchd-mds/desygn-ai/commit/5e980c3e48a2740bd087d0cf059c45831c96974f))
+* **ui:** move Install App section to top of landing page (after hero) ([088cef0](https://github.com/minhduchd-mds/desygn-ai/commit/088cef04f531438c14d6f80009ee011516c02ea7))
+* **ui:** P0 sidebar collapse, QR code, chat history, and settings ([fea309d](https://github.com/minhduchd-mds/desygn-ai/commit/fea309d9b44630247ca516094cc83e7e7de1d78a))
+* **ui:** strip legacy placeholder messages from persisted chat history ([57aee60](https://github.com/minhduchd-mds/desygn-ai/commit/57aee6098fc28929cb8d48a6caac09d1bad8006f))
+
 ## [Unreleased]
 
 ### Them moi
