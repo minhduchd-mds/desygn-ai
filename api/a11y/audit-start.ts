@@ -2,18 +2,9 @@
  * POST /api/a11y/audit-start
  *
  * Run a synchronous WCAG accessibility audit and persist the result.
- *
- * Flow:
- *   1. authenticate(req)                         → 401/403 on failure
- *   2. checkQuota(userId, tier, "audit")         → 402 when exhausted
- *   3. validate body with auditStartSchema       → 400 on bad input
- *   4. resolve nodes (Figma REST fetch or uploaded JSON)
- *   5. createDefaultEngine().run({ nodes, options })  (synchronous)
- *   6. persist to audit_runs + audit_issues (skipped when backend unset)
- *   7. recordUsage(userId, "audit")
- *   8. 200 { auditRunId, score, summary, status: "completed" }
- *
- * Default WCAG target: 2.2 AA (see _shared.resolveAuditOptions).
+ * Uses Vercel's default Node.js runtime because the audit workspace may load
+ * Node-only report/signing dependencies and the Figma/audit pipeline benefits
+ * from the full Node runtime.
  */
 
 import { createDefaultEngine } from "@desygn/audit-engine";
@@ -30,14 +21,13 @@ import {
   resolveAuditOptions,
 } from "./_shared.js";
 
-export const config = { runtime: "edge", maxDuration: 60 };
+export const config = { maxDuration: 60 };
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") {
     return errorResponse(405, "Method not allowed. Use POST.");
   }
 
-  // 1. Authenticate ──────────────────────────────────────────────────
   let auth;
   try {
     auth = await authenticate(req);
@@ -46,7 +36,6 @@ async function handler(req: Request): Promise<Response> {
     return errorResponse(401, "Authentication failed");
   }
 
-  // 2. Quota (write action) ──────────────────────────────────────────
   const quota = await checkQuota(auth.userId, auth.tier, "audit");
   if (!quota.allowed) {
     return errorResponse(402, "Audit quota exceeded for your plan.", {
@@ -55,7 +44,6 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  // 3. Parse + validate body ─────────────────────────────────────────
   let raw: unknown;
   try {
     raw = await req.json();
@@ -71,21 +59,17 @@ async function handler(req: Request): Promise<Response> {
   }
   const body = parsed.data;
 
-  // 4. Resolve audit nodes ───────────────────────────────────────────
   let nodes: AuditNode[];
   try {
     if (body.source === "figma") {
-      // superRefine guarantees body.figma is present for source === "figma".
       const { fileKey, nodeId, accessToken } = body.figma!;
       const client = new FigmaRestClient(accessToken);
       const file = await client.getFile(fileKey, nodeId ? [nodeId] : undefined);
       nodes = transformFigmaToAuditNodes(file.document);
     } else {
-      // source === "uploaded-json" — superRefine guarantees nodes present.
       nodes = body.nodes!;
     }
   } catch (err) {
-    // Figma fetch / transform failure — surface as a 502 (upstream error).
     const message = err instanceof Error ? err.message : "Failed to load design source.";
     return errorResponse(502, `Could not load design source: ${message}`);
   }
@@ -94,7 +78,6 @@ async function handler(req: Request): Promise<Response> {
     return errorResponse(400, "No auditable nodes were found in the provided source.");
   }
 
-  // 5. Run the audit synchronously ───────────────────────────────────
   const options = resolveAuditOptions(body.options);
   let result;
   try {
@@ -104,7 +87,6 @@ async function handler(req: Request): Promise<Response> {
     return errorResponse(500, `Audit failed: ${message}`);
   }
 
-  // 6. Persist (graceful degrade when backend unconfigured) ──────────
   const auditRunId = result.id;
   const admin = getSupabaseAdmin();
   if (admin) {
@@ -144,15 +126,12 @@ async function handler(req: Request): Promise<Response> {
         );
       }
     } catch (err) {
-      // Persistence failure must not lose the audit result — log + continue.
       console.error("[audit-start] persistence failed:", err instanceof Error ? err.message : err);
     }
   }
 
-  // 7. Record usage (no-op when backend unconfigured) ────────────────
   await recordUsage(auth.userId, "audit", { auditRunId, source: body.source });
 
-  // 8. Respond ───────────────────────────────────────────────────────
   return jsonResponse(200, {
     auditRunId,
     score: result.score,

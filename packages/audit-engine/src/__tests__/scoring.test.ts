@@ -1,19 +1,23 @@
 /**
- * scoring — unit tests for score calculation and summarization.
+ * scoring — invariant tests for the explainable v2 risk model.
  */
 
-import { describe, it, expect } from "vitest";
-import { calculateScore, summarize } from "../scoring.js";
-import type { AuditIssue } from "../types.js";
+import { describe, expect, it } from "vitest";
+import { calculateScore, calculateScoreBreakdown, summarize } from "../scoring.js";
+import type { AuditIssue, Severity } from "../types.js";
 
-function issue(overrides: Partial<AuditIssue> = {}): AuditIssue {
+function issue(
+  severity: Severity = "moderate",
+  index = 0,
+  overrides: Partial<AuditIssue> = {},
+): AuditIssue {
   return {
-    id: "i1",
+    id: `i${index}`,
     ruleId: "contrast.text",
     wcagCriterion: "1.4.3",
     category: "contrast",
-    severity: "moderate",
-    nodeId: "n1",
+    severity,
+    nodeId: `n${index}`,
     nodeName: "Node",
     nodeType: "TEXT",
     message: "msg",
@@ -21,80 +25,88 @@ function issue(overrides: Partial<AuditIssue> = {}): AuditIssue {
   };
 }
 
-describe("calculateScore", () => {
+describe("calculateScore v2", () => {
   it("returns 100 for zero issues", () => {
-    expect(calculateScore([])).toBe(100);
+    expect(calculateScore([], { nodeCount: 500, evaluatedRules: 7 })).toBe(100);
   });
 
-  it("deducts 10 per critical issue", () => {
-    expect(calculateScore([issue({ severity: "critical" })])).toBe(90);
+  it("keeps any critical defect out of the green range", () => {
+    expect(
+      calculateScore([issue("critical")], { nodeCount: 1000, evaluatedRules: 7 }),
+    ).toBeLessThanOrEqual(79);
   });
 
-  it("deducts 5 per serious issue", () => {
-    expect(calculateScore([issue({ severity: "serious" })])).toBe(95);
+  it("penalizes broader systemic risk more than a repeated single-rule defect", () => {
+    const repeated = Array.from({ length: 8 }, (_, index) =>
+      issue("serious", index, { ruleId: "aria-name" }),
+    );
+    const broad = Array.from({ length: 8 }, (_, index) =>
+      issue("serious", index, {
+        ruleId: `rule-${index}`,
+        category: index % 2 === 0 ? "aria" : "keyboard",
+      }),
+    );
+    const context = { nodeCount: 200, evaluatedRules: 10 };
+
+    expect(calculateScore(broad, context)).toBeLessThan(calculateScore(repeated, context));
   });
 
-  it("deducts 2 per moderate issue", () => {
-    expect(calculateScore([issue({ severity: "moderate" })])).toBe(98);
+  it("uses logarithmic saturation for repeated findings", () => {
+    const two = [issue("moderate", 1), issue("moderate", 2)];
+    const twenty = Array.from({ length: 20 }, (_, index) => issue("moderate", index));
+    const context = { nodeCount: 100, evaluatedRules: 7 };
+
+    const twoRisk = calculateScoreBreakdown(two, context).rawRisk;
+    const twentyRisk = calculateScoreBreakdown(twenty, context).rawRisk;
+
+    expect(twentyRisk).toBeGreaterThan(twoRisk);
+    expect(twentyRisk).toBeLessThan(twoRisk * 10);
   });
 
-  it("deducts 0.5 per minor issue and rounds", () => {
-    expect(calculateScore([issue({ severity: "minor" })])).toBe(100); // 99.5 → 100
-    expect(calculateScore([issue({ severity: "minor" }), issue({ severity: "minor" })])).toBe(99);
-  });
+  it("keeps the public score inside 0..100", () => {
+    const many = Array.from({ length: 500 }, (_, index) => issue("critical", index));
+    const score = calculateScore(many, { nodeCount: 500, evaluatedRules: 7 });
 
-  it("never goes below 0", () => {
-    const many = Array.from({ length: 50 }, () => issue({ severity: "critical" }));
-    expect(calculateScore(many)).toBe(0);
-  });
-
-  it("combines mixed severities", () => {
-    // 10 + 5 + 2 + 0.5 = 17.5 → round(82.5) = 82 (banker's? no, Math.round → 83)
-    const score = calculateScore([
-      issue({ severity: "critical" }),
-      issue({ severity: "serious" }),
-      issue({ severity: "moderate" }),
-      issue({ severity: "minor" }),
-    ]);
-    expect(score).toBe(83); // 100 - 17.5 = 82.5, Math.round → 83
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
   });
 });
 
 describe("summarize", () => {
   it("returns all-zero summary for empty issues", () => {
-    const s = summarize([]);
-    expect(s.total).toBe(0);
-    expect(s.critical).toBe(0);
-    expect(s.serious).toBe(0);
-    expect(s.moderate).toBe(0);
-    expect(s.minor).toBe(0);
+    const summary = summarize([]);
+    expect(summary.total).toBe(0);
+    expect(summary.critical).toBe(0);
+    expect(summary.serious).toBe(0);
+    expect(summary.moderate).toBe(0);
+    expect(summary.minor).toBe(0);
   });
 
   it("counts by severity", () => {
-    const s = summarize([
-      issue({ severity: "critical" }),
-      issue({ severity: "critical" }),
-      issue({ severity: "minor" }),
+    const summary = summarize([
+      issue("critical", 1),
+      issue("critical", 2),
+      issue("minor", 3),
     ]);
-    expect(s.critical).toBe(2);
-    expect(s.minor).toBe(1);
-    expect(s.total).toBe(3);
+    expect(summary.critical).toBe(2);
+    expect(summary.minor).toBe(1);
+    expect(summary.total).toBe(3);
   });
 
   it("counts by category", () => {
-    const s = summarize([
-      issue({ category: "contrast" }),
-      issue({ category: "contrast" }),
-      issue({ category: "aria" }),
+    const summary = summarize([
+      issue("moderate", 1, { category: "contrast" }),
+      issue("moderate", 2, { category: "contrast" }),
+      issue("moderate", 3, { category: "aria" }),
     ]);
-    expect(s.byCategory.contrast).toBe(2);
-    expect(s.byCategory.aria).toBe(1);
-    expect(s.byCategory.keyboard).toBe(0);
+    expect(summary.byCategory.contrast).toBe(2);
+    expect(summary.byCategory.aria).toBe(1);
+    expect(summary.byCategory.keyboard).toBe(0);
   });
 
   it("initializes all 7 categories to 0", () => {
-    const s = summarize([]);
-    expect(Object.keys(s.byCategory).sort()).toEqual(
+    const summary = summarize([]);
+    expect(Object.keys(summary.byCategory).sort()).toEqual(
       ["aria", "contrast", "heading", "keyboard", "motion", "semantic", "touch-target"],
     );
   });

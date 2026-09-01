@@ -1,23 +1,9 @@
 /**
  * GET /api/a11y/audit-status?id=<auditRunId>
  *
- * Lightweight status poll for a single audit run. Returns just enough for
- * the dashboard to render progress UI without paying for the full
- * audit-result payload.
- *
- * Flow:
- *   1. method check                                    → 405 on non-GET
- *   2. authenticate(req)                               → 401 on AuthError
- *   3. rateLimit("audit-status:<userId>", 120)         → 429 on burst
- *   4. zod-validate `id` as a uuid                     → 400 on bad input
- *   5. getSupabaseAdmin(); if null                     → 503
- *   6. Read audit_runs scoped to the caller by joining via project_versions
- *      (service-role bypasses RLS — explicit scoping is the safe move).
- *   7. 200 { status, progress, currentStep?, score?, completedAt? }
- *      with Cache-Control: no-store
- *
- * `progress` is derived from status until Inngest event streaming lands:
- *   queued → 0, completed/failed → 100, anything else → 50.
+ * Lightweight status poll for a single audit run.
+ * Uses Vercel's default Node.js runtime because the shared audit workspace
+ * contains Node-only report/signing dependencies that are not Edge-safe.
  */
 
 import { z } from "zod";
@@ -26,15 +12,12 @@ import { rateLimit } from "../lib/rate-limit.js";
 import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import { formatZodError, jsonResponse } from "./_shared.js";
 
-export const config = { runtime: "edge" };
-
 export const auditStatusQuerySchema = z.object({
   id: z.string().uuid("id must be a valid uuid"),
 });
 
 const NO_STORE: Record<string, string> = { "Cache-Control": "no-store" };
 
-/** Map a row's `status` to a coarse 0–100 progress value. */
 export function deriveProgress(status: string | null | undefined): number {
   if (status === "queued") return 0;
   if (status === "completed" || status === "failed") return 100;
@@ -54,7 +37,6 @@ async function handler(req: Request): Promise<Response> {
     return jsonResponse(405, { error: "Method not allowed. Use GET." }, NO_STORE);
   }
 
-  // 1. Authenticate ─────────────────────────────────────────────────
   let auth;
   try {
     auth = await authenticate(req);
@@ -65,7 +47,6 @@ async function handler(req: Request): Promise<Response> {
     return jsonResponse(401, { error: "Authentication failed" }, NO_STORE);
   }
 
-  // 2. Rate-limit per user ──────────────────────────────────────────
   const rl = await rateLimit(`audit-status:${auth.userId}`, 120);
   if (!rl.success) {
     const retryAfter = Math.max(0, rl.reset - Math.floor(Date.now() / 1000));
@@ -76,14 +57,9 @@ async function handler(req: Request): Promise<Response> {
     );
   }
 
-  // 3. Validate query ───────────────────────────────────────────────
   const idParam = new URL(req.url).searchParams.get("id");
   if (!idParam) {
-    return jsonResponse(
-      400,
-      { error: "An 'id' query parameter is required." },
-      NO_STORE,
-    );
+    return jsonResponse(400, { error: "An 'id' query parameter is required." }, NO_STORE);
   }
 
   const parsed = auditStatusQuerySchema.safeParse({ id: idParam });
@@ -96,13 +72,11 @@ async function handler(req: Request): Promise<Response> {
   }
   const auditRunId = parsed.data.id;
 
-  // 4. Backend gate ─────────────────────────────────────────────────
   const admin = getSupabaseAdmin();
   if (!admin) {
     return jsonResponse(503, { error: "Backend not configured" }, NO_STORE);
   }
 
-  // 5. Scope to the caller via project_versions (admin bypasses RLS).
   const { data: ownedVersions, error: versionsError } = await admin
     .from("project_versions")
     .select("id")
@@ -112,9 +86,7 @@ async function handler(req: Request): Promise<Response> {
     return jsonResponse(500, { error: "Failed to scope audit status." }, NO_STORE);
   }
 
-  const ownedIds: string[] = (ownedVersions ?? []).map(
-    (row: { id: string }) => row.id,
-  );
+  const ownedIds: string[] = (ownedVersions ?? []).map((row: { id: string }) => row.id);
   if (ownedIds.length === 0) {
     return jsonResponse(404, { error: "Audit run not found." }, NO_STORE);
   }

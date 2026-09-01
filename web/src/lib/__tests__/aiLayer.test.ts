@@ -42,13 +42,11 @@ describe("AILayer", () => {
 
     it("checks experiment active for tier", () => {
       ai.setExperiment("agent-chaining", true);
-      // agent-chaining is 100% rollout for all tiers
       expect(ai.isExperimentActive("agent-chaining", "free")).toBe(true);
     });
 
     it("blocks experiment for wrong tier", () => {
       ai.setExperiment("tool-use-agents", true);
-      // tool-use-agents is enterprise only
       expect(ai.isExperimentActive("tool-use-agents", "free")).toBe(false);
     });
 
@@ -82,7 +80,10 @@ describe("AILayer", () => {
       const result = await ai.execute("Analyze this design");
       expect(result.success).toBeDefined();
       expect(result.tokensUsed).toBeGreaterThan(0);
-      expect(result.latencyMs).toBeGreaterThan(0);
+      // A synchronous/mock execution can legitimately complete inside one
+      // millisecond when the implementation uses Date.now(). Zero is valid;
+      // negative latency is not.
+      expect(result.latencyMs).toBeGreaterThanOrEqual(0);
       expect(result.piiClean).toBe(true);
     });
 
@@ -93,7 +94,6 @@ describe("AILayer", () => {
     });
 
     it("returns quota exceeded when no analytics init", async () => {
-      // With userId + tier but without proper quota setup, should still work
       const result = await ai.execute("test", { userId: "user1", tier: "free" });
       expect(result).toBeDefined();
     });
@@ -111,7 +111,6 @@ describe("AILayer", () => {
         ["hasAnalysis", false],
       ]);
       const plan = ai.plan(goal, worldState);
-      // Plan may or may not find a path depending on registered actions
       expect(plan !== undefined).toBe(true);
     });
 
@@ -162,7 +161,6 @@ describe("AILayer", () => {
         temperature: 0,
         timeout: 5000,
       });
-      // Should not throw
       expect(true).toBe(true);
     });
   });

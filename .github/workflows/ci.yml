@@ -14,7 +14,6 @@ env:
   NODE_VERSION: "20"
 
 jobs:
-  # ── Lint ─────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -33,7 +32,6 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-  # ── Unit Tests ───────────────────────────────────────────────
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -49,8 +47,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build workspace packages used by integration tests
+        run: |
+          npm run build --workspace=@desygn/audit-engine
+          npm run build --workspace=@desygn/figma-rest-adapter
+          npm run build --workspace=@desygn/report-generator
+
+      - name: Configure deterministic Git identity for repository-fixture tests
+        run: |
+          git config --global user.name "Desygn CI"
+          git config --global user.email "ci@desygn.invalid"
+
       - name: Run Vitest
-        run: npm test -- --reporter=verbose
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          npm test -- --reporter=verbose 2>&1 | tee test-results/vitest.log
 
       - name: Run coverage with thresholds
         run: npm run test:coverage
@@ -70,8 +83,8 @@ jobs:
           name: test-results
           path: test-results/
           if-no-files-found: ignore
+          retention-days: 7
 
-  # ── Build ────────────────────────────────────────────────────
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -87,6 +100,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build shared workspace packages
+        run: |
+          npm run build --workspace=@desygn/audit-engine
+          npm run build --workspace=@desygn/figma-rest-adapter
+          npm run build --workspace=@desygn/report-generator
 
       - name: Build web
         run: npm run web:build
@@ -115,7 +134,6 @@ jobs:
           path: public/assets/
           retention-days: 7
 
-  # ── E2E (Playwright) ─────────────────────────────────────────
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
