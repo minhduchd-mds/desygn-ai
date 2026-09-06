@@ -1,4 +1,4 @@
-name: Deploy Storybook
+name: Build Storybook
 
 on:
   push:
@@ -12,14 +12,14 @@ on:
       - ".github/workflows/storybook-deploy.yml"
   workflow_dispatch:
 
+# GitHub Pages is not enabled for this repository. Keep this workflow build-only
+# during security cleanup so it needs no deployment/OIDC write permissions.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "storybook-pages"
-  cancel-in-progress: false
+  group: "storybook-build"
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -43,20 +43,3 @@ jobs:
         run: npm run build-storybook
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
-        with:
-          path: storybook-static
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
