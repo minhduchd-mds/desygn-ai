@@ -32,6 +32,9 @@ jobs:
       - name: Check generated component registry
         run: npm run registry:check
 
+      - name: Check shared design-system semantics
+        run: npm run design-system:check
+
       - name: Run typecheck
         run: npm run typecheck
 
