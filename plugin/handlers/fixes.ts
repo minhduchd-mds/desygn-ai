@@ -143,16 +143,17 @@ async function suggestName(node: SceneNode): Promise<string> {
   }
 
   if ("children" in node) {
-    const children = (node as FrameNode).children.filter((c: { visible: boolean }) => c.visible);
-    const hasText = children.some((c: { type: string }) => c.type === "TEXT");
-    const hasImage = children.some(
-      (c: { fills: readonly Paint[] }) =>
-        "fills" in c && (c.fills as readonly Paint[]).some?.((f: Paint) => f.type === "IMAGE"),
-    );
+    const children = (node as FrameNode).children.filter((c) => c.visible);
+    const hasText = children.some((c) => c.type === "TEXT");
+    const hasImage = children.some((child) => {
+      if (!("fills" in child)) return false;
+      const fills = child.fills;
+      return Array.isArray(fills) && fills.some((fill) => fill.type === "IMAGE");
+    });
 
     // Icon detection: all children are shapes (vectors, lines, ellipses, etc.)
     const SHAPE_TYPES = new Set(["VECTOR", "LINE", "ELLIPSE", "RECTANGLE", "STAR", "POLYGON", "BOOLEAN_OPERATION"]);
-    const allShapes = children.length > 0 && children.every((c: { type: string }) => SHAPE_TYPES.has(c.type));
+    const allShapes = children.length > 0 && children.every((c) => SHAPE_TYPES.has(c.type));
     if (allShapes) {
       return suggestIconName(node);
     }
