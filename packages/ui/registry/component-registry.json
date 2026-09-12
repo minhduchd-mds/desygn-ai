@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "packages/ui/src/primitives/index.ts",
+  "package": "@desygn/ui",
+  "componentCount": 10,
+  "components": [
+    {
+      "id": "desygn.avatar",
+      "name": "Avatar",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Avatar.tsx",
+      "story": "packages/ui/stories/Avatar.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.badge",
+      "name": "Badge",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Badge.tsx",
+      "story": "packages/ui/stories/Badge.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.button",
+      "name": "Button",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Button.tsx",
+      "story": "packages/ui/stories/Button.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.card",
+      "name": "Card",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Card.tsx",
+      "story": "packages/ui/stories/Card.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.checkbox",
+      "name": "Checkbox",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Checkbox.tsx",
+      "story": "packages/ui/stories/Checkbox.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.dialog",
+      "name": "Dialog",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Dialog.tsx",
+      "story": "packages/ui/stories/Dialog.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.input",
+      "name": "Input",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Input.tsx",
+      "story": "packages/ui/stories/Input.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.select",
+      "name": "Select",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Select.tsx",
+      "story": "packages/ui/stories/Select.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.spinner",
+      "name": "Spinner",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Spinner.tsx",
+      "story": "packages/ui/stories/Spinner.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    },
+    {
+      "id": "desygn.switch",
+      "name": "Switch",
+      "package": "@desygn/ui",
+      "import": "@desygn/ui",
+      "source": "packages/ui/src/primitives/Switch.tsx",
+      "story": "packages/ui/stories/Switch.stories.tsx",
+      "hasStory": true,
+      "contract": { "accessibilityRequired": true, "semanticTokensRequired": true, "visualVerificationRequired": true }
+    }
+  ]
+}
