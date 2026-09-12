@@ -23,12 +23,11 @@ Do not add parallel sources of truth.
 2. **Deterministic first.** Standards, scoring, identifiers, permissions, policy, persisted contracts, and token mappings must be deterministic code with tests.
 3. **Evidence required.** Model-assisted conclusions must reference normalized evidence/provenance and expose uncertainty.
 4. **No secret leakage.** Never place provider keys, tokens, service-role credentials, private URLs, or credentials in client/plugin code, logs, fixtures, docs, or generated artifacts.
-5. **No proprietary/customer material.** This public repository must not contain customer names, internal company names, private checklists, screenshots, documents, business identifiers, or copied proprietary design rules. Use neutral examples and public standards only.
-6. **No customer-specific branding.** Do not introduce Viettel, VTIT, TCCT, VTF, or any other private/client branding, terminology, screenshots, assets, or rules. Replace with neutral product examples.
-7. **Generated artifacts are not hand-edited.** Change their source and regenerate.
-8. **UI uses the shared design system.** Reuse `@desygn/ui` tokens/primitives before adding local equivalents.
-9. **Accessibility is a release requirement.** Keyboard, focus, semantics, contrast, reduced motion, and responsive behavior must be verified for UI changes.
-10. **Agent-generated code is untrusted until verified.** Lint, typecheck, tests, build, and relevant visual/e2e checks must pass before merge.
+5. **No proprietary/customer material.** This public repository must not contain customer names, internal company names, private checklists, screenshots, documents, business identifiers, copied proprietary design rules, or customer-specific branding. Use neutral synthetic examples and public standards only.
+6. **Generated artifacts are not hand-edited.** Change their source and regenerate.
+7. **UI uses the shared design system.** Reuse `@desygn/ui` tokens/primitives before adding local equivalents.
+8. **Accessibility is a release requirement.** Keyboard, focus, semantics, contrast, reduced motion, and responsive behavior must be verified for UI changes.
+9. **Agent-generated code is untrusted until verified.** Lint, typecheck, tests, build, and relevant visual/e2e checks must pass before merge.
 
 ## Design-system rules
 - Design tokens are canonical; avoid raw color/spacing/radius values in reusable UI when a token exists.
