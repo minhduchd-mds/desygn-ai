@@ -14,9 +14,10 @@ storybook-static
 public/
 .idea/
 
-# Test artifacts (should not be committed)
+# Test/visual artifacts (should not be committed)
 playwright-report/
 test-results/
+visual-artifacts/
 
 # Turborepo
 .turbo/
