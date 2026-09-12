@@ -24,10 +24,21 @@ Toggle dark mode with the `data-theme` attribute on `<html>`:
 <html data-theme="dark">
 ```
 
-## Primitives (8)
+## Primitives (10)
 
 ```tsx
-import { Button, Input, Card, Badge, Spinner, Checkbox, Switch, Avatar } from "@desygn/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Dialog,
+  Input,
+  Select,
+  Spinner,
+  Switch,
+} from "@desygn/ui";
 
 <Button variant="primary" size="md" loading={false}>Start audit</Button>
 <Input error="Enter a valid URL" />
@@ -36,11 +47,24 @@ import { Button, Input, Card, Badge, Spinner, Checkbox, Switch, Avatar } from "@
 <Spinner size="md" />
 <Checkbox label="Include AAA checks" />
 <Switch label="Block PR on fail" />
-<Avatar name="Minh Duc" src={url} />
+<Avatar name="Example User" src={url} />
 ```
 
 All primitives ship a visible focus ring (WCAG 2.4.7) and honor
 `prefers-reduced-motion`.
+
+`Select` and `Dialog` are also part of the public primitive surface. The generated
+registry under `packages/ui/registry/` is the machine-readable source for agents,
+documentation checks and design-system automation.
+
+## Registry
+
+```bash
+npm run registry:generate
+npm run registry:check
+```
+
+Do not edit the registry files by hand. Update component exports/stories and regenerate.
 
 ## Tokens
 
@@ -58,6 +82,7 @@ contrast behavior than HSL/RGB).
 - Styling logic lives in pure `*Class()` builders (`variants.ts`), unit-
   tested without a DOM
 - `severityToTone()` maps audit severities → badge tones for the dashboard
+- Public examples must be synthetic/neutral; do not include customer or private company branding
 
 ## License
 
