@@ -1,2 +1,6 @@
-/** Bundler-injected HTML for `figma.showUI`. */
-declare const __html__: string;
+/**
+ * Plugin host globals (`figma`, `__html__`, timers, fetch) are declared by
+ * `@figma/plugin-typings/index.d.ts`, loaded explicitly in tsconfig.plugin.json.
+ * Keep project-specific ambient declarations here only if they are not supplied
+ * by the official host typings.
+ */
