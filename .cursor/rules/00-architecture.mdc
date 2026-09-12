@@ -1,0 +1,19 @@
+---
+description: Core Desygn AI architecture, safety, design-system and public-repository rules
+alwaysApply: true
+---
+
+# Desygn AI core rules
+
+- Read `AGENTS.md` before making architectural changes.
+- Extend canonical packages instead of creating parallel V2/V3 implementations.
+- Keep standards, scoring, permissions, identifiers, policy and persisted contracts deterministic and tested.
+- AI may explain, recommend and plan from evidence; it must not become the only definition of a product rule.
+- Reuse `@desygn/ui` tokens/primitives before creating local UI equivalents.
+- Validate external/model data at trust boundaries.
+- Never expose secrets in frontend, plugin, fixtures, logs, docs or generated files.
+- Never add proprietary/customer content to this public repo. Do not introduce Viettel, VTIT, TCCT, VTF, other private client branding, internal screenshots, copied internal checklists, documents, or customer-specific design rules. Use synthetic neutral examples and public standards.
+- Do not suppress required build/test failures with `continue-on-error`.
+- A reusable component change must update tests, Storybook and machine-readable registry metadata.
+- UI changes require accessibility and responsive verification; visual changes require visual verification when the pipeline is available.
+- Never publish/version/release unless explicitly requested by the owner.
