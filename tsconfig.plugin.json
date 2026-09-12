@@ -16,8 +16,7 @@
     ]
   },
   "files": [
-    "node_modules/@figma/plugin-typings/plugin-api.d.ts",
-    "plugin/globals.d.ts"
+    "node_modules/@figma/plugin-typings/index.d.ts"
   ],
   "include": [
     "plugin/**/*",
