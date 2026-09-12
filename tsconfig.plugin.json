@@ -10,12 +10,18 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "typeRoots": ["node_modules/@figma"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@figma"
+    ]
   },
+  "files": [
+    "node_modules/@figma/plugin-typings/plugin-api.d.ts",
+    "plugin/globals.d.ts"
+  ],
   "include": [
     "plugin/**/*",
-    "shared/**/*",
-    "node_modules/@figma/plugin-typings/plugin-api.d.ts"
+    "shared/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }
