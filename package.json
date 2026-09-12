@@ -72,6 +72,10 @@
     "package": "npm run build && rm -rf release && mkdir release && cp manifest.json release/ && cp -r dist release/",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "registry:generate": "node scripts/generate-component-registry.mjs",
+    "registry:check": "node scripts/generate-component-registry.mjs --check",
+    "verify:core": "npm run registry:check && npm run typecheck && npm run lint && npm test",
+    "verify:release": "npm run verify:core && npm run test:coverage && npm run web:build && npm run build && npm run build-storybook",
     "prepare": "lefthook install || true",
     "turbo:build": "turbo run build",
     "turbo:lint": "turbo run lint",
@@ -149,5 +153,8 @@
       "path-to-regexp": "8.4.2",
       "undici": "7.25.0"
     }
+  },
+  "engines": {
+    "node": ">=22 <23"
   }
 }
