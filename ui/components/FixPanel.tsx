@@ -20,6 +20,11 @@ interface FixButtonState {
   deleteMsg: string;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function FixPanel({ issues, onFixesApplied, embedded }: FixPanelProps) {
   const [renameEntries, setRenameEntries] = useState<RenameEntry[] | null>(null);
   const [selectedRenames, setSelectedRenames] = useState<Set<string>>(new Set());
@@ -55,10 +60,12 @@ export function FixPanel({ issues, onFixesApplied, embedded }: FixPanelProps) {
   // Listen for plugin responses
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg) return;
+      if (!msg || typeof msg !== "object" || typeof msg.type !== "string") return;
 
       if (msg.type === "renames-result") {
+        if (!Array.isArray(msg.entries)) return;
         setRenameEntries(msg.entries);
         setSelectedRenames(new Set(msg.entries.map((e: RenameEntry) => e.nodeId)));
       }
