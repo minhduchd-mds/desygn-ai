@@ -1,19 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
 import type { PluginProfile } from "../../shared/types";
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function useProfiles() {
   const [profiles, setProfiles] = useState<PluginProfile[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg) return;
-      if (msg.type === "profiles-loaded") {
+      if (!msg || typeof msg !== "object" || typeof msg.type !== "string") return;
+      if (msg.type === "profiles-loaded" && Array.isArray(msg.profiles)) {
         setProfiles(msg.profiles);
-        setActiveId(msg.activeId);
+        setActiveId(typeof msg.activeId === "string" ? msg.activeId : null);
       }
-      if (msg.type === "profile-saved") {
+      if (msg.type === "profile-saved" && Array.isArray(msg.profiles)) {
         setProfiles(msg.profiles);
         setActiveId((prev) => prev && !msg.profiles.find((p: PluginProfile) => p.id === prev) ? null : prev);
       }
