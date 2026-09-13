@@ -211,8 +211,14 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [build, storybook]
     if: github.event_name == 'pull_request'
+    env:
+      # Keep browser E2E deterministic and avoid mutating external auth state.
+      # Supabase has its own integration surface; UI smoke tests use local auth.
+      VITE_SUPABASE_URL: ""
+      VITE_SUPABASE_ANON_KEY: ""
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -232,9 +238,6 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Playwright report
         if: always()
