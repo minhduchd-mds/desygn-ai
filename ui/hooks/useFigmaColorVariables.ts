@@ -7,6 +7,11 @@ interface FigmaColorVariablesState {
   isLoading: boolean;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function useFigmaColorVariables(): FigmaColorVariablesState {
   const [state, setState] = useState<FigmaColorVariablesState>({
     tokens: {},
@@ -17,8 +22,9 @@ export function useFigmaColorVariables(): FigmaColorVariablesState {
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg || msg.type !== "figma-color-variables-result") return;
+      if (!msg || typeof msg !== "object" || msg.type !== "figma-color-variables-result") return;
       setState({
         tokens: msg.tokens ?? {},
         fileName: msg.fileName ?? "",
