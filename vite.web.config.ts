@@ -6,6 +6,7 @@ const apiRoutes: Record<string, string> = {
   "/api/bootstrap-context": "../api/bootstrap-context.ts",
   "/api/chat": "../api/chat.ts",
   "/api/generate-screens": "../api/generate-screens.ts",
+  "/api/checklist/audit-web": "../api/checklist/audit-web.ts",
 };
 
 function readJsonBody(request: { on: (event: string, callback: (chunk?: Buffer) => void) => void }): Promise<unknown> {
@@ -33,7 +34,22 @@ function readJsonBody(request: { on: (event: string, callback: (chunk?: Buffer) 
 async function runApiRoute(server: ViteDevServer, modulePath: string, request: Parameters<ViteDevServer["middlewares"]["use"]>[0], response: Parameters<ViteDevServer["middlewares"]["use"]>[1]) {
   const body = request.method === "OPTIONS" ? undefined : await readJsonBody(request);
   const module = await server.ssrLoadModule(modulePath) as { default: (request: unknown, response: unknown) => Promise<void> };
+  const requestUrl = new URL(request.url ?? "/", "http://localhost");
+  const query = Object.fromEntries(requestUrl.searchParams.entries());
   let statusCode = 200;
+
+  // Keep the local dev adapter close to VercelRequest semantics. API wrappers
+  // such as CORS and rate limiting depend on headers, while route handlers may
+  // also inspect query/url/socket. Supplying only { method, body } makes local
+  // integration tests diverge from production behavior.
+  const requestShim = {
+    method: request.method,
+    body,
+    headers: request.headers,
+    query,
+    url: request.url,
+    socket: request.socket,
+  };
 
   const responseShim = {
     setHeader: (name: string, value: string) => {
@@ -55,7 +71,7 @@ async function runApiRoute(server: ViteDevServer, modulePath: string, request: P
     },
   };
 
-  await module.default({ method: request.method, body }, responseShim);
+  await module.default(requestShim, responseShim);
 }
 
 export default defineConfig(({ mode }) => {
