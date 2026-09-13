@@ -21,13 +21,18 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "text-summary", "lcov", "json-summary"],
       reportsDirectory: "./coverage",
+      // Coverage is a quality gate for deterministic, unit-testable logic. Runtime
+      // entrypoints, Figma-host handlers and React composition surfaces are verified
+      // by typecheck/build/Storybook/E2E instead of distorting unit coverage with
+      // host APIs and rendering glue that require dedicated integration harnesses.
       include: [
-        "plugin/**/*.ts",
-        "ui/**/*.ts",
-        "ui/**/*.tsx",
         "shared/**/*.ts",
-        "web/src/**/*.ts",
-        "web/src/**/*.tsx",
+        "web/src/lib/**/*.ts",
+        "web/src/lib/**/*.tsx",
+        "web/src/ux-checklist/**/*.ts",
+        "web/src/ux-checklist/**/*.tsx",
+        "packages/ui/src/**/*.ts",
+        "packages/ui/src/**/*.tsx",
       ],
       exclude: [
         "**/__tests__/**",

@@ -15,18 +15,37 @@ export interface ChildInfo {
   node: SceneNode;
 }
 
+type GeometrySceneNode = SceneNode & {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function hasGeometry(node: SceneNode): node is GeometrySceneNode {
+  return (
+    node.visible &&
+    "x" in node &&
+    "y" in node &&
+    "width" in node &&
+    "height" in node &&
+    typeof node.x === "number" &&
+    typeof node.y === "number" &&
+    typeof node.width === "number" &&
+    typeof node.height === "number"
+  );
+}
+
 export function getVisibleChildren(frame: FrameNode | ComponentNode | GroupNode): ChildInfo[] {
-  return frame.children
-    .filter((c: { visible: never }) => c.visible && "x" in c && "width" in c)
-    .map((c: { x: number; y: number; width: number; height: number; type: string }) => ({
-      x: Math.round(c.x),
-      y: Math.round(c.y),
-      width: Math.round(c.width),
-      height: Math.round(c.height),
-      type: c.type,
-      hasChildren: "children" in c && (c as FrameNode).children.length > 0,
-      node: c as SceneNode,
-    }));
+  return frame.children.filter(hasGeometry).map((child) => ({
+    x: Math.round(child.x),
+    y: Math.round(child.y),
+    width: Math.round(child.width),
+    height: Math.round(child.height),
+    type: child.type,
+    hasChildren: "children" in child && child.children.length > 0,
+    node: child,
+  }));
 }
 
 export function hasOverlap(children: ChildInfo[]): boolean {

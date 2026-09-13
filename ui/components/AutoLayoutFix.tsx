@@ -17,6 +17,11 @@ interface AutoLayoutFixProps {
   initialAnalyzing?: boolean;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function AutoLayoutFix({ hasSelection, onApplied, embedded, initialCandidates, initialSkipped, initialAppliedCount, initialAnalyzing }: AutoLayoutFixProps) {
   const [candidates, setCandidates] = useState<AutoLayoutCandidate[]>(initialCandidates ?? []);
   const [skipped, setSkipped] = useState<AutoLayoutSkipped[]>(initialSkipped ?? []);
@@ -31,10 +36,12 @@ export function AutoLayoutFix({ hasSelection, onApplied, embedded, initialCandid
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg) return;
+      if (!msg || typeof msg !== "object" || typeof msg.type !== "string") return;
 
       if (msg.type === "autolayout-analysis-result") {
+        if (!Array.isArray(msg.candidates) || !Array.isArray(msg.skipped)) return;
         setCandidates(msg.candidates);
         setSkipped(msg.skipped);
         setSelected(new Set(msg.candidates.map((c: AutoLayoutCandidate) => c.nodeId)));
@@ -44,7 +51,7 @@ export function AutoLayoutFix({ hasSelection, onApplied, embedded, initialCandid
 
       if (msg.type === "autolayout-applied") {
         setApplying(false);
-        setAppliedCount(msg.count);
+        setAppliedCount(typeof msg.count === "number" ? msg.count : 0);
         setAnalyzed(false);
         setCandidates([]);
         onApplied();

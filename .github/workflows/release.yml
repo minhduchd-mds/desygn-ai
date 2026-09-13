@@ -1,27 +1,31 @@
-name: Release
+name: Verify Release Tag
+
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
+
+permissions:
+  contents: read
 
 jobs:
-  release:
+  verify-tag:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          node-version: 22
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm test
-      - run: npm run web:build
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          generate_release_notes: true
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          node-version-file: .node-version
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tagged source
+        run: npm run verify:release
+
+# Release Please owns changelog/version/tag/GitHub Release creation.
+# The repository root is a private monorepo package. Any future npm publication
+# must use an explicit package-scoped workflow rather than publishing root.

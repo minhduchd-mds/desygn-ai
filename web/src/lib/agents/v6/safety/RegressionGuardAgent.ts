@@ -41,6 +41,19 @@ export interface RegressionGuardOutput {
   totalDurationMs: number;
 }
 
+function validateTestPattern(pattern: string): string {
+  const value = pattern.trim();
+  if (!value || value.startsWith("-") || /[\0\r\n]/.test(value)) {
+    throw new Error("Invalid test pattern");
+  }
+  return value;
+}
+
+function resolveExecutable(command: string): string {
+  if (process.platform === "win32" && command === "npx") return "npx.cmd";
+  return command;
+}
+
 export class RegressionGuardAgent extends BaseAgentV6<RegressionGuardInput, RegressionGuardOutput> {
   readonly id = "safety.regression-guard";
   readonly name = "Regression Guard";
@@ -86,7 +99,7 @@ export class RegressionGuardAgent extends BaseAgentV6<RegressionGuardInput, Regr
     // 3. Tests
     if (!skip.has("test") && !failedAt) {
       const args = ["vitest", "run", "--reporter=verbose"];
-      if (input.testPattern) args.push(input.testPattern);
+      if (input.testPattern) args.push(validateTestPattern(input.testPattern));
       const result = await this.runCommand(input.cwd, "npx", args, "test", ctx);
       checks.push(result);
       if (!result.passed) failedAt = "test";
@@ -117,11 +130,11 @@ export class RegressionGuardAgent extends BaseAgentV6<RegressionGuardInput, Regr
   ): Promise<CheckResult> {
     return new Promise((resolve) => {
       const started = Date.now();
-      const child: ChildProcess = spawn(command, args, {
+      const child: ChildProcess = spawn(resolveExecutable(command), args, {
         cwd,
         env: { ...process.env, FORCE_COLOR: "0" },
         stdio: ["ignore", "pipe", "pipe"],
-        shell: process.platform === "win32",
+        shell: false,
       });
 
       const chunks: Buffer[] = [];

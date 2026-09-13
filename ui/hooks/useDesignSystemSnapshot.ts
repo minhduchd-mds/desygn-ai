@@ -7,6 +7,11 @@ interface SnapshotState {
   error: string | null;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function useDesignSystemSnapshot(enabled = true): SnapshotState & { refreshSnapshot: () => void } {
   const [state, setState] = useState<SnapshotState>({ snapshot: null, isLoading: enabled, error: null });
   const hasRequestedRef = useRef(false);
@@ -21,8 +26,9 @@ export function useDesignSystemSnapshot(enabled = true): SnapshotState & { refre
     if (!enabled) return;
 
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg || msg.type !== "design-system-snapshot-result") return;
+      if (!msg || typeof msg !== "object" || msg.type !== "design-system-snapshot-result") return;
       setState({ snapshot: msg.snapshot, isLoading: false, error: null });
     }
 

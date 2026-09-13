@@ -4,6 +4,11 @@ import { scan as runScan, invalidateScanCache } from "../lib/scanner";
 import { sendPluginMessage } from "../lib/pluginMessage";
 import { SCAN_TIMEOUT_MS } from "../../shared/constants";
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function useScan() {
   const [result, setResult]       = useState<ScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -28,15 +33,14 @@ export function useScan() {
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg) return;
-      if (msg.type === "variants-result") {
-        if (scanTimeoutRef.current) { clearTimeout(scanTimeoutRef.current); scanTimeoutRef.current = null; }
-        setVariants(msg.variants);
-        if (pendingNodeRef.current) {
-          executeScan(pendingNodeRef.current, msg.variants);
-          pendingNodeRef.current = null;
-        }
+      if (!msg || typeof msg !== "object" || msg.type !== "variants-result" || !Array.isArray(msg.variants)) return;
+      if (scanTimeoutRef.current) { clearTimeout(scanTimeoutRef.current); scanTimeoutRef.current = null; }
+      setVariants(msg.variants);
+      if (pendingNodeRef.current) {
+        executeScan(pendingNodeRef.current, msg.variants);
+        pendingNodeRef.current = null;
       }
     }
     window.addEventListener("message", handleMessage);

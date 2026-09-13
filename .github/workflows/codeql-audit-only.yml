@@ -1,0 +1,44 @@
+name: CodeQL Audit Only
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["chore/platform-governance-upgrade"]
+    paths:
+      - ".github/workflows/codeql-audit-only.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    name: Security and Quality SARIF
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL audit
+        uses: github/codeql-action/init@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Analyze without uploading to Code Scanning
+        uses: github/codeql-action/analyze@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3
+        with:
+          upload: never
+          output: codeql-results
+          upload-database: false
+
+      - name: Upload SARIF for triage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: codeql-security-and-quality-sarif
+          path: codeql-results/**/*.sarif
+          if-no-files-found: error
+          retention-days: 3

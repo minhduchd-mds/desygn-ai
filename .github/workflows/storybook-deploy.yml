@@ -6,14 +6,16 @@ on:
     paths:
       - "ui/**"
       - "web/src/**"
+      - "packages/ui/**"
       - ".storybook/**"
+      - "scripts/generate-component-registry.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/storybook-deploy.yml"
   workflow_dispatch:
 
 # GitHub Pages is not enabled for this repository. Keep this workflow build-only
-# during security cleanup so it needs no deployment/OIDC write permissions.
+# so it needs no deployment/OIDC write permissions.
 permissions:
   contents: read
 
@@ -33,11 +35,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check component registry
+        run: npm run registry:check
+
+      - name: Build shared UI package
+        run: npm run build --workspace=@desygn/ui
 
       - name: Build Storybook
         run: npm run build-storybook

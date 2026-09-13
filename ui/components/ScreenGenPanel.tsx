@@ -24,6 +24,11 @@ interface ScreenConfig {
   includeStates: boolean;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 const SCREEN_PRESETS: Record<string, ScreenConfig[]> = {
   Dashboard: [
     { name: "Dashboard Overview", description: "Main KPI and metrics view", sections: ["Navigation", "KPI Cards", "Charts", "Activity Feed"], includeStates: true },
@@ -177,12 +182,12 @@ export function ScreenGenPanel({
     } as never);
 
     const handleResult = (event: MessageEvent) => {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (msg?.type === "figma-project-frame-result") {
-        setGenerating(false);
-        setGenStatus(msg.message);
-        window.removeEventListener("message", handleResult);
-      }
+      if (!msg || typeof msg !== "object" || msg.type !== "figma-project-frame-result") return;
+      setGenerating(false);
+      setGenStatus(typeof msg.message === "string" ? msg.message : "Figma frame created");
+      window.removeEventListener("message", handleResult);
     };
     window.addEventListener("message", handleResult);
   };

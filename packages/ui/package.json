@@ -1,10 +1,19 @@
 {
   "name": "@desygn/ui",
   "version": "0.1.0",
-  "description": "Shared design system: primitives, patterns, tokens for Desygn A11y apps.",
+  "description": "Shared design system: accessible primitives, semantic tokens and machine-readable registry for Desygn apps.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "src/**/*.css",
+    "registry/",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./src/**/*.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,6 +23,11 @@
       "types": "./dist/tokens/index.d.ts",
       "import": "./dist/tokens/index.js"
     },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "import": "./dist/primitives/index.js"
+    },
+    "./registry": "./registry/component-registry.json",
     "./tokens.css": "./src/tokens/tokens.css",
     "./primitives.css": "./src/primitives/primitives.css"
   },

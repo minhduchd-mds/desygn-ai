@@ -49,7 +49,8 @@ describe("E2E Pipeline Integration", () => {
       expect(result.success).toBe(true);
       expect(result.stages.length).toBe(8);
       expect(result.output).not.toBeNull();
-      expect(result.totalLatencyMs).toBeGreaterThan(0);
+      // Millisecond-resolution timers may validly report 0 for a fully in-memory run.
+      expect(result.totalLatencyMs).toBeGreaterThanOrEqual(0);
     });
 
     it("GOAP plans and executes full deployment", async () => {

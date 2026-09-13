@@ -13,6 +13,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { withRateLimit } from "../lib/rate-limit";
 import { getAllowedOrigin, setCorsHeaders } from "../lib/cors";
+import { safePublicFetch } from "../lib/safe-fetch";
 
 // ---------------------------------------------------------------------------
 // Zod input schema
@@ -278,8 +279,48 @@ function estimateResourceCount(html: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch with timeout
+// Fetch with timeout + SSRF and response-size defenses
 // ---------------------------------------------------------------------------
+
+const MAX_HTML_BYTES = 2 * 1024 * 1024;
+
+async function readTextWithLimit(response: Response, maxBytes: number): Promise<string> {
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    throw new Error(`Target HTML exceeds the ${maxBytes} byte limit`);
+  }
+
+  if (!response.body) return "";
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        await reader.cancel("response too large");
+        throw new Error(`Target HTML exceeds the ${maxBytes} byte limit`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const combined = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(combined);
+}
 
 async function fetchWithTimeout(
   url: string,
@@ -289,7 +330,7 @@ async function fetchWithTimeout(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, {
+    const response = await safePublicFetch(url, {
       signal: controller.signal,
       headers: {
         "User-Agent":
@@ -297,7 +338,7 @@ async function fetchWithTimeout(
         Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
       },
-      redirect: "follow",
+      maxRedirects: 4,
     });
 
     if (!response.ok) {
@@ -305,14 +346,14 @@ async function fetchWithTimeout(
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("html")) {
+    if (!contentType.toLowerCase().includes("html")) {
       throw new Error(
         `Expected HTML but received content-type: ${contentType}`
       );
     }
 
-    const html = await response.text();
-    return { html, finalUrl: response.url ?? url };
+    const html = await readTextWithLimit(response, MAX_HTML_BYTES);
+    return { html, finalUrl: response.url || url };
   } finally {
     clearTimeout(timer);
   }
@@ -373,8 +414,12 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
       return;
     }
 
-    res.status(502).json({
-      error: "Failed to fetch target URL",
+    const unsafeTarget =
+      message.startsWith("Target URL") ||
+      message.startsWith("Target host") ||
+      message.startsWith("Target IP");
+    res.status(unsafeTarget ? 400 : 502).json({
+      error: unsafeTarget ? "Target URL is not allowed" : "Failed to fetch target URL",
       message,
       url,
     });

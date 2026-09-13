@@ -4,6 +4,11 @@ import { batchScan } from "../lib/batch-scanner";
 import { sendPluginMessage } from "../lib/pluginMessage";
 import { SCAN_TIMEOUT_MS } from "../../shared/constants";
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 export function useBatchScan() {
   const [result, setResult] = useState<BatchScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -13,8 +18,9 @@ export function useBatchScan() {
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg || msg.type !== "batch-selection-result") return;
+      if (!msg || typeof msg !== "object" || msg.type !== "batch-selection-result" || !Array.isArray(msg.nodes)) return;
 
       if (batchTimeoutRef.current) { clearTimeout(batchTimeoutRef.current); batchTimeoutRef.current = null; }
 

@@ -2,9 +2,8 @@
  * tokens.css — Design tokens as CSS custom properties.
  *
  * Light theme is default. Dark theme via [data-theme="dark"] selector.
- * All color values use OKLCH for perceptual uniformity.
- *
- * Per 05-web-template-redesign.md Section 2.
+ * All literal color values live in this token layer; reusable primitives consume
+ * semantic aliases rather than palette values directly.
  */
 
 :root {
@@ -32,8 +31,9 @@
   --color-slate-800: oklch(0.30 0.025 250);
   --color-slate-900: oklch(0.22 0.020 250);
   --color-slate-950: oklch(0.16 0.015 250);
+  --color-on-strong: oklch(1 0 0);
 
-  /* ─── Color: Semantic ─────────────────────────────────────────── */
+  /* ─── Color: Semantic palette ─────────────────────────────────── */
   --color-success: oklch(0.65 0.18 145);
   --color-warning: oklch(0.75 0.16 80);
   --color-error: oklch(0.62 0.22 28);
@@ -45,6 +45,35 @@
   --surface-muted: var(--color-slate-100);
   --surface-border: var(--color-slate-200);
   --surface-ring: var(--color-primary-500);
+  --surface-overlay: oklch(0 0 0 / 0.5);
+  --surface-on-strong: var(--color-on-strong);
+
+  /* ─── Interactive semantic aliases ────────────────────────────── */
+  --action-primary-bg: var(--color-primary-600);
+  --action-primary-bg-hover: var(--color-primary-700);
+  --action-secondary-bg: var(--color-slate-200);
+  --action-secondary-bg-hover: var(--color-slate-300);
+  --action-secondary-fg: var(--color-slate-900);
+  --action-danger-bg: var(--color-error);
+  --control-track-bg: var(--color-slate-300);
+  --control-track-active-bg: var(--color-primary-600);
+  --avatar-bg: var(--color-primary-600);
+
+  /* ─── Status semantic aliases ─────────────────────────────────── */
+  --status-neutral-bg: var(--color-slate-200);
+  --status-neutral-fg: var(--color-slate-800);
+  --status-success-bg: var(--color-success);
+  --status-success-fg: var(--surface-on-strong);
+  --status-warning-bg: var(--color-warning);
+  --status-warning-fg: var(--color-slate-900);
+  --status-error-bg: var(--color-error);
+  --status-error-fg: var(--surface-on-strong);
+  --status-info-bg: var(--color-info);
+  --status-info-fg: var(--surface-on-strong);
+
+  /* ─── Elevation ───────────────────────────────────────────────── */
+  --shadow-card: 0 1px 3px oklch(0 0 0 / 0.1), 0 1px 2px oklch(0 0 0 / 0.06);
+  --shadow-dialog: 0 10px 25px oklch(0 0 0 / 0.2), 0 4px 10px oklch(0 0 0 / 0.1);
 
   /* ─── Radius ──────────────────────────────────────────────────── */
   --radius-sm: 0.25rem;
@@ -80,6 +109,13 @@
   --surface-muted: var(--color-slate-900);
   --surface-border: var(--color-slate-800);
   --surface-ring: var(--color-primary-400);
+
+  --action-secondary-bg: var(--color-slate-800);
+  --action-secondary-bg-hover: var(--color-slate-700);
+  --action-secondary-fg: var(--color-slate-50);
+  --control-track-bg: var(--color-slate-700);
+  --status-neutral-bg: var(--color-slate-800);
+  --status-neutral-fg: var(--color-slate-100);
 }
 
 /* ─── Reduced motion ──────────────────────────────────────────── */

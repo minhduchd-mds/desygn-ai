@@ -5,10 +5,46 @@
  * Usage: wrap rendered markdown with <CodeBlockCopy>{children}</CodeBlockCopy>
  * or call attachCopyButtons(containerEl) imperatively.
  */
-import { useEffect, useRef, useCallback } from "react";
+import DOMPurify from "dompurify";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 
 const COPY_BTN_CLASS = "code-copy-btn";
 const COPIED_CLASS = "is-copied";
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function setCopyIcon(btn: HTMLButtonElement, copied: boolean): void {
+  btn.replaceChildren();
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("width", "14");
+  svg.setAttribute("height", "14");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", copied ? "2.5" : "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+
+  if (copied) {
+    const check = document.createElementNS(SVG_NS, "polyline");
+    check.setAttribute("points", "20 6 9 17 4 12");
+    svg.appendChild(check);
+  } else {
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", "9");
+    rect.setAttribute("y", "9");
+    rect.setAttribute("width", "13");
+    rect.setAttribute("height", "13");
+    rect.setAttribute("rx", "2");
+
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1");
+
+    svg.append(rect, path);
+  }
+
+  btn.appendChild(svg);
+}
 
 function createCopyButton(): HTMLButtonElement {
   const btn = document.createElement("button");
@@ -16,7 +52,7 @@ function createCopyButton(): HTMLButtonElement {
   btn.className = COPY_BTN_CLASS;
   btn.title = "Copy code";
   btn.setAttribute("aria-label", "Copy code to clipboard");
-  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  setCopyIcon(btn, false);
   return btn;
 }
 
@@ -28,10 +64,10 @@ function handleCopyClick(event: Event): void {
   const code = pre.querySelector("code")?.textContent ?? pre.textContent ?? "";
   void navigator.clipboard.writeText(code).then(() => {
     btn.classList.add(COPIED_CLASS);
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    setCopyIcon(btn, true);
     setTimeout(() => {
       btn.classList.remove(COPIED_CLASS);
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      setCopyIcon(btn, false);
     }, 2000);
   });
 }
@@ -76,8 +112,9 @@ export function useCodeBlockCopy(deps: unknown[]): React.RefObject<HTMLDivElemen
 }
 
 /**
- * Wrapper component that adds copy buttons to code blocks in children.
- * Use with dangerouslySetInnerHTML rendered markdown.
+ * Wrapper component that adds copy buttons to code blocks in rendered markdown.
+ * The HTML is sanitized at the final DOM sink so callers cannot accidentally
+ * bypass the markdown sanitization boundary.
  */
 export function CodeBlockCopyContainer({
   html,
@@ -87,6 +124,7 @@ export function CodeBlockCopyContainer({
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sanitizedHtml = useMemo(() => DOMPurify.sanitize(html), [html]);
 
   const attachButtons = useCallback(() => {
     if (!containerRef.current) return;
@@ -116,13 +154,13 @@ export function CodeBlockCopyContainer({
       handlers.push(() => img.removeEventListener("error", onError));
     });
     return () => handlers.forEach((fn) => fn());
-  }, [html, attachButtons]);
+  }, [sanitizedHtml, attachButtons]);
 
   return (
     <div
       ref={containerRef}
       className={className}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
     />
   );
 }
