@@ -12,6 +12,11 @@ interface FigmaImportPanelProps {
   parseTokensText: (text: string) => Record<string, string>;
 }
 
+function isTrustedFigmaMessage(event: MessageEvent): boolean {
+  if (event.source !== parent) return false;
+  return event.origin === "null" || event.origin === "https://www.figma.com";
+}
+
 // Parse a skill/markdown file to extract tokens and guidelines
 function parseSkillFile(content: string): { tokens: Record<string, string>; guidelines: string; components: string[] } {
   const tokens: Record<string, string> = {};
@@ -85,10 +90,12 @@ export function FigmaImportPanel({
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
+      if (!isTrustedFigmaMessage(event)) return;
       const msg = event.data?.pluginMessage;
-      if (!msg) return;
+      if (!msg || typeof msg !== "object" || typeof msg.type !== "string") return;
 
       if (msg.type === "figma-sources-result") {
+        if (!Array.isArray(msg.sources)) return;
         if (loadingTimer) clearTimeout(loadingTimer);
         setLoadingSources(false);
         const srcs = msg.sources as FigmaImportSource[];
@@ -99,13 +106,14 @@ export function FigmaImportPanel({
       }
 
       if (msg.type !== "figma-tokens-result") return;
+      if (!msg.tokens || typeof msg.tokens !== "object" || Array.isArray(msg.tokens) || !Array.isArray(msg.components)) return;
 
       if (importTimer) clearTimeout(importTimer);
       setImporting(false);
 
       const importedTokens = msg.tokens as Record<string, string>;
-      const importedComponents = (msg.components as string[]).map((name: string): ComponentRef => ({ name }));
-      const fileName = msg.fileName as string;
+      const importedComponents = (msg.components as string[]).filter((name): name is string => typeof name === "string").map((name): ComponentRef => ({ name }));
+      const fileName = typeof msg.fileName === "string" ? msg.fileName : "Figma file";
 
       const mergedTokens = { ...importedTokens };
       const existingTokens = parseTokensText(tokensText);
