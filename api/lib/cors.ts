@@ -1,28 +1,44 @@
 /**
  * Shared CORS configuration for all API routes.
- * Restrict origin in production — wildcard only for local dev.
+ * Production only accepts the deployed application origins. Local origins are
+ * enabled exclusively in development.
  */
 
-const ALLOWED_ORIGINS = [
+const PRODUCTION_ORIGINS = new Set([
   "https://design-md-ai.vercel.app",
   "https://design-md-ai-yd6r.vercel.app",
+]);
+
+const DEVELOPMENT_ORIGINS = new Set([
   "http://localhost:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
-];
+]);
 
-export function getAllowedOrigin(req: { headers?: { get?: (name: string) => string | null }; method?: string } | { headers?: Record<string, string | string[] | undefined> }): string {
-  let origin: string | null | undefined;
-  if ("get" in (req.headers ?? {})) {
-    origin = (req.headers as { get: (n: string) => string | null }).get("origin");
-  } else {
-    const raw = (req.headers as Record<string, string | string[] | undefined> | undefined)?.origin;
-    origin = Array.isArray(raw) ? raw[0] : raw;
+function readOrigin(req: { headers?: { get?: (name: string) => string | null } | Record<string, string | string[] | undefined> }): string | null {
+  const headers = req.headers;
+  if (!headers) return null;
+
+  if (typeof (headers as { get?: unknown }).get === "function") {
+    return (headers as { get: (name: string) => string | null }).get("origin");
   }
-  if (origin && ALLOWED_ORIGINS.some((o) => origin!.startsWith(o))) return origin;
-  if (process.env.NODE_ENV === "development") return origin ?? "*";
-  return ALLOWED_ORIGINS[0];
+
+  const raw = (headers as Record<string, string | string[] | undefined>).origin;
+  return Array.isArray(raw) ? (raw[0] ?? null) : (raw ?? null);
+}
+
+export function getAllowedOrigin(req: { headers?: { get?: (name: string) => string | null } | Record<string, string | string[] | undefined> }): string {
+  const origin = readOrigin(req);
+  const isDevelopment = process.env.NODE_ENV === "development";
+
+  if (origin && PRODUCTION_ORIGINS.has(origin)) return origin;
+  if (isDevelopment && origin && DEVELOPMENT_ORIGINS.has(origin)) return origin;
+  if (isDevelopment && !origin) return "*";
+
+  // Never reflect an untrusted Origin. Returning the canonical production
+  // origin makes browsers reject cross-origin reads from unapproved sites.
+  return "https://design-md-ai.vercel.app";
 }
 
 /** CORS headers for edge runtime (Request-based) */
@@ -31,6 +47,7 @@ export function buildCorsHeaders(req: Request): Record<string, string> {
     "Access-Control-Allow-Origin": getAllowedOrigin({ headers: req.headers }),
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
   };
 }
 
@@ -42,4 +59,5 @@ export function setCorsHeaders(
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
 }
