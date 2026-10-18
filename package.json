@@ -121,12 +121,12 @@
     "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.75",
-    "@ai-sdk/groq": "^3.0.39",
+    "@ai-sdk/google": "^3.0.121",
+    "@ai-sdk/groq": "^3.0.64",
     "@supabase/supabase-js": "^2.105.4",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
-    "ai": "^6.0.184",
+    "ai": "^6.0.277",
     "dompurify": "^3.4.4",
     "highlight.js": "^11.11.1",
     "inngest": "^3.54.2",
