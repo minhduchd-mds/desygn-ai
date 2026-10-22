@@ -174,7 +174,7 @@ export class PipelineEngine {
       errors.push(msg);
     }
 
-    const totalLatencyMs = Math.round(performance.now() - start);
+    const totalLatencyMs = performance.now() - start;
 
     // Collect stage metrics
     for (const stage of this.stages.values()) {
