@@ -17,7 +17,7 @@
   "dependencies": {
     "@desygn/audit-engine": "0.1.0",
     "@desygn/figma-rest-adapter": "0.1.0",
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
