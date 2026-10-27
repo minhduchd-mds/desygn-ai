@@ -36,7 +36,7 @@ import { Button, Input, Card, Badge, Spinner, Checkbox, Switch, Avatar } from "@
 <Spinner size="md" />
 <Checkbox label="Include AAA checks" />
 <Switch label="Block PR on fail" />
-<Avatar name="Minh Duc" src={url} />
+<Avatar name="Người dùng mẫu" src={url} />
 ```
 
 All primitives ship a visible focus ring (WCAG 2.4.7) and honor
