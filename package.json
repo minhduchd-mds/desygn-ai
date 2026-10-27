@@ -89,7 +89,7 @@
     "@storybook/addon-a11y": "^10.4.0",
     "@storybook/addon-docs": "^10.4.0",
     "@storybook/addon-onboarding": "^10.4.0",
-    "@storybook/addon-vitest": "^10.4.0",
+    "@storybook/addon-vitest": "^10.6.2",
     "@storybook/react-vite": "^10.4.0",
     "@types/node": "^25.8.0",
     "@types/react": "^19.2.14",
