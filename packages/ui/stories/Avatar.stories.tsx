@@ -4,7 +4,7 @@ import { Avatar } from "../src/primitives/index.js";
 const meta: Meta<typeof Avatar> = {
   title: "Desygn UI/Avatar",
   component: Avatar,
-  args: { name: "Minh Duc" },
+  args: { name: "Người dùng mẫu" },
   argTypes: { size: { control: "select", options: ["sm", "md", "lg"] } },
 };
 export default meta;
