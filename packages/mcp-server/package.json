@@ -18,7 +18,7 @@
     "@desygn/audit-engine": "0.1.0",
     "@desygn/figma-rest-adapter": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "tsx": "^4.19.4",
