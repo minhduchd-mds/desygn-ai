@@ -135,7 +135,7 @@
     "marked": "^18.0.3",
     "marked-highlight": "^2.2.4",
     "openai": "^6.38.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "overrides": {
     "@vercel/static-config": {
